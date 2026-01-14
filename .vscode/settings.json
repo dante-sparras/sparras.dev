@@ -12,12 +12,11 @@
     "**/next-env.d.ts": true
   },
   "files.exclude": {
-    "**/.next": true,
-    "**/next-env.d.ts": true
+    "**/.next": true
   },
 
   // TypeScript
-  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.tsdk": "node_modules\\typescript\\lib",
 
   // Biome
   "editor.formatOnSave": true,
