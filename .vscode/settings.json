@@ -1,18 +1,27 @@
 {
   "files.watcherExclude": {
     "**/.next": true,
-    "**/next-env.d.ts": true
+    "**/next-env.d.ts": true,
+    "**/node_modules": true,
+    "**/postcss.config.mjs": true
   },
   "search.exclude": {
     "**/.next": true,
-    "**/next-env.d.ts": true
+    "**/next-env.d.ts": true,
+    "**/node_modules": true,
+    "**/postcss.config.mjs": true
   },
   "files.readonlyInclude": {
     "**/.next": true,
-    "**/next-env.d.ts": true
+    "**/next-env.d.ts": true,
+    "**/node_modules": true,
+    "**/postcss.config.mjs": true
   },
   "files.exclude": {
-    "**/.next": true
+    "**/.next": true,
+    "**/next-env.d.ts": true,
+    "**/node_modules": true,
+    "**/postcss.config.mjs": true
   },
 
   // TypeScript
