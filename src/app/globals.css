@@ -121,6 +121,12 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  .bg-dots-border {
+    @apply bg-[radial-gradient(var(--border)_1px,transparent_1px)] bg-size-[20px_20px];
   }
 }
