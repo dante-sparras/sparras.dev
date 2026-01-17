@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Image from "next/image";
 import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { Providers } from "@/components/providers";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Large } from "@/components/typography/large";
-import { Lead } from "@/components/typography/lead";
 import { Muted } from "@/components/typography/muted";
-import { Small } from "@/components/typography/small";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
@@ -51,8 +49,8 @@ export default function RootLayout({
             <main className="min-h-full md:px-6 bg-background bg-dots-border">
               {children}
             </main>
-            <footer className="border-t md:px-6 px-4 py-6 flex justify-center">
-              <Muted>
+            <footer className="border-t md:px-6 px-4 py-6 flex items-center flex-col gap-6">
+              <Muted className="w-fit">
                 Made with{" "}
                 <Link
                   href="https://nextjs.org"
@@ -76,6 +74,41 @@ export default function RootLayout({
                 </Link>{" "}
                 ❤️
               </Muted>
+              <ul className="w-full flex flex-row justify-center">
+                <li className=" size-10 flex items-center justify-center">
+                  <Link href="https://x.com/DanteSparras">
+                    <Image
+                      src="/x.svg"
+                      alt="X Logo"
+                      width={16}
+                      height={16}
+                      className="dark:filter dark:brightness-0 dark:invert"
+                    />
+                  </Link>
+                </li>
+                <li className=" size-10 flex items-center justify-center">
+                  <Link href="https://www.linkedin.com/in/dante-sparras/">
+                    <Image
+                      src="/linkedin.svg"
+                      alt="LinkedIn Logo"
+                      width={16}
+                      height={16}
+                      className="dark:filter dark:brightness-0 dark:invert"
+                    />
+                  </Link>
+                </li>
+                <li className=" size-10 flex items-center justify-center">
+                  <Link href="https://github.com/dante-sparras">
+                    <Image
+                      src="/github.svg"
+                      alt="GitHub Logo"
+                      width={16}
+                      height={16}
+                      className="dark:filter dark:brightness-0 dark:invert"
+                    />
+                  </Link>
+                </li>
+              </ul>
             </footer>
           </ScrollArea>
         </Providers>
