@@ -7,7 +7,6 @@ import { Nav } from "@/components/nav";
 import { Providers } from "@/components/providers";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Muted } from "@/components/typography/muted";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
 const geistSans = Geist({
@@ -32,13 +31,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="overflow-hidden">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground antialiased`}
       >
         <Providers>
-          <ScrollArea className="w-full h-screen **:data-[slot='scroll-area-viewport']:overscroll-none **:data-[slot='scroll-area-viewport']:*:border-border md:**:data-[slot='scroll-area-viewport']:*:border-x **:data-[slot='scroll-area-viewport']:*:max-w-3xl **:data-[slot='scroll-area-viewport']:*:mx-auto">
-            <header className="sticky top-0 flex h-12 items-center justify-end gap-4 px-4 bg-background border-b">
+          <div className="min-h-screen flex flex-col">
+            <header className="sticky top-0 z-50 flex h-12 items-center justify-end gap-4 px-4 bg-background border-b">
               <Nav />
               <Separator
                 orientation="vertical"
@@ -46,10 +45,10 @@ export default function RootLayout({
               />
               <ThemeToggle />
             </header>
-            <main className="min-h-full md:px-6 bg-background bg-dots-border">
+            <main className="flex-1 md:px-6 bg-background bg-dots-border border-border md:border-x max-w-3xl mx-auto w-full">
               {children}
             </main>
-            <footer className="border-t md:px-6 px-4 py-6 flex items-center flex-col gap-6">
+            <footer className="border-t md:px-6 px-4 py-6 pb-12 md:pb-6 flex items-center flex-col gap-6 border-border md:border-x max-w-3xl mx-auto w-full">
               <Muted className="text-center">
                 Made with{" "}
                 <Link
@@ -110,7 +109,7 @@ export default function RootLayout({
                 </li>
               </ul>
             </footer>
-          </ScrollArea>
+          </div>
         </Providers>
       </body>
     </html>
