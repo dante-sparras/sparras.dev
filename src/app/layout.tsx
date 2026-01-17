@@ -48,7 +48,7 @@ export default function RootLayout({
             <main className="flex-1 md:px-6 bg-background bg-dots-border border-border md:border-x max-w-3xl mx-auto w-full">
               {children}
             </main>
-            <footer className="border-t md:px-6 px-4 py-6 pb-12 md:pb-6 flex items-center flex-col gap-6 border-border md:border-x max-w-3xl mx-auto w-full">
+            <footer className="border-t md:px-6 px-4 pt-6 pb-12 md:pb-6 flex items-center flex-col gap-6 border-border md:border-x max-w-3xl mx-auto w-full">
               <Muted className="text-center">
                 Made with{" "}
                 <Link
