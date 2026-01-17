@@ -37,10 +37,10 @@ export function Nav() {
         <DropdownMenuTrigger
           className={cn(
             navigationMenuTriggerStyle(),
-            "md:hidden flex mr-auto size-7 px-0 cursor-pointer",
+            "md:hidden flex mr-auto size-9 px-0 cursor-pointer",
           )}
         >
-          <MenuIcon className="size-4" />
+          <MenuIcon className="size-5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="md:hidden">
           {navLinks.map((link) => (
