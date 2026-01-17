@@ -37,8 +37,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground antialiased`}
       >
         <Providers>
-          <ScrollArea className="w-full h-screen **:data-[slot='scroll-area-viewport']:overscroll-none **:data-[slot='scroll-area-viewport']:*:border-border **:data-[slot='scroll-area-viewport']:*:border-x **:data-[slot='scroll-area-viewport']:*:max-w-3xl **:data-[slot='scroll-area-viewport']:*:mx-auto">
-            <header className="sticky top-0 flex h-12 items-center justify-end gap-4 px-4 bg-background/80 backdrop-blur-lg border-b">
+          <ScrollArea className="w-full h-screen **:data-[slot='scroll-area-viewport']:overscroll-none **:data-[slot='scroll-area-viewport']:*:border-border md:**:data-[slot='scroll-area-viewport']:*:border-x **:data-[slot='scroll-area-viewport']:*:max-w-3xl **:data-[slot='scroll-area-viewport']:*:mx-auto">
+            <header className="sticky top-0 flex h-12 items-center justify-end gap-4 px-4 bg-background border-b">
               <Nav />
               <Separator
                 orientation="vertical"
@@ -50,7 +50,7 @@ export default function RootLayout({
               {children}
             </main>
             <footer className="border-t md:px-6 px-4 py-6 flex items-center flex-col gap-6">
-              <Muted className="w-fit">
+              <Muted className="text-center">
                 Made with{" "}
                 <Link
                   href="https://nextjs.org"
