@@ -5,6 +5,7 @@ import { Nav } from "@/components/nav";
 import { Providers } from "@/components/providers";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Large } from "@/components/typography/large";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
 const geistSans = Geist({
@@ -31,10 +32,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} flex flex-col h-screen overflow-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} h-screen overflow-hidden bg-background text-foreground antialiased`}
       >
         <Providers>
-          <header className="w-full flex h-12 items-center justify-end gap-4 px-4 md:max-w-3xl md:mx-auto md:px-6 border-l border-r border-b border-border bg-background/80 backdrop-blur-md z-50">
+          <header className="w-full flex h-12 items-center justify-end gap-4 px-4 bg-background md:max-w-3xl md:mx-auto border-x border-b border-border">
             <Nav />
             <Separator
               orientation="vertical"
@@ -42,14 +43,14 @@ export default function RootLayout({
             />
             <ThemeToggle />
           </header>
-          <div className="flex-1 w-full overflow-y-auto overscroll-y-auto border-l border-r border-border bg-dots-border md:max-w-3xl md:mx-auto md:px-6 flex flex-col">
-            <main className="flex">{children}</main>
-            <footer className="flex">
+          <ScrollArea className="w-full border-x h-[calc(100vh-3rem)] border-border bg-background bg-dots-border md:max-w-3xl md:mx-auto">
+            <main className="min-h-full md:px-6">{children}</main>
+            <footer className="border-border border-t md:px-6 px-4 py-6 bg-background">
               <Large>
                 &copy; {new Date().getFullYear()} Dante Sparrås. All rights
               </Large>
             </footer>
-          </div>
+          </ScrollArea>
         </Providers>
       </body>
     </html>
