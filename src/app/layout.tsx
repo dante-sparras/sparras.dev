@@ -12,7 +12,7 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Separator } from "@/components/ui/separator";
 
-// #regon FONTS
+// #region FONTS
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
