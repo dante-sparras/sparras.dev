@@ -22,46 +22,56 @@ type NavLink = {
   href: React.ComponentProps<typeof Link>["href"];
 };
 
-const navLinks: NavLink[] = [
-  { title: "Showcase", href: "/" },
-  { title: "Blog", href: "/" },
-];
+export type NavData = NavLink[];
 
-export function Nav() {
+export function NavDropdown({
+  data,
+  className,
+}: {
+  data: NavData;
+  className?: string;
+}) {
   return (
-    <>
-      {/** Mobile */}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className={cn(
-            navigationMenuTriggerStyle(),
-            "mr-auto flex size-9 cursor-pointer px-0 md:hidden",
-          )}
-        >
-          <MenuIcon className="size-5" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="md:hidden">
-          {navLinks.map((link) => (
-            <DropdownMenuItem key={link.title} className="cursor-pointer">
-              <Link href={link.href}>{link.title}</Link>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={cn(
+          navigationMenuTriggerStyle(),
+          "mr-auto size-9 cursor-pointer px-0",
+          className,
+        )}
+      >
+        <MenuIcon className="size-5" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="md:hidden">
+        {data.map((link) => (
+          <DropdownMenuItem key={link.title} className="cursor-pointer">
+            <Link href={link.href}>{link.title}</Link>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
-      {/** Desktop */}
-      <NavigationMenu className="hidden md:flex">
-        <NavigationMenuList>
-          {navLinks.map((link) => (
-            <NavigationMenuItem key={link.title}>
-              <NavigationMenuLink
-                className={cn(navigationMenuTriggerStyle(), "h-9")}
-                render={<Link href={link.href}>{link.title}</Link>}
-              ></NavigationMenuLink>
-            </NavigationMenuItem>
-          ))}
-        </NavigationMenuList>
-      </NavigationMenu>
-    </>
+export function NavList({
+  data,
+  className,
+}: {
+  data: NavLink[];
+  className?: string;
+}) {
+  return (
+    <NavigationMenu className={className}>
+      <NavigationMenuList>
+        {data.map((link) => (
+          <NavigationMenuItem key={link.title}>
+            <NavigationMenuLink
+              className={cn(navigationMenuTriggerStyle(), "h-9")}
+              render={<Link href={link.href}>{link.title}</Link>}
+            ></NavigationMenuLink>
+          </NavigationMenuItem>
+        ))}
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 }
