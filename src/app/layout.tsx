@@ -98,9 +98,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="relative">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="relative h-full min-h-screen"
+    >
       <body
-        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col bg-background text-foreground antialiased *:mx-auto *:w-full *:max-w-3xl *:border-border *:border-x`}
+        className={`${geistSans.variable} ${geistMono.variable} h-full bg-background text-foreground antialiased *:mx-auto *:w-full *:max-w-3xl *:border-border *:border-x`}
       >
         <Providers>
           <header className="sticky top-0 flex h-12 items-center justify-end gap-4 border-b bg-background px-4">
@@ -112,7 +116,9 @@ export default function RootLayout({
             />
             <ThemeToggle />
           </header>
-          <main className="min-h-full flex-1 bg-background">{children}</main>
+          <main className="relative flex h-full min-h-[calc(100vh-3rem)] w-full max-w-full flex-1 flex-col bg-background">
+            {children}
+          </main>
           <footer className="flex flex-col items-center gap-6 border-t px-4 py-6 md:px-6">
             <MadeWithLinks data={madeWithLinks} />
             <SocialIconsLinks data={socialLinks} />

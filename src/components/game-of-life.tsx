@@ -272,7 +272,7 @@ export default function GameOfLifeCanvas({
     <canvas
       ref={canvasRef}
       className={cn(
-        "pointer-events-auto block h-full w-full touch-none",
+        "pointer-events-auto flex h-full w-full touch-none",
         className,
       )}
       onPointerDown={handleInteraction}
