@@ -23,21 +23,19 @@ type NavLink = {
 };
 
 const navLinks: NavLink[] = [
-  { title: "Home", href: "/" },
-  { title: "Documentation", href: "/" },
-  { title: "Components", href: "/" },
+  { title: "Showcase", href: "/" },
   { title: "Blog", href: "/" },
-  { title: "About", href: "/" },
 ];
 
 export function Nav() {
   return (
     <>
+      {/** Mobile */}
       <DropdownMenu>
         <DropdownMenuTrigger
           className={cn(
             navigationMenuTriggerStyle(),
-            "md:hidden flex mr-auto size-9 px-0 cursor-pointer",
+            "mr-auto flex size-9 cursor-pointer px-0 md:hidden",
           )}
         >
           <MenuIcon className="size-5" />
@@ -50,12 +48,14 @@ export function Nav() {
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/** Desktop */}
       <NavigationMenu className="hidden md:flex">
         <NavigationMenuList>
           {navLinks.map((link) => (
             <NavigationMenuItem key={link.title}>
               <NavigationMenuLink
-                className={navigationMenuTriggerStyle()}
+                className={cn(navigationMenuTriggerStyle(), "h-9")}
                 render={<Link href={link.href}>{link.title}</Link>}
               ></NavigationMenuLink>
             </NavigationMenuItem>

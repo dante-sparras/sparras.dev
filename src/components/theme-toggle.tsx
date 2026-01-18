@@ -2,41 +2,48 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export function ThemeToggle() {
-  const { setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const [mounted, setMounted] = useState(false);
+
+  console.log({ resolvedTheme });
+
+  // Avoid Hydration Mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
+
+  const onClick = () => setTheme(isDark ? "light" : "dark");
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button variant="outline" size="icon-lg" className="relative">
-            <Sun className="size-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-            <Moon className="absolute top-1/4 size-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        }
-        className="cursor-pointer dark:hover:bg-muted dark:focus-visible:bg-muted dark:bg-background border-0"
-      ></DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      aria-pressed={isDark}
+      className="relative h-9 w-9 cursor-pointer p-0"
+    >
+      <span className="sr-only">Toggle theme</span>
+      <Sun
+        className={`-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 size-4 transition-all ${
+          isDark
+            ? "rotate-90 scale-0 opacity-0"
+            : "rotate-0 scale-100 opacity-100"
+        }`}
+      />
+      <Moon
+        className={`-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 size-4 transition-all ${
+          isDark
+            ? "rotate-0 scale-100 opacity-100"
+            : "-rotate-90 scale-0 opacity-0"
+        }`}
+      />
+    </Button>
   );
 }
