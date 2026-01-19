@@ -123,7 +123,6 @@ export default function Home() {
 
       {/* About Section */}
       <section className="px-6 py-8">
-        <H3>About</H3>
         <P className="text-muted-foreground">
           I&apos;m a passionate developer focused on building modern web
           applications and mobile experiences. With expertise in frontend
