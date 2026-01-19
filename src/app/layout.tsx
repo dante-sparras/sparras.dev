@@ -104,10 +104,10 @@ export default function RootLayout({
       className="relative h-screen w-screen"
     >
       <body
-        className={`${geistSans.variable} ${geistMono.variable} flex h-full w-full flex-col bg-background text-foreground antialiased *:mx-auto *:w-full *:max-w-3xl *:border-border *:border-x`}
+        className={`${geistSans.variable} ${geistMono.variable} flex h-full w-full flex-col overflow-hidden bg-background text-foreground antialiased`}
       >
         <Providers>
-          <header className="sticky top-0 flex h-12 z-50 items-center justify-end gap-4 border-b bg-background px-4">
+          <header className="sticky top-0 z-50 mx-auto flex h-12 w-full max-w-3xl shrink-0 items-center justify-end gap-4 border-border border-x border-b bg-background px-4">
             <NavDropdown data={navData} className="flex md:hidden" />
             <NavList data={navData} className="hidden md:flex" />
             <Separator
@@ -116,11 +116,15 @@ export default function RootLayout({
             />
             <ThemeToggle />
           </header>
-          <main className="flex-1 bg-background">{children}</main>
-          <footer className="flex flex-col items-center gap-6 border-t px-4 py-6 md:px-6">
-            <MadeWithLinks data={madeWithLinks} />
-            <SocialIconsLinks data={socialLinks} />
-          </footer>
+          <div className="flex-1 overflow-y-auto">
+            <main className="mx-auto w-full max-w-3xl border-border border-x bg-background">
+              {children}
+            </main>
+            <footer className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 border-border border-x border-t px-4 py-6 md:px-6">
+              <MadeWithLinks data={madeWithLinks} />
+              <SocialIconsLinks data={socialLinks} />
+            </footer>
+          </div>
         </Providers>
       </body>
     </html>
