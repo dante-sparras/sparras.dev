@@ -146,6 +146,8 @@ export default function Home() {
         </div>
       </section>
 
+      <div className="h-8 bg-stripes" />
+
       {/* Projects Section */}
       <section className="px-6 py-8">
         <H3 className="mb-6">Projects</H3>
@@ -162,6 +164,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <div className="h-8 bg-stripes" />
 
       {/* Blog Section */}
       <section className="px-6 py-8">
@@ -180,5 +184,7 @@ export default function Home() {
         </div>
       </section>
     </div>
+
+    <div className="h-8 bg-stripes" />
   );
 }
