@@ -107,7 +107,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} flex h-full w-full flex-col overflow-hidden bg-background text-foreground antialiased`}
       >
         <Providers>
-          <header className="sticky top-0 z-50 mx-auto flex h-12 w-full max-w-3xl shrink-0 items-center justify-end gap-4 border-border border-x border-b bg-background px-4">
+          <header className="sticky top-0 z-50 mx-auto flex h-12 w-full max-w-3xl shrink-0 items-center justify-end gap-4 border-border md:border-x border-b bg-background px-4">
             <NavDropdown data={navData} className="flex md:hidden" />
             <NavList data={navData} className="hidden md:flex" />
             <Separator
