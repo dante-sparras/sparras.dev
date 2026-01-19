@@ -8,6 +8,13 @@ export function P({
   children: React.ReactNode;
 }) {
   return (
-    <p className={cn("leading-7 not-first:mt-6", className)}>{children}</p>
+    <p
+      className={cn(
+        "text-balance font-sans text-foreground text-sm leading-6",
+        className,
+      )}
+    >
+      {children}
+    </p>
   );
 }

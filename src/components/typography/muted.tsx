@@ -8,6 +8,8 @@ export function Muted({
   children: React.ReactNode;
 }) {
   return (
-    <p className={cn("text-muted-foreground text-sm", className)}>{children}</p>
+    <p className={cn("font-sans text-muted-foreground text-sm", className)}>
+      {children}
+    </p>
   );
 }

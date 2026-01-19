@@ -85,10 +85,10 @@ const blogPosts: {
 
 export default function Home() {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col *:border-b">
       {/* Hero Section */}
-      <section className="relative flex flex-col">
-        <div className="relative h-52 w-full border-border border-b">
+      <section className="relative flex flex-col divide-y">
+        <div className="relative h-52 w-full">
           <GameOfLifeCanvas
             speed={100}
             showGrid
@@ -100,7 +100,7 @@ export default function Home() {
             stagnationThreshold={5}
           />
         </div>
-        <div className="-translate-y-2/3 absolute top-52 z-10 ml-6 flex w-fit overflow-hidden rounded-full border border-border bg-background">
+        <div className="-translate-y-2/3 absolute top-52 z-10 ml-6 flex w-fit overflow-hidden rounded-full border bg-background">
           <Image
             src="/portrait.webp"
             alt="Picture of Dante Sparrås"
@@ -111,19 +111,14 @@ export default function Home() {
           />
         </div>
         <div className="h-16 bg-stripes" />
-        <div className="*:py-2 *:pl-6">
-          <H2 className="flex items-center border-border border-y">
-            Dante Sparrås
-          </H2>
-          <Muted className="border-border border-b">
-            Frontend & .NET Developer
-          </Muted>
+        <div className="divide-y *:py-3 *:pl-6">
+          <H2>Dante Sparrås</H2>
+          <Muted>Frontend & .NET Developer</Muted>
         </div>
       </section>
-
       {/* About Section */}
-      <section className="px-6 py-8">
-        <P className="text-muted-foreground">
+      <section className="px-6 py-3">
+        <P>
           I&apos;m a passionate developer focused on building modern web
           applications and mobile experiences. With expertise in frontend
           technologies and .NET backend development, I create scalable and
@@ -131,8 +126,10 @@ export default function Home() {
         </P>
       </section>
 
+      <div className="h-8 bg-stripes" />
+
       {/* Tech Stack Section */}
-      <section className="border-border border-t px-6 py-8">
+      <section className="px-6 py-8">
         <H3 className="mb-6">Tech Stack</H3>
         <div className="grid grid-cols-4 gap-4 sm:grid-cols-8">
           {techStack.map((tech) => (
@@ -150,7 +147,7 @@ export default function Home() {
       </section>
 
       {/* Projects Section */}
-      <section className="border-border border-t px-6 py-8">
+      <section className="px-6 py-8">
         <H3 className="mb-6">Projects</H3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
@@ -167,7 +164,7 @@ export default function Home() {
       </section>
 
       {/* Blog Section */}
-      <section className="border-border border-t px-6 py-8">
+      <section className="px-6 py-8">
         <H3 className="mb-6">Blog</H3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {blogPosts.map((post) => (
