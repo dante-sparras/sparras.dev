@@ -35,7 +35,11 @@ const techStack = [
 ];
 
 // Projects data
-const projects = [
+const projects: {
+  title: string;
+  description: string;
+  href: React.ComponentProps<typeof Link>["href"];
+}[] = [
   {
     title: "Project One",
     description:
@@ -55,7 +59,11 @@ const projects = [
 ];
 
 // Blog posts data
-const blogPosts = [
+const blogPosts: {
+  title: string;
+  description: string;
+  href: React.ComponentProps<typeof Link>["href"];
+}[] = [
   {
     title: "Getting Started with Next.js",
     description:
