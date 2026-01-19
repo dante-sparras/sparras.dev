@@ -183,8 +183,7 @@ export default function Home() {
           ))}
         </div>
       </section>
+      <div className="h-8 bg-stripes" />
     </div>
-
-    <div className="h-8 bg-stripes" />
   );
 }
