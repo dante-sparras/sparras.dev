@@ -8,12 +8,7 @@ export function H2({
   children: React.ReactNode;
 }) {
   return (
-    <h2
-      className={cn(
-        "scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0",
-        className,
-      )}
-    >
+    <h2 className={cn("scroll-m-20 font-semibold text-3xl", className)}>
       {children}
     </h2>
   );
