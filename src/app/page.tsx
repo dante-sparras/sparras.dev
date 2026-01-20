@@ -112,15 +112,19 @@ export default function Home() {
         />
         <StripedDivider className="h-14" />
         <H2 className="border-b py-3 pl-6">Dante Sparrås</H2>
-        <Muted className="py-3 pl-6">Frontend & .NET Developer</Muted>
+        <Muted className="py-3 pl-6">Full-stack Developer</Muted>
       </header>
       <StripedDivider />
       <section aria-labelledby="about-heading">
-        <P className="px-6 py-5 leading-relaxed">
-          I&apos;m a passionate developer focused on building modern web
-          applications and mobile experiences. With expertise in frontend
-          technologies and .NET backend development, I create scalable and
-          user-friendly solutions.
+        <P className="text-balance px-6 py-5">
+          I&apos;m a Full-stack developer specializing in web and game
+          development. Both artistic and technical, I blend strong design
+          sensibility with deep technical expertise. My core strengths include
+          writing clean and readable code, designing robust architecture,
+          building modular and scalable systems, understanding low-level
+          mechanics, and delivering exceptional developer and user experiences
+          (DX + UX). I&apos;m driven to create elegant, high-performance
+          solutions that scale seamlessly.
         </P>
       </section>
       <StripedDivider />
