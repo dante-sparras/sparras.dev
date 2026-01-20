@@ -121,10 +121,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-background font-mono text-foreground antialiased *:mx-auto *:max-w-3xl *:first:border-b *:last:border-t *:md:border-x`}
+        className={`${geistSans.variable} ${geistMono.variable} bg-background font-mono text-foreground antialiased`}
       >
         <Providers>
-          <div className="sticky top-0 z-50">
+          <div className="sticky top-0 z-50 mx-auto max-w-3xl md:border-x">
             <header className="flex h-14 items-center justify-end gap-4 border-b bg-background px-4 py-2">
               <DropdownMenu>
                 <DropdownMenuTrigger
@@ -173,9 +173,9 @@ export default function RootLayout({
             </header>
           </div>
 
-          <main>{children}</main>
+          <main className="mx-auto max-w-3xl md:border-x">{children}</main>
 
-          <footer className="flex flex-col items-center gap-6 px-4 py-6 md:px-6">
+          <footer className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-6 md:border-x md:px-6">
             <Muted className="text-center">
               Made with{" "}
               {madeWithLinks.map((link) => (
