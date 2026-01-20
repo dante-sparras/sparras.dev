@@ -1,17 +1,29 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Separator } from "@base-ui/react";
+import { MenuIcon } from "lucide-react";
 import Image from "next/image";
-import { type MadeWithLink, MadeWithLinks } from "@/components/made-with-links";
+import Link from "next/link";
+import React from "react";
 import { MainHeader } from "@/components/main-header";
-import { type NavData, NavDropdown, NavList } from "@/components/nav";
 import { Providers } from "@/components/providers";
-import {
-  type SocialIconLink,
-  SocialIconsLinks,
-} from "@/components/social-icons-links";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Muted } from "@/components/typography/muted";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 // #region FONTS
 const geistSans = Geist({
@@ -34,12 +46,18 @@ export const metadata: Metadata = {
 // #endregion
 
 // #region DATA
-const navData: NavData = [
+const navData: {
+  title: string;
+  href: React.ComponentProps<typeof Link>["href"];
+}[] = [
   { title: "Home", href: "/" },
   { title: "Showcase", href: "/showcase" },
   { title: "Blog", href: "/blog" },
 ];
-const socialLinks: SocialIconLink[] = [
+const socialLinks: {
+  href: React.ComponentProps<typeof Link>["href"];
+  icon: React.ReactNode;
+}[] = [
   {
     href: "https://x.com/DanteSparras",
     icon: (
@@ -77,7 +95,10 @@ const socialLinks: SocialIconLink[] = [
     ),
   },
 ];
-const madeWithLinks: MadeWithLink[] = [
+const madeWithLinks: {
+  href: React.ComponentProps<typeof Link>["href"];
+  title: string;
+}[] = [
   {
     href: "https://nextjs.org",
     title: "Next.js",
@@ -104,19 +125,80 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} bg-background font-mono text-foreground antialiased *:mx-auto *:max-w-3xl *:first:border-b *:last:border-t *:md:border-x`}
       >
         <Providers>
-          <MainHeader className="flex h-14 items-center justify-end gap-4 border-b bg-background px-4">
-            <NavDropdown data={navData} className="flex md:hidden" />
-            <NavList data={navData} className="hidden md:flex" />
+          <MainHeader className="flex h-14 items-center justify-end gap-4 border-b bg-background px-4 py-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={cn(
+                  navigationMenuTriggerStyle(),
+                  "mr-auto flex size-9 cursor-pointer px-0 md:hidden",
+                )}
+              >
+                <MenuIcon className="size-5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="md:hidden"
+                render={
+                  <nav aria-label="Main navigation">
+                    {navData.map((link) => (
+                      <DropdownMenuItem
+                        key={link.title}
+                        render={<Link href={link.href}>{link.title}</Link>}
+                        className="cursor-pointer"
+                      />
+                    ))}
+                  </nav>
+                }
+              ></DropdownMenuContent>
+            </DropdownMenu>
+            <NavigationMenu
+              className="hidden md:flex"
+              aria-label="Main navigation"
+            >
+              <NavigationMenuList>
+                {navData.map((link) => (
+                  <NavigationMenuItem key={link.title}>
+                    <NavigationMenuLink
+                      className={cn(navigationMenuTriggerStyle(), "h-9")}
+                      render={<Link href={link.href}>{link.title}</Link>}
+                    ></NavigationMenuLink>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
             <Separator
               orientation="vertical"
-              className="hidden h-4 w-px md:flex"
+              className="hidden md:flex md:h-4"
             />
-            <ThemeToggle />
+            <ThemeToggle className="size-9 *:p-2" />
           </MainHeader>
-          <main className="w-full flex-1 overscroll-y-contain">{children}</main>
-          <footer className="flex w-full flex-col items-center gap-6 px-4 py-6 md:px-6">
-            <MadeWithLinks data={madeWithLinks} />
-            <SocialIconsLinks data={socialLinks} />
+
+          <main>{children}</main>
+
+          <footer className="flex flex-col items-center gap-6 px-4 py-6 md:px-6">
+            <Muted className="text-center">
+              Made with{" "}
+              {madeWithLinks.map((link) => (
+                <React.Fragment key={link.href.toString()}>
+                  <Link
+                    href={link.href}
+                    className="text-blue-400 hover:underline"
+                  >
+                    {link.title}
+                  </Link>{" "}
+                </React.Fragment>
+              ))}
+              ❤️
+            </Muted>
+            <ul className="flex w-full flex-row justify-center">
+              {socialLinks.map((link) => (
+                <li
+                  key={link.href.toString()}
+                  className="flex size-10 items-center justify-center"
+                >
+                  <Link href={link.href}>{link.icon}</Link>
+                </li>
+              ))}
+            </ul>
           </footer>
         </Providers>
       </body>
