@@ -5,7 +5,6 @@ import { MenuIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import { MainHeader } from "@/components/main-header";
 import { Providers } from "@/components/providers";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Muted } from "@/components/typography/muted";
@@ -125,52 +124,54 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} bg-background font-mono text-foreground antialiased *:mx-auto *:max-w-3xl *:first:border-b *:last:border-t *:md:border-x`}
       >
         <Providers>
-          <MainHeader className="flex h-14 items-center justify-end gap-4 border-b bg-background px-4 py-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className={cn(
-                  navigationMenuTriggerStyle(),
-                  "mr-auto flex size-9 cursor-pointer px-0 md:hidden",
-                )}
+          <div className="sticky top-0 z-50">
+            <header className="flex h-14 items-center justify-end gap-4 border-b bg-background px-4 py-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    "mr-auto flex size-9 cursor-pointer px-0 md:hidden",
+                  )}
+                >
+                  <MenuIcon className="size-5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="md:hidden"
+                  render={
+                    <nav aria-label="Main navigation">
+                      {navData.map((link) => (
+                        <DropdownMenuItem
+                          key={link.title}
+                          render={<Link href={link.href}>{link.title}</Link>}
+                          className="cursor-pointer"
+                        />
+                      ))}
+                    </nav>
+                  }
+                ></DropdownMenuContent>
+              </DropdownMenu>
+              <NavigationMenu
+                className="hidden md:flex"
+                aria-label="Main navigation"
               >
-                <MenuIcon className="size-5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="md:hidden"
-                render={
-                  <nav aria-label="Main navigation">
-                    {navData.map((link) => (
-                      <DropdownMenuItem
-                        key={link.title}
+                <NavigationMenuList>
+                  {navData.map((link) => (
+                    <NavigationMenuItem key={link.title}>
+                      <NavigationMenuLink
+                        className={cn(navigationMenuTriggerStyle(), "h-9")}
                         render={<Link href={link.href}>{link.title}</Link>}
-                        className="cursor-pointer"
-                      />
-                    ))}
-                  </nav>
-                }
-              ></DropdownMenuContent>
-            </DropdownMenu>
-            <NavigationMenu
-              className="hidden md:flex"
-              aria-label="Main navigation"
-            >
-              <NavigationMenuList>
-                {navData.map((link) => (
-                  <NavigationMenuItem key={link.title}>
-                    <NavigationMenuLink
-                      className={cn(navigationMenuTriggerStyle(), "h-9")}
-                      render={<Link href={link.href}>{link.title}</Link>}
-                    ></NavigationMenuLink>
-                  </NavigationMenuItem>
-                ))}
-              </NavigationMenuList>
-            </NavigationMenu>
-            <Separator
-              orientation="vertical"
-              className="hidden md:flex md:h-4"
-            />
-            <ThemeToggle className="size-9 *:p-2" />
-          </MainHeader>
+                      ></NavigationMenuLink>
+                    </NavigationMenuItem>
+                  ))}
+                </NavigationMenuList>
+              </NavigationMenu>
+              <Separator
+                orientation="vertical"
+                className="hidden md:flex md:h-4"
+              />
+              <ThemeToggle className="size-9 *:p-2" />
+            </header>
+          </div>
 
           <main>{children}</main>
 
