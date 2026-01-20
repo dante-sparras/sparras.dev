@@ -10,7 +10,7 @@ export function MainHeader({
   // 'absolute' (not 'sticky' since that would make the <header> disappear when
   // scrolling) positioning which would make it ignore overscroll behavior.
   return (
-    <div className="sticky top-0 z-50 w-full">
+    <div className="sticky top-0 z-50">
       <header className={className}>{children}</header>
     </div>
   );

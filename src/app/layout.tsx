@@ -99,9 +99,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="h-full scroll-smooth">
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} flex h-full flex-col bg-background font-mono text-foreground antialiased *:mx-auto *:max-w-3xl *:first:border-b *:last:border-t *:md:border-x`}
+        className={`${geistSans.variable} ${geistMono.variable} bg-background font-mono text-foreground antialiased *:mx-auto *:max-w-3xl *:first:border-b *:last:border-t *:md:border-x`}
       >
         <Providers>
           <MainHeader className="flex h-14 items-center justify-end gap-4 border-b bg-background px-4">
