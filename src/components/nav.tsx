@@ -42,13 +42,20 @@ export function NavDropdown({
       >
         <MenuIcon className="size-5" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="md:hidden">
-        {data.map((link) => (
-          <DropdownMenuItem key={link.title} className="cursor-pointer">
-            <Link href={link.href}>{link.title}</Link>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
+      <DropdownMenuContent
+        className="md:hidden"
+        render={
+          <nav aria-label="Main navigation">
+            {data.map((link) => (
+              <DropdownMenuItem
+                key={link.title}
+                render={<Link href={link.href}>{link.title}</Link>}
+                className="cursor-pointer"
+              />
+            ))}
+          </nav>
+        }
+      ></DropdownMenuContent>
     </DropdownMenu>
   );
 }
@@ -61,7 +68,7 @@ export function NavList({
   className?: string;
 }) {
   return (
-    <NavigationMenu className={className}>
+    <NavigationMenu className={className} aria-label="Main navigation">
       <NavigationMenuList>
         {data.map((link) => (
           <NavigationMenuItem key={link.title}>

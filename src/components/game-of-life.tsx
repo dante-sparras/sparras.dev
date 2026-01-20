@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -536,7 +537,7 @@ export default function GameOfLife({
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 overflow-hidden ${className}`}
+      className={className}
       style={mounted ? { background: colors.background } : undefined}
     >
       <canvas

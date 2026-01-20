@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { GitHubCalendar } from "react-github-calendar";
 import GameOfLifeCanvas from "@/components/game-of-life";
 import { H2 } from "@/components/typography/h2";
 import { H3 } from "@/components/typography/h3";
@@ -85,40 +86,36 @@ const blogPosts: {
 
 export default function Home() {
   return (
-    <div className="flex flex-col *:border-b">
-      {/* Hero Section */}
-      <section className="relative flex flex-col divide-y">
-        <div className="relative h-52 w-full">
+    <div className="flex flex-col *:after:block *:after:h-8 *:after:border-border *:after:border-y *:after:bg-stripes *:after:content-['']">
+      <section aria-labelledby="hero-heading">
+        <div className="relative after:block after:h-14 after:border-border after:border-y after:bg-stripes after:content-['']">
           <GameOfLifeCanvas
             speed={100}
             showGrid
             targetCellSize={15}
             backgroundColorVar="--background"
             cellColorVar="--foreground"
-            className="opacity-25"
             fadeIntensity={0.9}
             stagnationThreshold={5}
+            className="h-52 opacity-25"
           />
-        </div>
-        <div className="-translate-y-2/3 absolute top-52 z-10 ml-6 flex w-fit overflow-hidden rounded-full border bg-background">
           <Image
             src="/portrait.webp"
             alt="Picture of Dante Sparrås"
             width={152}
             height={152}
-            className="pointer-events-none"
+            className="-translate-y-3/4 pointer-events-none absolute top-52 ml-6 rounded-full border"
             priority
           />
         </div>
-        <div className="h-16 bg-stripes" />
         <div className="divide-y *:py-3 *:pl-6">
           <H2>Dante Sparrås</H2>
           <Muted>Frontend & .NET Developer</Muted>
         </div>
       </section>
-      {/* About Section */}
-      <section className="px-6 py-3">
-        <P>
+
+      <section aria-labelledby="about-heading">
+        <P className="px-6 py-5 leading-relaxed">
           I&apos;m a passionate developer focused on building modern web
           applications and mobile experiences. With expertise in frontend
           technologies and .NET backend development, I create scalable and
@@ -126,10 +123,17 @@ export default function Home() {
         </P>
       </section>
 
-      <div className="h-8 bg-stripes" />
+      <section aria-labelledby="github-calendar-heading">
+        <div className="relative flex items-center justify-center px-6 py-5">
+          <GitHubCalendar
+            username="dante-sparras"
+            weekStart={1}
+            blockSize={9.35}
+          />
+        </div>
+      </section>
 
-      {/* Tech Stack Section */}
-      <section className="px-6 py-8">
+      <section aria-labelledby="tech-stack-heading">
         <H3 className="mb-6">Tech Stack</H3>
         <div className="grid grid-cols-4 gap-4 sm:grid-cols-8">
           {techStack.map((tech) => (
@@ -146,10 +150,7 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="h-8 bg-stripes" />
-
-      {/* Projects Section */}
-      <section className="px-6 py-8">
+      <section aria-labelledby="projects-heading" className="py-8">
         <H3 className="mb-6">Projects</H3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
@@ -165,10 +166,7 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="h-8 bg-stripes" />
-
-      {/* Blog Section */}
-      <section className="px-6 py-8">
+      <section aria-labelledby="blog-heading" className="py-8">
         <H3 className="mb-6">Blog</H3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {blogPosts.map((post) => (
@@ -183,7 +181,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-      <div className="h-8 bg-stripes" />
     </div>
   );
 }

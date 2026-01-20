@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Separator } from "@base-ui/react";
 import Image from "next/image";
 import { type MadeWithLink, MadeWithLinks } from "@/components/made-with-links";
+import { MainHeader } from "@/components/main-header";
 import { type NavData, NavDropdown, NavList } from "@/components/nav";
 import { Providers } from "@/components/providers";
 import {
@@ -10,7 +12,6 @@ import {
   SocialIconsLinks,
 } from "@/components/social-icons-links";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Separator } from "@/components/ui/separator";
 
 // #region FONTS
 const geistSans = Geist({
@@ -98,16 +99,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className="relative h-screen w-screen"
-    >
+    <html lang="en" suppressHydrationWarning className="h-full scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} flex h-full w-full flex-col overflow-hidden bg-background text-foreground antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} flex h-full flex-col bg-background font-mono text-foreground antialiased *:mx-auto *:max-w-3xl *:first:border-b *:last:border-t *:md:border-x`}
       >
         <Providers>
-          <header className="sticky top-0 z-50 mx-auto flex h-12 w-full max-w-3xl shrink-0 items-center justify-end gap-4 border-border md:border-x border-b bg-background px-4">
+          <MainHeader className="flex h-14 items-center justify-end gap-4 border-b bg-background px-4">
             <NavDropdown data={navData} className="flex md:hidden" />
             <NavList data={navData} className="hidden md:flex" />
             <Separator
@@ -115,16 +112,12 @@ export default function RootLayout({
               className="hidden h-4 w-px md:flex"
             />
             <ThemeToggle />
-          </header>
-          <div className="flex-1 overflow-y-auto">
-            <main className="mx-auto w-full max-w-3xl border-border border-x bg-background">
-              {children}
-            </main>
-            <footer className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 border-border border-x border-t px-4 py-6 md:px-6">
-              <MadeWithLinks data={madeWithLinks} />
-              <SocialIconsLinks data={socialLinks} />
-            </footer>
-          </div>
+          </MainHeader>
+          <main className="w-full flex-1 overscroll-y-contain">{children}</main>
+          <footer className="flex w-full flex-col items-center gap-6 px-4 py-6 md:px-6">
+            <MadeWithLinks data={madeWithLinks} />
+            <SocialIconsLinks data={socialLinks} />
+          </footer>
         </Providers>
       </body>
     </html>

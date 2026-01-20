@@ -63,7 +63,7 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.58 0.22 27);
-  --border: #aeaeae;
+  --border: oklch(75.083% 0.00009 271.152);
   --input: oklch(0.75 0 0);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.88 0.15 92);
@@ -99,7 +99,7 @@
   --accent: oklch(0.371 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(25% 0 271.152);
+  --border: oklch(15% 0 271.152);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.88 0.15 92);
@@ -121,31 +121,28 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply font-sans;
-  }
+}
+
+@utility bg-stripes {
+  @apply bg-background;
+
+  /* Create a tileable linear gradient */
+  background-image: linear-gradient(
+    135deg,
+    var(--border) 10%,
+    transparent 10%,
+    transparent 50%,
+    var(--border) 50%,
+    var(--border) 60%,
+    transparent 60%,
+    transparent 100%
+  );
+
+  /* Define the size of the pattern tile (controls gap size) */
+  background-size: 9px 9px;
 }
 
 @layer utilities {
-  .bg-stripes {
-    /* 1. Set the background color */
-    @apply bg-background;
-    
-    /* 2. Create a tileable linear gradient */
-    background-image: linear-gradient(
-        135deg, 
-        var(--border) 10%, 
-        transparent 10%, 
-        transparent 50%, 
-        var(--border) 50%, 
-        var(--border) 60%, 
-        transparent 60%, 
-        transparent 100%
-    );
-    
-    /* 3. Define the size of the pattern tile (controls gap size) */
-    background-size: 7px 7px;
-  }
   .bg-graph-paper {
     @apply bg-background bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px),linear-gradient(to_right,var(--border)_2px,transparent_2px),linear-gradient(to_bottom,var(--border)_2px,transparent_2px)] bg-size-[20px_20px,20px_20px,200px_200px,200px_200px];
   }
