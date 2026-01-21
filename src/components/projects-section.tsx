@@ -41,7 +41,7 @@ export function ProjectsSection({ projects }: ProjectsSectionProps) {
       </div>
 
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <div className="grid gap-4 px-6 pt-6 pb-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
           {visibleProjects.map((project) => (
             <Link key={project.title} href={project.href}>
               <Card className="h-full transition-colors hover:bg-muted/50">
