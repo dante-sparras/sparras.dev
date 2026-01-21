@@ -87,9 +87,6 @@
   * {
     @apply border-border outline-ring/50;
   }
-  svg {
-    @apply size-full;
-  }
 }
 
 @utility bg-stripes {
