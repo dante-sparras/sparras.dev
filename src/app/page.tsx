@@ -1,13 +1,3 @@
-import {
-  Code2,
-  Database,
-  FileCode2,
-  Globe,
-  Layers,
-  Server,
-  Smartphone,
-  Terminal,
-} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import GameOfLifeCanvas from "@/components/game-of-life";
@@ -21,18 +11,105 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 // Tech stack data with placeholder icons
-const techStack = [
-  { name: "React", icon: Code2 },
-  { name: "Next.js", icon: Globe },
-  { name: "TypeScript", icon: FileCode2 },
-  { name: ".NET", icon: Server },
-  { name: "Node.js", icon: Terminal },
-  { name: "SQL", icon: Database },
-  { name: "Tailwind", icon: Layers },
-  { name: "React Native", icon: Smartphone },
+const techStack: {
+  tooltipContent: string;
+  src: React.ComponentProps<typeof Image>["src"];
+  href: React.ComponentProps<typeof Link>["href"];
+}[] = [
+  {
+    tooltipContent: "Next.js",
+    src: "/icons/nextjs.svg",
+    href: "https://nextjs.org/",
+  },
+  {
+    tooltipContent: "shadcn/ui",
+    src: "/icons/shadcn-ui.svg",
+    href: "https://ui.shadcn.com/",
+  },
+  {
+    tooltipContent: "TailwindCSS",
+    src: "/icons/tailwindcss.svg",
+    href: "https://tailwindcss.com/",
+  },
+  {
+    tooltipContent: "Convex",
+    src: "/icons/convex.svg",
+    href: "https://www.convex.dev/",
+  },
+  {
+    tooltipContent: "React",
+    src: "/icons/react.svg",
+    href: "https://react.dev/",
+  },
+  { tooltipContent: "Bun", src: "/icons/bun.svg", href: "https://bun.com/" },
+  {
+    tooltipContent: "Node.js",
+    src: "/icons/nodejs.svg",
+    href: "https://nodejs.org/en",
+  },
+  {
+    tooltipContent: "Unity",
+    src: "/icons/unity.svg",
+    href: "https://unity.com/",
+  },
+  {
+    tooltipContent: "C#",
+    src: "/icons/c-sharp.svg",
+    href: "https://learn.microsoft.com/en-us/dotnet/csharp/",
+  },
+  {
+    tooltipContent: "TypeScript",
+    src: "/icons/typescript.svg",
+    href: "https://www.typescriptlang.org/",
+  },
+  {
+    tooltipContent: "JavaScript",
+    src: "/icons/javascript.svg",
+    href: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+  },
+  {
+    tooltipContent: "CSS",
+    src: "/icons/css.svg",
+    href: "https://developer.mozilla.org/en-US/docs/Web/CSS",
+  },
+  {
+    tooltipContent: "HTML5",
+    src: "/icons/html5.svg",
+    href: "https://developer.mozilla.org/en-US/docs/Web/HTML",
+  },
+  {
+    tooltipContent: "C++",
+    src: "/icons/c-plus-plus.svg",
+    href: "https://learn.microsoft.com/en-us/cpp/cpp/?view=msvc-170",
+  },
+  {
+    tooltipContent: "Git",
+    src: "/icons/git.svg",
+    href: "https://git-scm.com/",
+  },
+  {
+    tooltipContent: "GitHub",
+    src: "/icons/github.svg",
+    href: "https://github.com/",
+  },
+  {
+    tooltipContent: "Visual Studio Code",
+    src: "/icons/vscode.svg",
+    href: "https://code.visualstudio.com/",
+  },
+  {
+    tooltipContent: "Visual Studio",
+    src: "/icons/visual-studio.svg",
+    href: "https://visualstudio.microsoft.com/",
+  },
 ];
 
 // Projects data
@@ -107,7 +184,7 @@ export default function Home() {
           alt="Picture of Dante Sparrås"
           width={152}
           height={152}
-          className="-translate-y-3/4 pointer-events-none absolute top-52 ml-6 rounded-full border"
+          className="-translate-y-3/4 pointer-events-none absolute top-52 left-6 rounded-full border"
           priority
         />
         <StripedDivider className="h-14" />
@@ -139,27 +216,38 @@ export default function Home() {
           />
         </div>
       </section> */}
-
-      <section aria-labelledby="tech-stack-heading">
-        <H3 className="mb-6">Tech Stack</H3>
-        <div className="grid grid-cols-4 gap-4 sm:grid-cols-8">
-          {techStack.map((tech) => (
-            <div
-              key={tech.name}
-              className="flex flex-col items-center gap-2 rounded-lg p-3 transition-colors hover:bg-muted"
-            >
-              <tech.icon className="h-8 w-8 text-muted-foreground" />
-              <span className="text-center text-muted-foreground text-xs">
-                {tech.name}
-              </span>
-            </div>
+      <section aria-labelledby="skills-heading">
+        <H3 className="border-b px-6 py-3">Skills</H3>
+        <ul className="grid grid-cols-5 gap-4 px-6 py-6 sm:grid-cols-8 md:grid-cols-10">
+          {techStack.map(({ tooltipContent, src, href }) => (
+            <Tooltip key={tooltipContent}>
+              <TooltipTrigger
+                render={
+                  <li>
+                    <Link
+                      href={href}
+                      className="mx-auto flex size-14 items-center justify-center rounded-md border border-border transition-colors hover:border-blue-500"
+                    >
+                      <Image
+                        src={src}
+                        alt={`${tooltipContent} Icon Logo`}
+                        width={32}
+                        height={32}
+                        className="size-8 object-contain"
+                      />
+                    </Link>
+                  </li>
+                }
+              />
+              <TooltipContent>{tooltipContent}</TooltipContent>
+            </Tooltip>
           ))}
-        </div>
+        </ul>
       </section>
       <StripedDivider />
-      <section aria-labelledby="projects-heading" className="py-8">
-        <H3 className="mb-6">Projects</H3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section aria-labelledby="projects-heading">
+        <H3 className="border-b px-6 py-3">Projects</H3>
+        <div className="grid gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
             <Link key={project.title} href={project.href}>
               <Card className="h-full transition-colors hover:bg-muted/50">
@@ -173,9 +261,9 @@ export default function Home() {
         </div>
       </section>
       <StripedDivider />
-      <section aria-labelledby="blog-heading" className="py-8">
-        <H3 className="mb-6">Blog</H3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section aria-labelledby="blog-heading">
+        <H3 className="border-b px-6 py-3">Blog</H3>
+        <div className="grid gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
           {blogPosts.map((post) => (
             <Link key={post.title} href={post.href}>
               <Card className="h-full transition-colors hover:bg-muted/50">
