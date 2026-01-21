@@ -54,44 +54,24 @@ const navData: {
   { title: "Blog", href: "/blog" },
 ];
 const socialLinks: {
+  title: string;
   href: React.ComponentProps<typeof Link>["href"];
-  icon: React.ReactNode;
+  src: React.ComponentProps<typeof Image>["src"];
 }[] = [
   {
+    title: "X",
     href: "https://x.com/DanteSparras",
-    icon: (
-      <Image
-        src="/x.svg"
-        alt="X Logo"
-        width={16}
-        height={16}
-        className="dark:brightness-0 dark:invert dark:filter"
-      />
-    ),
+    src: "/icons/x.svg",
   },
   {
+    title: "LinkedIn",
     href: "https://www.linkedin.com/in/dante-sparras/",
-    icon: (
-      <Image
-        src="/linkedin.svg"
-        alt="LinkedIn Logo"
-        width={16}
-        height={16}
-        className="dark:brightness-0 dark:invert dark:filter"
-      />
-    ),
+    src: "/icons/linkedin.svg",
   },
   {
+    title: "GitHub",
     href: "https://github.com/dante-sparras",
-    icon: (
-      <Image
-        src="/github.svg"
-        alt="GitHub Logo"
-        width={16}
-        height={16}
-        className="dark:brightness-0 dark:invert dark:filter"
-      />
-    ),
+    src: "/icons/github.svg",
   },
 ];
 const madeWithLinks: {
@@ -119,7 +99,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="scroll-smooth">
+    <html lang="en" className="scheme-dark scroll-smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-background font-mono text-foreground antialiased`}
       >
@@ -196,7 +176,15 @@ export default function RootLayout({
                   key={link.href.toString()}
                   className="flex size-10 items-center justify-center"
                 >
-                  <Link href={link.href}>{link.icon}</Link>
+                  <Link href={link.href}>
+                    <Image
+                      src={link.src}
+                      alt={`${link.title} Logo`}
+                      width={16}
+                      height={16}
+                      className="size-4 object-contain brightness-0 invert filter"
+                    />
+                  </Link>
                 </li>
               ))}
             </ul>
