@@ -4,7 +4,7 @@ import "./globals.css";
 import { MenuIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import * as React from "react";
 import { Providers } from "@/components/providers";
 import { Muted } from "@/components/typography/muted";
 import {
@@ -13,13 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
+import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
 // #region FONTS
@@ -47,9 +41,8 @@ const navData: {
   title: string;
   href: React.ComponentProps<typeof Link>["href"];
 }[] = [
-  { title: "Home", href: "/" },
-  { title: "Showcase", href: "/showcase" },
-  { title: "Blog", href: "/blog" },
+  { title: "Projects", href: "#projects" },
+  { title: "Blog", href: "#blog" },
 ];
 const socialLinks: {
   title: string;
@@ -115,34 +108,31 @@ export default function RootLayout({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   className="md:hidden"
-                  render={
-                    <nav aria-label="Main navigation">
-                      {navData.map((link) => (
-                        <DropdownMenuItem
-                          key={link.title}
-                          render={<Link href={link.href}>{link.title}</Link>}
-                          className="cursor-pointer"
-                        />
-                      ))}
-                    </nav>
-                  }
-                ></DropdownMenuContent>
-              </DropdownMenu>
-              <NavigationMenu
-                className="hidden md:flex"
-                aria-label="Main navigation"
-              >
-                <NavigationMenuList>
+                  aria-label="Main navigation"
+                >
                   {navData.map((link) => (
-                    <NavigationMenuItem key={link.title}>
-                      <NavigationMenuLink
-                        className={cn(navigationMenuTriggerStyle(), "h-9")}
-                        render={<Link href={link.href}>{link.title}</Link>}
-                      ></NavigationMenuLink>
-                    </NavigationMenuItem>
+                    <DropdownMenuItem
+                      key={link.title}
+                      render={<Link href={link.href}>{link.title}</Link>}
+                      className="cursor-pointer"
+                    />
                   ))}
-                </NavigationMenuList>
-              </NavigationMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <nav className="hidden md:flex" aria-label="Main navigation">
+                <ul className="flex items-center">
+                  {navData.map((link) => (
+                    <li key={link.title}>
+                      <Link
+                        href={link.href}
+                        className={cn(navigationMenuTriggerStyle(), "h-9")}
+                      >
+                        {link.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
             </header>
           </div>
 

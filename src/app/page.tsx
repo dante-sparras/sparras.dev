@@ -19,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 
 // Tech stack data with placeholder icons
-const techStack: {
+const skills: {
   tooltipContent: string;
   src: React.ComponentProps<typeof Image>["src"];
   href: React.ComponentProps<typeof Link>["href"];
@@ -205,7 +205,6 @@ export default function Home() {
         </P>
       </section>
       <StripedDivider />
-
       {/** UNCOMMENT LATER THIS YEAR */}
       {/* <section aria-labelledby="github-calendar-heading">
         <div className="relative flex items-center justify-center px-6 py-5">
@@ -219,7 +218,7 @@ export default function Home() {
       <section aria-labelledby="skills-heading">
         <H3 className="border-b px-6 py-3">Skills</H3>
         <ul className="grid grid-cols-5 gap-4 px-6 py-6 sm:grid-cols-8 md:grid-cols-10">
-          {techStack.map(({ tooltipContent, src, href }) => (
+          {skills.map(({ tooltipContent, src, href }) => (
             <Tooltip key={tooltipContent}>
               <TooltipTrigger
                 render={
@@ -246,7 +245,9 @@ export default function Home() {
       </section>
       <StripedDivider />
       <section aria-labelledby="projects-heading">
-        <H3 className="border-b px-6 py-3">Projects</H3>
+        <H3 id="projects" className="border-b px-6 py-3">
+          Projects
+        </H3>
         <div className="grid gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
             <Link key={project.title} href={project.href}>
@@ -262,7 +263,9 @@ export default function Home() {
       </section>
       <StripedDivider />
       <section aria-labelledby="blog-heading">
-        <H3 className="border-b px-6 py-3">Blog</H3>
+        <H3 id="blog" className="border-b px-6 py-3">
+          Blog
+        </H3>
         <div className="grid gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
           {blogPosts.map((post) => (
             <Link key={post.title} href={post.href}>
