@@ -1,8 +1,6 @@
 "use client";
 
-import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -377,11 +375,8 @@ export default function GameOfLife({
   const [isDrawing, setIsDrawing] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
-
   const colors = getThemeColors(
-    isDark,
+    true,
     cellColorVar,
     backgroundColorVar,
     gridColorVar,

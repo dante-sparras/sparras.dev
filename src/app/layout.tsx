@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Providers } from "@/components/providers";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Muted } from "@/components/typography/muted";
 import {
   DropdownMenu,
@@ -21,7 +20,6 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 // #region FONTS
@@ -145,11 +143,6 @@ export default function RootLayout({
                   ))}
                 </NavigationMenuList>
               </NavigationMenu>
-              <Separator
-                orientation="vertical"
-                className="hidden md:flex md:h-4"
-              />
-              <ThemeToggle className="size-9 *:p-2" />
             </header>
           </div>
 
