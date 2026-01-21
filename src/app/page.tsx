@@ -1,16 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BlogSection } from "@/components/blog-section";
 import GameOfLifeCanvas from "@/components/game-of-life";
+import { ProjectsSection } from "@/components/projects-section";
 import { H2 } from "@/components/typography/h2";
 import { H3 } from "@/components/typography/h3";
 import { Muted } from "@/components/typography/muted";
 import { P } from "@/components/typography/p";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
@@ -18,7 +14,6 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-// Tech stack data with placeholder icons
 const skills: {
   tooltipContent: string;
   src: React.ComponentProps<typeof Image>["src"];
@@ -119,20 +114,10 @@ const projects: {
   href: React.ComponentProps<typeof Link>["href"];
 }[] = [
   {
-    title: "Project One",
+    title: "sparras.dev",
     description:
-      "A full-stack web application built with Next.js and .NET backend.",
-    href: "/showcase",
-  },
-  {
-    title: "Project Two",
-    description: "Mobile-first responsive design system using Tailwind CSS.",
-    href: "/showcase",
-  },
-  {
-    title: "Project Three",
-    description: "Real-time data visualization dashboard with TypeScript.",
-    href: "/showcase",
+      "My personal website built with Next.js, Tailwind CSS, and shadcn/ui.",
+    href: "https://github.com/dante-sparras/sparras.dev",
   },
 ];
 
@@ -141,25 +126,7 @@ const blogPosts: {
   title: string;
   description: string;
   href: React.ComponentProps<typeof Link>["href"];
-}[] = [
-  {
-    title: "Getting Started with Next.js",
-    description:
-      "Learn the basics of Next.js and build your first application.",
-    href: "/blog",
-  },
-  {
-    title: "TypeScript Best Practices",
-    description:
-      "Essential patterns and practices for writing better TypeScript.",
-    href: "/blog",
-  },
-  {
-    title: "Building Responsive UIs",
-    description: "Mobile-first approach to creating adaptive user interfaces.",
-    href: "/blog",
-  },
-];
+}[] = [];
 
 function StripedDivider({ className }: { className?: string }) {
   return <div className={cn("h-8 border-y bg-stripes", className)} />;
@@ -216,7 +183,9 @@ export default function Home() {
         </div>
       </section> */}
       <section aria-labelledby="skills-heading">
-        <H3 className="border-b px-6 py-3">Skills</H3>
+        <H3 id="skills" className="border-b px-6 py-3">
+          Skills
+        </H3>
         <ul className="grid grid-cols-5 gap-4 px-6 py-6 sm:grid-cols-8 md:grid-cols-10">
           {skills.map(({ tooltipContent, src, href }) => (
             <Tooltip key={tooltipContent}>
@@ -244,41 +213,9 @@ export default function Home() {
         </ul>
       </section>
       <StripedDivider />
-      <section aria-labelledby="projects-heading">
-        <H3 id="projects" className="border-b px-6 py-3">
-          Projects
-        </H3>
-        <div className="grid gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
-            <Link key={project.title} href={project.href}>
-              <Card className="h-full transition-colors hover:bg-muted/50">
-                <CardHeader>
-                  <CardTitle>{project.title}</CardTitle>
-                  <CardDescription>{project.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <ProjectsSection projects={projects} />
       <StripedDivider />
-      <section aria-labelledby="blog-heading">
-        <H3 id="blog" className="border-b px-6 py-3">
-          Blog
-        </H3>
-        <div className="grid gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post) => (
-            <Link key={post.title} href={post.href}>
-              <Card className="h-full transition-colors hover:bg-muted/50">
-                <CardHeader>
-                  <CardTitle>{post.title}</CardTitle>
-                  <CardDescription>{post.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <BlogSection blogPosts={blogPosts} />
       <StripedDivider />
     </>
   );

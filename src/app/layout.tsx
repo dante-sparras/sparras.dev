@@ -41,6 +41,7 @@ const navData: {
   title: string;
   href: React.ComponentProps<typeof Link>["href"];
 }[] = [
+  { title: "Skills", href: "#skills" },
   { title: "Projects", href: "#projects" },
   { title: "Blog", href: "#blog" },
 ];
