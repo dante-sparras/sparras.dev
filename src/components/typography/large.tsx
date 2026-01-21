@@ -1,13 +1,13 @@
 import { cn } from "@/lib/utils";
 
 export function Large({
-  className,
   children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
-    <div className={cn("text-lg font-semibold", className)}>{children}</div>
+    <div className={cn("font-semibold text-lg", className)} {...props}>
+      {children}
+    </div>
   );
 }

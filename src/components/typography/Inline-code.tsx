@@ -1,18 +1,17 @@
 import { cn } from "@/lib/utils";
 
 export function InlineCode({
-  className,
   children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
+  className,
+  ...props
+}: React.ComponentProps<"code">) {
   return (
     <code
       className={cn(
-        "bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold",
+        "relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono font-semibold text-sm",
         className,
       )}
+      {...props}
     >
       {children}
     </code>

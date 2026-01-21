@@ -1,14 +1,15 @@
 import { cn } from "@/lib/utils";
 
 export function Muted({
-  className,
   children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
+  className,
+  ...props
+}: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-sans text-muted-foreground text-sm", className)}>
+    <p
+      className={cn("font-sans text-muted-foreground text-sm", className)}
+      {...props}
+    >
       {children}
     </p>
   );

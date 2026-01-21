@@ -1,13 +1,13 @@
 import { cn } from "@/lib/utils";
 
 export function Lead({
-  className,
   children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
+  className,
+  ...props
+}: React.ComponentProps<"p">) {
   return (
-    <p className={cn("text-muted-foreground text-xl", className)}>{children}</p>
+    <p className={cn("text-muted-foreground text-xl", className)} {...props}>
+      {children}
+    </p>
   );
 }
