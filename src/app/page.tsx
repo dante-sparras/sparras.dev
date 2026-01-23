@@ -14,6 +14,12 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
+//#region DATA
+
+const name: string = "Dante Sparrås";
+const role: string = "Full-stack Developer";
+const aboutMe: string = `I'm a Full-stack developer specializing in web and game development. Both artistic and technical, I blend strong design sensibility with deep technical expertise. My core strengths include writing clean and readable code, designing robust architecture, building modular and scalable systems, understanding low-level mechanics, and delivering exceptional developer and user experiences (DX + UX). I'm driven to create elegant, high-performance solutions that scale seamlessly.`;
+
 const skills: {
   tooltipContent: string;
   src: React.ComponentProps<typeof Image>["src"];
@@ -107,7 +113,6 @@ const skills: {
   },
 ];
 
-// Projects data
 const projects: {
   title: string;
   description: string;
@@ -121,12 +126,13 @@ const projects: {
   },
 ];
 
-// Blog posts data
 const blogPosts: {
   title: string;
   description: string;
   href: React.ComponentProps<typeof Link>["href"];
 }[] = [];
+
+//#endregion
 
 function StripedDivider({ className }: { className?: string }) {
   return <div className={cn("h-8 border-y bg-stripes", className)} />;
@@ -155,21 +161,12 @@ export default function Home() {
           priority
         />
         <StripedDivider className="h-14" />
-        <H2 className="border-b py-3 pl-6">Dante Sparrås</H2>
-        <Muted className="py-3 pl-6">Full-stack Developer</Muted>
+        <H2 className="border-b py-3 pl-6">{name}</H2>
+        <Muted className="py-3 pl-6">{role}</Muted>
       </header>
       <StripedDivider />
       <section aria-labelledby="about-heading">
-        <P className="text-balance px-6 py-5">
-          I&apos;m a Full-stack developer specializing in web and game
-          development. Both artistic and technical, I blend strong design
-          sensibility with deep technical expertise. My core strengths include
-          writing clean and readable code, designing robust architecture,
-          building modular and scalable systems, understanding low-level
-          mechanics, and delivering exceptional developer and user experiences
-          (DX + UX). I&apos;m driven to create elegant, high-performance
-          solutions that scale seamlessly.
-        </P>
+        <P className="text-balance px-6 py-5">{aboutMe}</P>
       </section>
       <StripedDivider />
       {/** UNCOMMENT LATER THIS YEAR */}
