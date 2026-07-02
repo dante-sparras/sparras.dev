@@ -24,6 +24,21 @@ export const dictionary = {
     description:
       "Full-stack and game developer — portfolio site under construction.",
   },
+  nav: {
+    aria: "Primary",
+    menu: "Open menu",
+    menuTitle: "Menu",
+    logo: "D.S",
+    logoAria: "Dante Sparrås — home",
+    resume: "Resume",
+    links: {
+      about: "About",
+      skills: "Skills",
+      portfolio: "Portfolio",
+      testimonials: "Testimonials",
+      contact: "Contact",
+    },
+  },
   meta: {
     description:
       "Portfolio of Dante Sparrås — full-stack and game developer focused on clean architecture, modular systems, and strong DX and UX. Web with Next.js, games, and .NET.",

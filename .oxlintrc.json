@@ -46,6 +46,12 @@
       "rules": {
         "import/no-unassigned-import": "off"
       }
+    },
+    {
+      "files": ["components/ui/**/*.tsx"],
+      "rules": {
+        "react-perf/jsx-no-jsx-as-prop": "off"
+      }
     }
   ]
 }

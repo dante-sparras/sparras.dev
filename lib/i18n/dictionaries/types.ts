@@ -26,6 +26,21 @@ export type Dictionary = {
     title: string;
     description: string;
   };
+  nav: {
+    aria: string;
+    menu: string;
+    menuTitle: string;
+    logo: string;
+    logoAria: string;
+    resume: string;
+    links: {
+      about: string;
+      skills: string;
+      portfolio: string;
+      testimonials: string;
+      contact: string;
+    };
+  };
   meta: {
     description: string;
     keywords: readonly string[];

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { isLocale, locales } from "@/lib/i18n/config";
 import { getSiteMetadata } from "@/lib/i18n/get-dictionary";
+import { SiteNavbar } from "@/components/site-navbar";
 
 type Props = {
   children: React.ReactNode;
@@ -20,5 +21,10 @@ export async function generateMetadata({ params }: Props) {
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
-  return children;
+  return (
+    <>
+      <SiteNavbar locale={raw} />
+      {children}
+    </>
+  );
 }

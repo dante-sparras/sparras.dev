@@ -23,6 +23,21 @@ export const dictionary = {
     title: "Dante Sparrås",
     description: "Fullstack- och spelutvecklare — webbplatsen byggs om.",
   },
+  nav: {
+    aria: "Huvudnavigering",
+    menu: "Öppna meny",
+    menuTitle: "Meny",
+    logo: "D.S",
+    logoAria: "Dante Sparrås — startsida",
+    resume: "CV",
+    links: {
+      about: "Om",
+      skills: "Kompetens",
+      portfolio: "Portfolio",
+      testimonials: "Referenser",
+      contact: "Kontakt",
+    },
+  },
   meta: {
     description:
       "Portfolio för Dante Sparrås — fullstack- och spelutvecklare med fokus på ren arkitektur, modulära system och bra DX och UX. Webb med Next.js, spel och .NET.",
