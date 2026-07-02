@@ -14,11 +14,11 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
+    "@base-ui/react": "^1.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
-    "radix-ui": "^1.6.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "shadcn": "^4.12.0",

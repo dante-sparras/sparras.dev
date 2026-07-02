@@ -15,7 +15,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## UI (shadcn)
 
-- **Preset:** `radix-sera`, **base** `neutral`, **RSC** + Tailwind v4 (`components.json`)
+- **Preset:** **`base-sera`** (Base UI + **sera** style), **neutral** base, **RSC** + Tailwind v4 (`components.json`)
+- **Primitives:** `@base-ui/react` — use **`render`** prop (not Radix `asChild`) on triggers
 - **Add components:** `bunx shadcn@latest add <name>` → `@/components/ui`
 - **Utils:** `cn()` in `@/lib/utils`
 
