@@ -24,8 +24,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## i18n
 
 - **Locales:** `en`, `sv` under `app/[locale]/`; default **`en`**
-- **Detection:** `middleware.ts` reads **`Accept-Language`** (first matching `en` or `sv`), redirects `/` → `/en` or `/sv`
+- **Detection:** `proxy.ts` reads **`Accept-Language`** (first matching `en` or `sv`), redirects `/` → `/en` or `/sv`
 - **Copy:** `lib/i18n/dictionaries.ts` (extend as sections ship)
+- **Switcher:** `components/language-switcher.tsx` (shadcn **Button** + **DropdownMenu**); drop into navbar later
 
 ## Git hooks (Lefthook)
 
