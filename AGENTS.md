@@ -28,6 +28,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Copy:** `lib/i18n/dictionaries.ts` (extend as sections ship)
 - **Switcher:** `components/language-switcher.tsx` (shadcn **Button** + **DropdownMenu**); drop into navbar later
 
+## Theme
+
+- **`next-themes`** via `components/theme-provider.tsx` — `attribute="class"`, **`defaultTheme="system"`**, `enableSystem`
+- **Switcher:** `components/theme-switcher.tsx` — **system** / **light** / **dark** (labels in `lib/theme/labels.ts` per locale)
+
 ## Git hooks (Lefthook)
 
 **Why Lefthook (not custom `.mjs` / Git 2.54 config / Husky+lint-staged):** common minimal setup for Bun + formatters in 2026 — one `lefthook.yml`, fast Go binary, good on Windows, no `sh`. Oxfmt on **staged** files only; **oxlint** on the whole tree via `bun run check` (oxlint is fast).

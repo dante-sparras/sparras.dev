@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import { defaultLocale, isLocale } from "@/lib/i18n/config";
 
@@ -31,13 +32,23 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
+      suppressHydrationWarning
       className={cn(
         "h-full antialiased font-sans",
         geistSans.variable,
         geistMono.variable,
       )}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
