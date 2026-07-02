@@ -21,6 +21,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Utils:** `cn()` in `@/lib/utils`
 - **Fonts:** Geist Sans + Geist Mono only (`next/font` in `app/layout.tsx`)
 
+## i18n
+
+- **Locales:** `en`, `sv` under `app/[locale]/`; default **`en`**
+- **Detection:** `middleware.ts` reads **`Accept-Language`** (first matching `en` or `sv`), redirects `/` → `/en` or `/sv`
+- **Copy:** `lib/i18n/dictionaries.ts` (extend as sections ship)
+
 ## Git hooks (Lefthook)
 
 **Why Lefthook (not custom `.mjs` / Git 2.54 config / Husky+lint-staged):** common minimal setup for Bun + formatters in 2026 — one `lefthook.yml`, fast Go binary, good on Windows, no `sh`. Oxfmt on **staged** files only; **oxlint** on the whole tree via `bun run check` (oxlint is fast).
