@@ -19,6 +19,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Primitives:** `@base-ui/react` — use **`render`** prop (not Radix `asChild`) on triggers
 - **Add components:** `bunx shadcn@latest add <name>` → `@/components/ui`
 - **Utils:** `cn()` in `@/lib/utils`
+- **Fonts:** Geist Sans + Geist Mono only (`next/font` in `app/layout.tsx`)
 
 ## Git hooks (Lefthook)
 
