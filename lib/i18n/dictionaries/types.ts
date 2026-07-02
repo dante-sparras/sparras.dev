@@ -16,11 +16,6 @@ export type Dictionary = {
     system: string;
     light: string;
     dark: string;
-    short: {
-      system: string;
-      light: string;
-      dark: string;
-    };
   };
   home: {
     title: string;

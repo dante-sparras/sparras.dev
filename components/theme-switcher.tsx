@@ -75,7 +75,14 @@ export function ThemeSwitcher({ locale, className }: ThemeSwitcherProps) {
   }, [active, mounted, resolvedTheme]);
 
   const triggerRender = useMemo(
-    () => <Button variant="outline" size="sm" aria-label={copy.triggerAria} />,
+    () => (
+      <Button
+        variant="outline"
+        size="icon-sm"
+        aria-label={copy.triggerAria}
+        className="shrink-0"
+      />
+    ),
     [copy.triggerAria],
   );
 
@@ -88,10 +95,7 @@ export function ThemeSwitcher({ locale, className }: ThemeSwitcherProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={className} render={triggerRender}>
-        <TriggerIcon className="size-3.5 opacity-70" aria-hidden />
-        <span className="max-w-16 truncate">
-          {mounted ? copy.short[active] : copy.short.system}
-        </span>
+        <TriggerIcon className="size-4" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {themeChoices.map((choice) => (

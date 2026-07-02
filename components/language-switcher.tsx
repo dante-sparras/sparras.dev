@@ -52,14 +52,14 @@ function LocaleMenuItem({
 export function LanguageSwitcher({ locale, className }: LanguageSwitcherProps) {
   const pathname = usePathname();
   const messages = getDictionary(locale);
-  const current = messages.locales[locale];
 
   const triggerRender = useMemo(
     () => (
       <Button
         variant="outline"
-        size="sm"
+        size="icon-sm"
         aria-label={messages.language.triggerAria}
+        className="shrink-0"
       />
     ),
     [messages.language.triggerAria],
@@ -68,8 +68,7 @@ export function LanguageSwitcher({ locale, className }: LanguageSwitcherProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={className} render={triggerRender}>
-        <Languages className="size-3.5 opacity-70" aria-hidden />
-        <span>{current.short}</span>
+        <Languages className="size-4" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {locales.map((target) => {

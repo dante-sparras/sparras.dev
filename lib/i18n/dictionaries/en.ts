@@ -13,11 +13,6 @@ export const dictionary = {
     system: "System",
     light: "Light",
     dark: "Dark",
-    short: {
-      system: "Sys",
-      light: "Light",
-      dark: "Dark",
-    },
   },
   home: {
     title: "Dante Sparrås",
