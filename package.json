@@ -11,8 +11,8 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "check": "oxfmt --check && oxlint .",
-    "setup:git-hooks": "sh scripts/setup-git-hooks.sh",
-    "prepare": "sh scripts/setup-git-hooks.sh"
+    "setup:git-hooks": "bun scripts/setup-git-hooks.mjs",
+    "prepare": "bun scripts/setup-git-hooks.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
