@@ -11,6 +11,8 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "check": "oxfmt --check && oxlint .",
+    "git:pre-commit": "lint-staged && bun run check",
+    "git:pre-push": "bun run build",
     "setup:git-hooks": "bun scripts/setup-git-hooks.mjs",
     "prepare": "bun scripts/setup-git-hooks.mjs"
   },
@@ -25,10 +27,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "lint-staged": "^17.0.8",
     "oxfmt": "^0.57.0",
     "oxlint": "^1.72.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,md,mdx}": "oxfmt --write"
   },
   "ignoreScripts": [
     "sharp",
