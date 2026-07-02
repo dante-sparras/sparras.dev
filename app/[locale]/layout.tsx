@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { isLocale, locales } from "@/lib/i18n/config";
-import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getSiteMetadata } from "@/lib/i18n/get-dictionary";
 
 type Props = {
   children: React.ReactNode;
@@ -14,7 +14,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) return {};
-  return getDictionary(raw).metadata;
+  return getSiteMetadata(raw);
 }
 
 export default async function LocaleLayout({ children, params }: Props) {

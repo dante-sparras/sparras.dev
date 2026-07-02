@@ -25,13 +25,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - **Locales:** `en`, `sv` under `app/[locale]/`; default **`en`**
 - **Detection:** `proxy.ts` reads **`Accept-Language`** (first matching `en` or `sv`), redirects `/` → `/en` or `/sv`
-- **Copy:** `lib/i18n/dictionaries.ts` (extend as sections ship)
+- **Copy:** `dictionaries/en.ts` and `dictionaries/sv.ts` — shape in `dictionaries/types.ts`; `getDictionary(locale)` / `getSiteMetadata(locale)` in `lib/i18n/get-dictionary.ts`
 - **Switcher:** `components/language-switcher.tsx` (shadcn **Button** + **DropdownMenu**); drop into navbar later
 
 ## Theme
 
 - **`next-themes`** via `components/theme-provider.tsx` — `attribute="class"`, **`defaultTheme="system"`**, `enableSystem`
-- **Switcher:** `components/theme-switcher.tsx` — **system** / **light** / **dark** (labels in `lib/theme/labels.ts` per locale)
+- **Switcher:** `components/theme-switcher.tsx` — **system** / **light** / **dark** (copy under `dictionary.theme` in each locale file)
 
 ## Git hooks (Lefthook)
 

@@ -11,11 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Locale } from "@/lib/i18n/config";
-import {
-  getThemeLabels,
-  themeChoices,
-  type ThemeChoice,
-} from "@/lib/theme/labels";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { themeChoices, type ThemeChoice } from "@/lib/theme/choices";
 
 const icons: Record<ThemeChoice, typeof Sun> = {
   system: Monitor,
@@ -57,7 +54,8 @@ function ThemeMenuItem({
 export function ThemeSwitcher({ locale, className }: ThemeSwitcherProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const copy = getThemeLabels(locale);
+  const messages = getDictionary(locale);
+  const copy = messages.theme;
 
   useEffect(() => {
     setMounted(true);
@@ -77,9 +75,15 @@ export function ThemeSwitcher({ locale, className }: ThemeSwitcherProps) {
   }, [active, mounted, resolvedTheme]);
 
   const triggerRender = useMemo(
-    () => <Button variant="outline" size="sm" aria-label={copy.trigger} />,
-    [copy.trigger],
+    () => <Button variant="outline" size="sm" aria-label={copy.triggerAria} />,
+    [copy.triggerAria],
   );
+
+  const choiceLabels: Record<ThemeChoice, string> = {
+    system: copy.system,
+    light: copy.light,
+    dark: copy.dark,
+  };
 
   return (
     <DropdownMenu>
@@ -94,7 +98,7 @@ export function ThemeSwitcher({ locale, className }: ThemeSwitcherProps) {
           <ThemeMenuItem
             key={choice}
             choice={choice}
-            label={copy[choice]}
+            label={choiceLabels[choice]}
             active={active === choice}
             onSelect={setTheme}
           />

@@ -1,14 +1,5 @@
 import { type Locale, locales } from "./config";
 
-const localeLabels: Record<Locale, { short: string; name: string }> = {
-  en: { short: "EN", name: "English" },
-  sv: { short: "SV", name: "Svenska" },
-};
-
-export function getLocaleLabel(locale: Locale) {
-  return localeLabels[locale];
-}
-
 /** Path without the leading locale segment (e.g. `/sv/foo` → `/foo`, `/en` → `/`). */
 export function pathnameWithoutLocale(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);
