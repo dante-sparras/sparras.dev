@@ -23,7 +23,7 @@ export function localeFromAcceptLanguage(
       const q = qParam ? Number.parseFloat(qParam.split("=")[1] ?? "1") : 1;
       return { lang, q: Number.isFinite(q) ? q : 0 };
     })
-    .sort((a, b) => b.q - a.q);
+    .toSorted((a, b) => b.q - a.q);
 
   for (const { lang } of parsed) {
     if (lang === "sv") return "sv";
