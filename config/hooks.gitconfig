@@ -1,0 +1,3 @@
+[hook "oxc-pre-commit"]
+	event = pre-commit
+	command = sh scripts/git-hooks/pre-commit.sh
