@@ -1,0 +1,17 @@
+# Minimal Git hooks (Lefthook). See AGENTS.md.
+# https://lefthook.dev/configuration/
+
+pre-commit:
+  piped: true
+  commands:
+    oxfmt:
+      glob: "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,md,mdx}"
+      run: oxfmt --write {staged_files}
+      stage_fixed: true
+    check:
+      run: bun run check
+
+pre-push:
+  commands:
+    build:
+      run: bun run build

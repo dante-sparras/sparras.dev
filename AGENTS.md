@@ -8,18 +8,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Tooling (Oxc)
 
-- **Lint:** `bun run lint` / `bun run lint:fix` — [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) (`.oxlintrc.json`, React + Next.js plugins)
+- **Lint:** `bun run lint` / `bun run lint:fix` — [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) (`.oxlintrc.json`)
 - **Format:** `bun run fmt` / `bun run fmt:check` — [Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html) (`.oxfmtrc.json`)
 - **CI-style:** `bun run check` — format check then lint
-- No ESLint or Prettier in this repo; use the **Oxc** VS Code extension (`oxc.oxc-vscode`) for format-on-save + LSP.
+- Editor: **Oxc** VS Code extension (`oxc.oxc-vscode`)
 
-## Git hooks (Git 2.54+ config hooks)
+## Git hooks (Lefthook)
 
-`config/hooks.gitconfig` points **`pre-commit`** / **`pre-push`** at **`bun run git:pre-commit`** and **`bun run git:pre-push`** (logic lives in `package.json`, not hook scripts).
+**Why Lefthook (not custom `.mjs` / Git 2.54 config / Husky+lint-staged):** common minimal setup for Bun + formatters in 2026 — one `lefthook.yml`, fast Go binary, good on Windows, no `sh`. Oxfmt on **staged** files only; **oxlint** on the whole tree via `bun run check` (oxlint is fast).
 
-| Script           | Behavior                                               |
-| ---------------- | ------------------------------------------------------ |
-| `git:pre-commit` | **lint-staged** (Oxfmt staged files) → `bun run check` |
-| `git:pre-push`   | `bun run build`                                        |
+| Hook       | `lefthook.yml`                                   |
+| ---------- | ------------------------------------------------ |
+| pre-commit | `oxfmt --write {staged_files}` → `bun run check` |
+| pre-push   | `bun run build`                                  |
 
-Run **`bun run setup:git-hooks`** after clone (also runs on **`prepare`** via `scripts/setup-git-hooks.mjs`). Skip hooks: `git commit --no-verify` / `git push --no-verify`.
+After clone: **`bun install`** runs **`prepare`** → `lefthook install`. Manual: `bunx lefthook install`. Skip: `LEFTHOOK=0 git commit` or `git commit --no-verify`.

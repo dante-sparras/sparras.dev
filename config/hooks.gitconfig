@@ -1,7 +1,0 @@
-[hook "oxc-pre-commit"]
-	event = pre-commit
-	command = bun run git:pre-commit
-
-[hook "oxc-pre-push"]
-	event = pre-push
-	command = bun run git:pre-push
