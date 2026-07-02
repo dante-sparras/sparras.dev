@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { dictionary as en } from "@/dictionaries/en";
-import { dictionary as sv } from "@/dictionaries/sv";
-import type { Dictionary } from "@/dictionaries/types";
+import { dictionary as en } from "./dictionaries/en";
+import { dictionary as sv } from "./dictionaries/sv";
+import type { Dictionary } from "./dictionaries/types";
 import type { Locale } from "./config";
 
 const messagesByLocale = {

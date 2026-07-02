@@ -25,7 +25,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - **Locales:** `en`, `sv` under `app/[locale]/`; default **`en`**
 - **Detection:** `proxy.ts` reads **`Accept-Language`** (first matching `en` or `sv`), redirects `/` → `/en` or `/sv`
-- **Copy:** `dictionaries/en.ts` and `dictionaries/sv.ts` — shape in `dictionaries/types.ts`; `getDictionary(locale)` / `getSiteMetadata(locale)` in `lib/i18n/get-dictionary.ts`
+- **Copy:** `lib/i18n/dictionaries/en.ts` and `sv.ts` — shape in `lib/i18n/dictionaries/types.ts`; `getDictionary(locale)` / `getSiteMetadata(locale)` in `lib/i18n/get-dictionary.ts`
 - **Switcher:** `components/language-switcher.tsx` (shadcn **Button** + **DropdownMenu**); drop into navbar later
 
 ## Theme
