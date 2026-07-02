@@ -17,4 +17,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 Hooks are declared in `config/hooks.gitconfig` (`hook.oxc-pre-commit` → `pre-commit`). After clone / `bun install`, run `bun run setup:git-hooks` once (also runs on `prepare`) to `include` that file from `.git/config`.
 
-On each commit: **Oxfmt** rewrites staged `*.{ts,tsx,js,jsx,json,css,md,...}` and re-stages them, then **fmt:check** + **oxlint**. Skip with `git commit --no-verify`.
+On each commit: **Oxfmt** rewrites staged `*.{ts,tsx,js,jsx,json,css,md,...}` and re-stages them, then **fmt:check** + **oxlint**. On each push: **`bun run build`**. Skip with `git commit --no-verify` / `git push --no-verify`.
+
+`bun run setup:git-hooks` and the **`prepare`** lifecycle script both run `scripts/setup-git-hooks.sh` on purpose: **`prepare`** runs automatically after `bun install` so clones get hooks without an extra step; **`setup:git-hooks`** is the same idempotent script when you want to re-wire hooks without reinstalling (e.g. after pulling hook config changes).
