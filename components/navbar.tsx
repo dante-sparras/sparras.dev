@@ -21,7 +21,7 @@ export function Navbar({ locale }: NavbarProps) {
       <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 border-x border-border px-3 sm:gap-4 sm:px-4">
         <Link
           href={`/${locale}`}
-          className="font-mono text-sm font-medium tracking-tight shrink-0"
+          className="font-pixel text-2xl leading-none tracking-normal text-foreground shrink-0 sm:text-3xl"
           aria-label={nav.logoAria}
         >
           {nav.logo}

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
+import { geistPixelSquare } from "@/lib/fonts/geist-pixel";
 import { defaultLocale, isLocale } from "@/lib/i18n/config";
 
 const geistSans = Geist({
@@ -37,6 +38,7 @@ export default async function RootLayout({
         "h-full antialiased font-sans",
         geistSans.variable,
         geistMono.variable,
+        geistPixelSquare.variable,
       )}
     >
       <body className="min-h-full flex flex-col">

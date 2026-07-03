@@ -19,7 +19,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Primitives:** `@base-ui/react` — use **`render`** prop (not Radix `asChild`) on triggers
 - **Add components:** `bunx shadcn@latest add <name>` → `@/components/ui`
 - **Utils:** `cn()` in `@/lib/utils`
-- **Fonts:** Geist Sans + Geist Mono only (`next/font` in `app/layout.tsx`)
+- **Fonts:** Geist Sans + Geist Mono site-wide (`next/font` in `app/layout.tsx`); **navbar logo** uses **Geist Pixel Square** (`geist` → `font-pixel` / `lib/fonts/geist-pixel.ts`)
 
 ## i18n
 
