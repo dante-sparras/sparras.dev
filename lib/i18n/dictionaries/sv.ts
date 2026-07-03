@@ -24,13 +24,31 @@ export const dictionary = {
     menuTitle: "Meny",
     logo: "D.S",
     logoAria: "Dante Sparrås — startsida",
-    resume: "CV",
     links: {
       about: "Om",
-      skills: "Kompetens",
-      portfolio: "Portfolio",
-      testimonials: "Referenser",
+      work: "Arbete",
+      resume: "CV",
       contact: "Kontakt",
+    },
+  },
+  pages: {
+    about: {
+      title: "Om",
+      description:
+        "Bakgrund, arbetssätt och vad som driver mig — kommer snart.",
+    },
+    work: {
+      title: "Arbete",
+      description: "Utvalda projekt och case — kommer snart.",
+    },
+    resume: {
+      title: "CV",
+      description:
+        "Anpassade CV-vyer och PDF-nedladdningar kommer finnas här — kommer snart.",
+    },
+    contact: {
+      title: "Kontakt",
+      description: "Sätt att nå mig — kommer snart.",
     },
   },
   meta: {

@@ -1,12 +1,10 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
-import { navAnchors, navLinkIds, resumePath } from "@/lib/nav/config";
+import { navLinkIds, navPath } from "@/lib/nav/config";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { NavbarMenu } from "@/components/navbar-menu";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const navLinkClass =
   "text-muted-foreground hover:text-foreground text-sm transition-colors";
@@ -34,23 +32,13 @@ export function Navbar({ locale }: NavbarProps) {
           aria-label={nav.aria}
         >
           {navLinkIds.map((id) => (
-            <a key={id} href={navAnchors[id]} className={navLinkClass}>
+            <Link key={id} href={navPath(locale, id)} className={navLinkClass}>
               {nav.links[id]}
-            </a>
+            </Link>
           ))}
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <a
-            href={resumePath}
-            download
-            className={cn(
-              buttonVariants({ variant: "secondary", size: "sm" }),
-              "hidden lg:inline-flex",
-            )}
-          >
-            {nav.resume}
-          </a>
           <ThemeSwitcher locale={locale} />
           <LanguageSwitcher locale={locale} />
           <NavbarMenu locale={locale} className="md:hidden" />

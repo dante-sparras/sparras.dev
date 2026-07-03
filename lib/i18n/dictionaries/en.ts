@@ -25,13 +25,30 @@ export const dictionary = {
     menuTitle: "Menu",
     logo: "D.S",
     logoAria: "Dante Sparrås — home",
-    resume: "Resume",
     links: {
       about: "About",
-      skills: "Skills",
-      portfolio: "Portfolio",
-      testimonials: "Testimonials",
+      work: "Work",
+      resume: "Resume",
       contact: "Contact",
+    },
+  },
+  pages: {
+    about: {
+      title: "About",
+      description: "Background, approach, and what I care about — coming soon.",
+    },
+    work: {
+      title: "Work",
+      description: "Selected projects and case studies — coming soon.",
+    },
+    resume: {
+      title: "Resume",
+      description:
+        "Tailored résumé views and PDF downloads will live here — coming soon.",
+    },
+    contact: {
+      title: "Contact",
+      description: "Ways to reach me — coming soon.",
     },
   },
   meta: {

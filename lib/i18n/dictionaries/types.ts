@@ -27,14 +27,18 @@ export type Dictionary = {
     menuTitle: string;
     logo: string;
     logoAria: string;
-    resume: string;
     links: {
       about: string;
-      skills: string;
-      portfolio: string;
-      testimonials: string;
+      work: string;
+      resume: string;
       contact: string;
     };
+  };
+  pages: {
+    about: { title: string; description: string };
+    work: { title: string; description: string };
+    resume: { title: string; description: string };
+    contact: { title: string; description: string };
   };
   meta: {
     description: string;

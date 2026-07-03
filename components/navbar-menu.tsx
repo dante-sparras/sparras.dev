@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { Menu } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
-import { navAnchors, navLinkIds, resumePath } from "@/lib/nav/config";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { navLinkIds, navPath } from "@/lib/nav/config";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +14,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 
 type NavbarMenuProps = {
   locale: Locale;
@@ -52,26 +52,16 @@ export function NavbarMenu({ locale, className }: NavbarMenuProps) {
         </SheetHeader>
         <nav className="flex flex-col p-2" aria-label={nav.aria}>
           {navLinkIds.map((id) => (
-            <a
+            <Link
               key={id}
-              href={navAnchors[id]}
+              href={navPath(locale, id)}
               className={mobileLinkClass}
               onClick={closeMenu}
             >
               {nav.links[id]}
-            </a>
+            </Link>
           ))}
         </nav>
-        <div className="mt-auto border-t border-border p-4">
-          <a
-            href={resumePath}
-            download
-            className={cn(buttonVariants({ size: "sm" }), "w-full")}
-            onClick={closeMenu}
-          >
-            {nav.resume}
-          </a>
-        </div>
       </SheetContent>
     </Sheet>
   );

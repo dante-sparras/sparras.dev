@@ -30,7 +30,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Layout
 
-- **`components/navbar.tsx`** — sticky header (`max-w-3xl`, side borders), SY26 anchor links (`lib/nav/config.ts`), resume CTA, theme + language switchers
+- **`components/navbar.tsx`** — sticky header (`max-w-3xl`, side borders), routes **About · Work · Resume · Contact** (`lib/nav/config.ts` → `/{locale}/…`), theme + language switchers
 - **Mobile:** `components/navbar-menu.tsx` — shadcn **Sheet** (`md:hidden`)
 
 ## Theme
