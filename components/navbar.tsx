@@ -5,6 +5,7 @@ import { navLinkIds, navPath } from "@/lib/nav/config";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { NavbarMenu } from "@/components/navbar-menu";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { Separator } from "@/components/ui/separator";
 
 const navLinkClass =
   "text-muted-foreground hover:text-foreground text-sm transition-colors";
@@ -42,6 +43,10 @@ export function Navbar({ locale }: NavbarProps) {
               </Link>
             ))}
           </nav>
+          <Separator
+            orientation="vertical"
+            className="mx-0.5 hidden h-6 md:block"
+          />
           <ThemeSwitcher locale={locale} />
           <LanguageSwitcher locale={locale} />
           <NavbarMenu locale={locale} className="md:hidden" />
