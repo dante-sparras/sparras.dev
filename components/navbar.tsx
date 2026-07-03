@@ -5,7 +5,6 @@ import { navLinkIds, navPath } from "@/lib/nav/config";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { NavbarMenu } from "@/components/navbar-menu";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { Separator } from "@/components/ui/separator";
 
 const navLinkClass =
   "text-muted-foreground hover:text-foreground text-sm transition-colors";
@@ -22,15 +21,15 @@ export function Navbar({ locale }: NavbarProps) {
       <div className="mx-auto flex h-14 max-w-3xl items-center border-x border-border px-3 sm:px-4">
         <Link
           href={`/${locale}`}
-          className="font-pixel text-2xl leading-none tracking-normal text-foreground shrink-0 sm:text-3xl"
+          className="flex h-14 items-center font-pixel text-2xl leading-none tracking-normal text-foreground shrink-0 sm:text-3xl"
           aria-label={nav.logoAria}
         >
           {nav.logo}
         </Link>
 
-        <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex h-14 min-w-0 items-center gap-2 self-stretch sm:gap-3">
           <nav
-            className="hidden items-center gap-4 lg:gap-5 md:flex"
+            className="hidden h-full items-center gap-4 lg:gap-5 md:flex"
             aria-label={nav.aria}
           >
             {navLinkIds.map((id) => (
@@ -43,10 +42,9 @@ export function Navbar({ locale }: NavbarProps) {
               </Link>
             ))}
           </nav>
-          <Separator
-            orientation="vertical"
-            className="mx-0.5 hidden h-6 shrink-0 self-center md:block"
-          />
+          <div className="hidden h-full items-center md:flex" aria-hidden>
+            <span className="mx-0.5 block h-6 w-px shrink-0 bg-border" />
+          </div>
           <ThemeSwitcher locale={locale} />
           <LanguageSwitcher locale={locale} />
           <NavbarMenu locale={locale} className="md:hidden" />
