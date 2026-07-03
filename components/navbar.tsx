@@ -45,7 +45,7 @@ export function Navbar({ locale }: NavbarProps) {
           </nav>
           <Separator
             orientation="vertical"
-            className="mx-0.5 hidden h-6 md:block"
+            className="mx-0.5 hidden h-6 shrink-0 self-center md:block"
           />
           <ThemeSwitcher locale={locale} />
           <LanguageSwitcher locale={locale} />
