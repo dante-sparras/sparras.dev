@@ -27,7 +27,7 @@ export function Navbar({ locale }: NavbarProps) {
           {nav.logo}
         </Link>
 
-        <div className="flex min-w-0 flex-1 items-center pl-6 sm:pl-10">
+        <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
           <nav
             className="hidden items-center gap-4 lg:gap-5 md:flex"
             aria-label={nav.aria}
@@ -42,12 +42,9 @@ export function Navbar({ locale }: NavbarProps) {
               </Link>
             ))}
           </nav>
-
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            <ThemeSwitcher locale={locale} />
-            <LanguageSwitcher locale={locale} />
-            <NavbarMenu locale={locale} className="md:hidden" />
-          </div>
+          <ThemeSwitcher locale={locale} />
+          <LanguageSwitcher locale={locale} />
+          <NavbarMenu locale={locale} className="md:hidden" />
         </div>
       </div>
     </header>
