@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-type SiteNavbarMenuProps = {
+type NavbarMenuProps = {
   locale: Locale;
   className?: string;
 };
@@ -23,7 +23,7 @@ type SiteNavbarMenuProps = {
 const mobileLinkClass =
   "text-foreground hover:bg-muted flex w-full items-center rounded-none px-3 py-2.5 text-sm transition-colors";
 
-export function SiteNavbarMenu({ locale, className }: SiteNavbarMenuProps) {
+export function NavbarMenu({ locale, className }: NavbarMenuProps) {
   const { nav } = getDictionary(locale);
   const [open, setOpen] = useState(false);
 

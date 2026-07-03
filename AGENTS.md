@@ -26,12 +26,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Locales:** `en`, `sv` under `app/[locale]/`; default **`en`**
 - **Detection:** `proxy.ts` reads **`Accept-Language`** (first matching `en` or `sv`), redirects `/` → `/en` or `/sv`
 - **Copy:** `lib/i18n/dictionaries/en.ts` and `sv.ts` — shape in `lib/i18n/dictionaries/types.ts`; `getDictionary(locale)` / `getSiteMetadata(locale)` in `lib/i18n/get-dictionary.ts`
-- **Switcher:** `components/language-switcher.tsx` (shadcn **Button** + **DropdownMenu**); used in `components/site-navbar.tsx`
+- **Switcher:** `components/language-switcher.tsx` (shadcn **Button** + **DropdownMenu**); used in `components/navbar.tsx`
 
 ## Layout
 
-- **`components/site-navbar.tsx`** — sticky header (`max-w-3xl`, side borders), SY26 anchor links (`lib/nav/config.ts`), resume CTA, theme + language switchers
-- **Mobile:** `components/site-navbar-menu.tsx` — shadcn **Sheet** (`md:hidden`)
+- **`components/navbar.tsx`** — sticky header (`max-w-3xl`, side borders), SY26 anchor links (`lib/nav/config.ts`), resume CTA, theme + language switchers
+- **Mobile:** `components/navbar-menu.tsx` — shadcn **Sheet** (`md:hidden`)
 
 ## Theme
 

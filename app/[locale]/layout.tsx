@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { isLocale, locales } from "@/lib/i18n/config";
 import { getSiteMetadata } from "@/lib/i18n/get-dictionary";
-import { SiteNavbar } from "@/components/site-navbar";
+import { Navbar } from "@/components/navbar";
 
 type Props = {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   if (!isLocale(raw)) notFound();
   return (
     <>
-      <SiteNavbar locale={raw} />
+      <Navbar locale={raw} />
       {children}
     </>
   );

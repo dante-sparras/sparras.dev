@@ -3,7 +3,7 @@ import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { navAnchors, navLinkIds, resumePath } from "@/lib/nav/config";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { SiteNavbarMenu } from "@/components/site-navbar-menu";
+import { NavbarMenu } from "@/components/navbar-menu";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 const navLinkClass =
   "text-muted-foreground hover:text-foreground text-sm transition-colors";
 
-type SiteNavbarProps = {
+type NavbarProps = {
   locale: Locale;
 };
 
-export function SiteNavbar({ locale }: SiteNavbarProps) {
+export function Navbar({ locale }: NavbarProps) {
   const { nav } = getDictionary(locale);
 
   return (
@@ -53,7 +53,7 @@ export function SiteNavbar({ locale }: SiteNavbarProps) {
           </a>
           <ThemeSwitcher locale={locale} />
           <LanguageSwitcher locale={locale} />
-          <SiteNavbarMenu locale={locale} className="md:hidden" />
+          <NavbarMenu locale={locale} className="md:hidden" />
         </div>
       </div>
     </header>
