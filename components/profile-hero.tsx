@@ -74,16 +74,16 @@ export function ProfileHero({
         │          │  Role               │
         └──────────┴─────────────────────┘
       */}
-      <div className="flex min-h-48 items-stretch border-b border-border sm:min-h-56 md:min-h-64">
-        <div className="shrink-0 self-stretch border-r border-border p-0">
-          <div className="relative aspect-square h-full overflow-hidden rounded-full border border-border bg-muted">
+      <div className="flex items-stretch border-b border-border">
+        <div className="shrink-0 border-r border-border p-0">
+          <div className="relative size-40 overflow-hidden rounded-full border border-border bg-muted sm:size-48 md:size-56">
             <Image
               src={avatarSrc}
               alt={hero.avatarAlt}
               fill
               priority
               className="object-cover object-[center_18%]"
-              sizes="(max-width: 640px) 192px, 256px"
+              sizes="(max-width: 640px) 160px, (max-width: 768px) 192px, 224px"
             />
           </div>
         </div>
