@@ -89,8 +89,11 @@ export function ProfileHero({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* Reserved for future banner / art — stays empty for now */}
-          <div className="min-h-0 flex-1" aria-hidden />
+          {/* Diagonal hatch — future banner / art can layer over this */}
+          <div
+            className="min-h-0 flex-1 bg-[repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_1px_10px)]"
+            aria-hidden
+          />
 
           <div className="shrink-0 border-t border-border p-0">
             <h1 className="border-b border-border px-2 py-0.5 text-2xl font-semibold tracking-tight leading-none sm:px-2.5 sm:text-3xl">
