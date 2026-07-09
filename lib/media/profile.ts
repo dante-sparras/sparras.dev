@@ -1,5 +1,5 @@
-/** Local profile media — replace with real portrait/banner when ready. */
+/** Local profile media under `public/images/`. */
 export const profileMedia = {
-  banner: "/images/banner.svg",
-  avatar: "/images/avatar.svg",
+  banner: "/images/banner.webp",
+  avatar: "/images/portrait.webp",
 } as const;
