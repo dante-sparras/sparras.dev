@@ -76,7 +76,7 @@ export function ProfileHero({
       */}
       <div className="flex items-stretch border-b border-border">
         <div className="shrink-0 border-r border-border p-0">
-          <div className="relative size-28 overflow-hidden rounded-full bg-muted sm:size-36">
+          <div className="relative size-28 overflow-hidden rounded-full border border-border bg-muted sm:size-36">
             <Image
               src={avatarSrc}
               alt={hero.avatarAlt}
