@@ -17,8 +17,12 @@ export const dictionary = {
   home: {
     hero: {
       name: "Dante Sparrås",
-      handle: "@DanteSparras",
+      role: "Framtida .NET-utvecklare",
       avatarAlt: "Porträtt av Dante Sparrås",
+      student: "Student vid YH Akademin",
+      location: "Norrköping, Sverige",
+      pronouns: "han/honom",
+      weatherPlace: "Norrköping",
     },
   },
   nav: {

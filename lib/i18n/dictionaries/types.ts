@@ -20,8 +20,12 @@ export type Dictionary = {
   home: {
     hero: {
       name: string;
-      handle: string;
+      role: string;
       avatarAlt: string;
+      student: string;
+      location: string;
+      pronouns: string;
+      weatherPlace: string;
     };
   };
   nav: {
