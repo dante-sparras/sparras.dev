@@ -50,8 +50,8 @@ function MetaRowGlyph({
 
 /**
  * Profile header — grid placement matching the sparras mock:
- * circular portrait in a bordered cell; name / role stacked with rules;
- * two-column meta below.
+ * circular portrait in a bordered cell spanning name + role rows;
+ * name sits on a horizontal rule; role below; meta two columns.
  */
 export function ProfileHero({
   hero,
@@ -64,14 +64,14 @@ export function ProfileHero({
   return (
     <section className="w-full" aria-label={hero.name}>
       {/*
-        Identity grid:
         ┌──────────┬─────────────────────┐
-        │          │  Name               │
-        │  Avatar  ├─────────────────────┤
-        │          │  Role               │
+        │          │                     │
+        │  Avatar  │  Name               │  ← taller row, name bottom-aligned
+        │          ├─────────────────────┤
+        │          │  Role               │  ← compact row
         └──────────┴─────────────────────┘
       */}
-      <div className="grid grid-cols-[auto_1fr] border-b border-border">
+      <div className="grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] border-b border-border">
         <div className="row-span-2 flex items-center justify-center border-r border-border p-3 sm:p-4">
           <div className="relative size-28 overflow-hidden rounded-full bg-muted sm:size-36">
             <Image
@@ -85,20 +85,19 @@ export function ProfileHero({
           </div>
         </div>
 
-        <div className="flex items-end border-b border-border px-4 pb-3 pt-8 sm:px-5 sm:pb-3.5 sm:pt-10">
+        <div className="flex min-h-24 items-end border-b border-border px-4 pb-3 pt-6 sm:min-h-32 sm:px-5 sm:pb-3.5 sm:pt-8">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {hero.name}
           </h1>
         </div>
 
-        <div className="flex items-start px-4 py-3 sm:px-5 sm:py-3.5">
+        <div className="flex items-center px-4 py-3 sm:px-5 sm:py-3.5">
           <p className="text-muted-foreground text-sm sm:text-base">
             {hero.role}
           </p>
         </div>
       </div>
 
-      {/* Meta: left facts | right contact */}
       <div className="grid sm:grid-cols-2">
         <ul className="flex flex-col gap-3 border-b border-border px-4 py-5 sm:border-r sm:border-b-0 sm:px-5 sm:py-6">
           <MetaRow Icon={GraduationCap}>{hero.student}</MetaRow>
