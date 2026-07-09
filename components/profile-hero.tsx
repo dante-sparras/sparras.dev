@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { GraduationCap, Link2, Mail, MapPin, Phone, Sun } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n/dictionaries/types";
 import { siteProfile } from "@/lib/site/profile";
+import { ProfileBannerBlackHole } from "@/components/profile-banner-black-hole";
 
 type HeroCopy = Dictionary["home"]["hero"];
 
@@ -52,7 +53,7 @@ function MetaRowGlyph({
  * Profile header:
  * - Avatar flush in left cell
  * - Right column matches avatar height
- * - Empty upper zone (future banner art)
+ * - Banner zone: WebGPU black hole (dgreenheck/webgpu-black-hole)
  * - Title + role pinned to the bottom with tight borders
  */
 export function ProfileHero({
@@ -67,7 +68,7 @@ export function ProfileHero({
     <section className="w-full" aria-label={hero.name}>
       {/*
         ┌──────────┬─────────────────────┐
-        │          │  (empty / banner)   │
+        │          │  black hole banner  │
         │  Avatar  ├─────────────────────┤
         │          │  Name               │  ← bottom of right column
         │          ├─────────────────────┤
@@ -89,11 +90,7 @@ export function ProfileHero({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* Diagonal hatch — future banner / art can layer over this */}
-          <div
-            className="min-h-0 flex-1 bg-[repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_1px_10px)]"
-            aria-hidden
-          />
+          <ProfileBannerBlackHole />
 
           <div className="shrink-0 border-t border-border p-0">
             <h1 className="border-b border-border px-2 py-0.5 text-2xl font-semibold tracking-tight leading-none sm:px-2.5 sm:text-3xl">
