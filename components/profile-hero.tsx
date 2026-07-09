@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
   GraduationCap,
   Link2,
@@ -21,12 +21,16 @@ export type ProfileHeroProps = {
   temperatureC: number | null;
 };
 
-function MetaRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+function MetaRow({
+  Icon,
+  children,
+}: {
+  Icon: LucideIcon;
+  children: React.ReactNode;
+}) {
   return (
     <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
-      <span className="text-muted-foreground/80 [&_svg]:size-4" aria-hidden>
-        {icon}
-      </span>
+      <Icon className="size-4 shrink-0 opacity-80" aria-hidden />
       <span className="min-w-0 leading-snug">{children}</span>
     </li>
   );
@@ -46,7 +50,6 @@ export function ProfileHero({
 
   return (
     <section className="w-full" aria-label={hero.name}>
-      {/* Identity: avatar | name + role */}
       <div className="flex items-center gap-4 border-b border-border px-4 py-5 sm:gap-6 sm:px-5 sm:py-6">
         <div className="relative size-28 shrink-0 overflow-hidden rounded-full bg-muted sm:size-36">
           <Image
@@ -68,15 +71,12 @@ export function ProfileHero({
         </div>
       </div>
 
-      {/* Meta grid */}
       <div className="grid sm:grid-cols-2">
         <ul className="flex flex-col gap-3 border-b border-border px-4 py-5 sm:border-r sm:border-b-0 sm:px-5 sm:py-6">
-          <MetaRow icon={<GraduationCap />}>{hero.student}</MetaRow>
-          <MetaRow icon={<MapPin />}>{hero.location}</MetaRow>
-          {weatherLabel ? (
-            <MetaRow icon={<Sun />}>{weatherLabel}</MetaRow>
-          ) : null}
-          <MetaRow icon={<Mail />}>
+          <MetaRow Icon={GraduationCap}>{hero.student}</MetaRow>
+          <MetaRow Icon={MapPin}>{hero.location}</MetaRow>
+          {weatherLabel ? <MetaRow Icon={Sun}>{weatherLabel}</MetaRow> : null}
+          <MetaRow Icon={Mail}>
             <a
               href={`mailto:${siteProfile.email}`}
               className="hover:text-foreground transition-colors"
@@ -84,7 +84,7 @@ export function ProfileHero({
               {siteProfile.email}
             </a>
           </MetaRow>
-          <MetaRow icon={<Link2 />}>
+          <MetaRow Icon={Link2}>
             <a
               href={siteProfile.websiteHref}
               className="hover:text-foreground transition-colors"
@@ -96,8 +96,8 @@ export function ProfileHero({
         </ul>
 
         <ul className="flex flex-col gap-3 px-4 py-5 sm:px-5 sm:py-6">
-          <MetaRow icon={<UserRound />}>{hero.pronouns}</MetaRow>
-          <MetaRow icon={<Phone />}>
+          <MetaRow Icon={UserRound}>{hero.pronouns}</MetaRow>
+          <MetaRow Icon={Phone}>
             <a
               href={siteProfile.phoneHref}
               className="hover:text-foreground transition-colors"
