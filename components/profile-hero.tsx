@@ -62,16 +62,13 @@ export function ProfileHero({
   return (
     <section className="w-full" aria-label={hero.name}>
       {/*
-        ┌──────────┬─────────────────────┐  title: border-t + border-b, no pad
-        │  Avatar  │  Name               │
-        │  (flush) ├─────────────────────┤
-        │          │  Role               │  no pad
-        └──────────┴─────────────────────┘
+        Avatar cell = exact circle size (no pad).
+        Name: border-t + border-b hug the text (no pad).
+        Role: fills remaining height under the name rule.
       */}
-      <div className="grid grid-cols-[auto_1fr] border-b border-border">
-        <div className="row-span-2 border-r border-border p-0">
-          {/* Circle fills cell height; width follows so borders hug the photo */}
-          <div className="relative aspect-square h-full min-h-28 overflow-hidden rounded-full bg-muted sm:min-h-36">
+      <div className="flex items-stretch border-b border-border">
+        <div className="shrink-0 border-r border-border p-0">
+          <div className="relative size-28 overflow-hidden rounded-full bg-muted sm:size-36">
             <Image
               src={avatarSrc}
               alt={hero.avatarAlt}
@@ -83,16 +80,17 @@ export function ProfileHero({
           </div>
         </div>
 
-        <div className="border-t border-b border-border p-0 leading-none">
-          <h1 className="text-2xl font-semibold tracking-tight leading-none sm:text-3xl">
-            {hero.name}
-          </h1>
-        </div>
-
-        <div className="p-0 leading-none">
-          <p className="text-muted-foreground text-sm leading-none sm:text-base">
-            {hero.role}
-          </p>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="border-t border-b border-border p-0">
+            <h1 className="text-2xl font-semibold tracking-tight leading-none sm:text-3xl">
+              {hero.name}
+            </h1>
+          </div>
+          <div className="flex flex-1 items-start p-0">
+            <p className="text-muted-foreground text-sm leading-none sm:text-base">
+              {hero.role}
+            </p>
+          </div>
         </div>
       </div>
 
