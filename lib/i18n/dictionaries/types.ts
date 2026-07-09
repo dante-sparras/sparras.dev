@@ -18,8 +18,12 @@ export type Dictionary = {
     dark: string;
   };
   home: {
-    title: string;
-    description: string;
+    hero: {
+      name: string;
+      handle: string;
+      bannerAlt: string;
+      avatarAlt: string;
+    };
   };
   nav: {
     aria: string;

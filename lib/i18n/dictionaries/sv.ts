@@ -15,8 +15,12 @@ export const dictionary = {
     dark: "Mörkt",
   },
   home: {
-    title: "Dante Sparrås",
-    description: "Fullstack- och spelutvecklare — webbplatsen byggs om.",
+    hero: {
+      name: "Dante Sparrås",
+      handle: "@DanteSparras",
+      bannerAlt: "Profilbanner",
+      avatarAlt: "Porträtt av Dante Sparrås",
+    },
   },
   nav: {
     aria: "Huvudnavigering",
@@ -39,12 +43,12 @@ export const dictionary = {
     },
     work: {
       title: "Arbete",
-      description: "Utvalda projekt och case — kommer snart.",
+      description: "Utvalda projekt och case studies — kommer snart.",
     },
     resume: {
       title: "CV",
       description:
-        "Anpassade CV-vyer och PDF-nedladdningar kommer finnas här — kommer snart.",
+        "Skräddarsydda CV-vyer och PDF-nedladdningar hamnar här — kommer snart.",
     },
     contact: {
       title: "Kontakt",
@@ -53,19 +57,19 @@ export const dictionary = {
   },
   meta: {
     description:
-      "Portfolio för Dante Sparrås — fullstack- och spelutvecklare med fokus på ren arkitektur, modulära system och bra DX och UX. Webb med Next.js, spel och .NET.",
+      "Portfölj för Dante Sparrås — fullstack- och spelutvecklare med fokus på ren arkitektur, modulära system och stark DX och UX. Webb med Next.js, spel och .NET.",
     keywords: [
       "Dante Sparrås",
       "fullstackutvecklare",
       "spelutvecklare",
       "Next.js",
-      "portfolio",
+      "portfölj",
       "Norrköping",
       "Sverige",
     ],
     openGraphDescription:
-      "Portfolio för fullstack- och spelutvecklare — webb, spel och genomtänkt systemdesign.",
+      "Fullstack- och spelutvecklarportfölj — webb, spel och genomtänkt systemdesign.",
     twitterDescription:
-      "Portfolio för fullstack- och spelutvecklare — webb, spel och genomtänkt systemdesign.",
+      "Fullstack- och spelutvecklarportfölj — webb, spel och genomtänkt systemdesign.",
   },
 } as const satisfies Dictionary;

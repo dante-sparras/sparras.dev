@@ -15,9 +15,12 @@ export const dictionary = {
     dark: "Dark",
   },
   home: {
-    title: "Dante Sparrås",
-    description:
-      "Full-stack and game developer — portfolio site under construction.",
+    hero: {
+      name: "Dante Sparrås",
+      handle: "@DanteSparras",
+      bannerAlt: "Profile banner",
+      avatarAlt: "Portrait of Dante Sparrås",
+    },
   },
   nav: {
     aria: "Primary",
