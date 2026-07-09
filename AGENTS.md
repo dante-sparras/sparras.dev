@@ -30,7 +30,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Layout
 
-- **`components/navbar.tsx`** — sticky header (`max-w-3xl`, side borders), routes **About · Work · Resume · Contact** (`lib/nav/config.ts` → `/{locale}/…`), theme + language switchers
+- **`components/navbar.tsx`** — sticky header (`max-w-3xl`, side borders), routes **About · Work · Resume · Contact** (`lib/nav/config.ts` → `/{locale}/about|work|resume|contact`), theme + language switchers
+- **Navbar chrome (do not regress):** logo **alone** on the far left; nav links in a **right cluster immediately before** theme + language switchers, with a **vertical separator** between links and switchers — **never** place primary links beside the logo
+- **Resume:** on-site page only (tailored/PDF versions later) — **not** a navbar download button
+- **Naming:** short component names (`Navbar`, `NavbarMenu`); theme/language triggers **icon-only**; logo initials in **Geist Pixel Square**, visually larger than body mono
 - **Mobile:** `components/navbar-menu.tsx` — shadcn **Sheet** (`md:hidden`)
 
 ## Theme

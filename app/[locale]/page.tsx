@@ -14,7 +14,7 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-24">
-      <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 border-x border-border px-4 text-center">
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-4 border-x border-border px-4 text-center">
         <h1 className="text-3xl font-semibold tracking-tight">{home.title}</h1>
         <p className="text-muted-foreground text-lg leading-relaxed">
           {home.description}

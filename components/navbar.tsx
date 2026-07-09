@@ -17,7 +17,7 @@ export function Navbar({ locale }: NavbarProps) {
   const { nav } = getDictionary(locale);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md supports-backdrop-filter:bg-background/70">
       <div className="mx-auto flex h-14 max-w-3xl items-center border-x border-border px-3 sm:px-4">
         <Link
           href={`/${locale}`}

@@ -22,9 +22,9 @@ export default async function LocaleLayout({ children, params }: Props) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
   return (
-    <>
+    <div className="flex min-h-svh flex-1 flex-col">
       <Navbar locale={raw} />
-      {children}
-    </>
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+    </div>
   );
 }

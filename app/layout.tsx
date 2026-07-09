@@ -41,7 +41,7 @@ export default async function RootLayout({
         geistPixelSquare.variable,
       )}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-svh flex-col">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
