@@ -1,14 +1,6 @@
 import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
-import {
-  GraduationCap,
-  Link2,
-  Mail,
-  MapPin,
-  Phone,
-  Sun,
-  UserRound,
-} from "lucide-react";
+import { GraduationCap, Link2, Mail, MapPin, Phone, Sun } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n/dictionaries/types";
 import { siteProfile } from "@/lib/site/profile";
 
@@ -36,9 +28,30 @@ function MetaRow({
   );
 }
 
+function MetaRowGlyph({
+  glyph,
+  children,
+}: {
+  glyph: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
+      <span
+        className="flex size-4 shrink-0 items-center justify-center text-[0.95rem] leading-none opacity-80"
+        aria-hidden
+      >
+        {glyph}
+      </span>
+      <span className="min-w-0 leading-snug">{children}</span>
+    </li>
+  );
+}
+
 /**
- * Profile header aligned to the sparras reference: circular portrait,
- * name + role, two-column icon meta (education, location, weather, contact).
+ * Profile header — grid placement matching the sparras mock:
+ * circular portrait in a bordered cell; name / role stacked with rules;
+ * two-column meta below.
  */
 export function ProfileHero({
   hero,
@@ -50,27 +63,42 @@ export function ProfileHero({
 
   return (
     <section className="w-full" aria-label={hero.name}>
-      <div className="flex items-center gap-4 border-b border-border px-4 py-5 sm:gap-6 sm:px-5 sm:py-6">
-        <div className="relative size-28 shrink-0 overflow-hidden rounded-full bg-muted sm:size-36">
-          <Image
-            src={avatarSrc}
-            alt={hero.avatarAlt}
-            fill
-            priority
-            className="object-cover object-[center_18%]"
-            sizes="(max-width: 640px) 112px, 144px"
-          />
+      {/*
+        Identity grid:
+        ┌──────────┬─────────────────────┐
+        │          │  Name               │
+        │  Avatar  ├─────────────────────┤
+        │          │  Role               │
+        └──────────┴─────────────────────┘
+      */}
+      <div className="grid grid-cols-[auto_1fr] border-b border-border">
+        <div className="row-span-2 flex items-center justify-center border-r border-border p-3 sm:p-4">
+          <div className="relative size-28 overflow-hidden rounded-full bg-muted sm:size-36">
+            <Image
+              src={avatarSrc}
+              alt={hero.avatarAlt}
+              fill
+              priority
+              className="object-cover object-[center_18%]"
+              sizes="(max-width: 640px) 112px, 144px"
+            />
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
+
+        <div className="flex items-end border-b border-border px-4 pb-3 pt-8 sm:px-5 sm:pb-3.5 sm:pt-10">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {hero.name}
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+        </div>
+
+        <div className="flex items-start px-4 py-3 sm:px-5 sm:py-3.5">
+          <p className="text-muted-foreground text-sm sm:text-base">
             {hero.role}
           </p>
         </div>
       </div>
 
+      {/* Meta: left facts | right contact */}
       <div className="grid sm:grid-cols-2">
         <ul className="flex flex-col gap-3 border-b border-border px-4 py-5 sm:border-r sm:border-b-0 sm:px-5 sm:py-6">
           <MetaRow Icon={GraduationCap}>{hero.student}</MetaRow>
@@ -96,7 +124,7 @@ export function ProfileHero({
         </ul>
 
         <ul className="flex flex-col gap-3 px-4 py-5 sm:px-5 sm:py-6">
-          <MetaRow Icon={UserRound}>{hero.pronouns}</MetaRow>
+          <MetaRowGlyph glyph="♂">{hero.pronouns}</MetaRowGlyph>
           <MetaRow Icon={Phone}>
             <a
               href={siteProfile.phoneHref}
