@@ -49,7 +49,11 @@ function MetaRowGlyph({
 }
 
 /**
- * Profile header — borders flush to avatar circle and title/role text.
+ * Profile header:
+ * - Avatar flush in left cell
+ * - Right column matches avatar height
+ * - Empty upper zone (future banner art)
+ * - Title + role pinned to the bottom with tight borders
  */
 export function ProfileHero({
   hero,
@@ -62,9 +66,13 @@ export function ProfileHero({
   return (
     <section className="w-full" aria-label={hero.name}>
       {/*
-        Avatar cell = exact circle size (no pad).
-        Name: border-t + border-b hug the text (no pad).
-        Role: fills remaining height under the name rule.
+        ┌──────────┬─────────────────────┐
+        │          │  (empty / banner)   │
+        │  Avatar  ├─────────────────────┤
+        │          │  Name               │  ← bottom of right column
+        │          ├─────────────────────┤
+        │          │  Role               │
+        └──────────┴─────────────────────┘
       */}
       <div className="flex items-stretch border-b border-border">
         <div className="shrink-0 border-r border-border p-0">
@@ -81,12 +89,13 @@ export function ProfileHero({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="border-t border-b border-border p-0">
-            <h1 className="text-2xl font-semibold tracking-tight leading-none sm:text-3xl">
+          {/* Reserved for future banner / art — stays empty for now */}
+          <div className="min-h-0 flex-1" aria-hidden />
+
+          <div className="shrink-0 border-t border-border p-0">
+            <h1 className="border-b border-border text-2xl font-semibold tracking-tight leading-none sm:text-3xl">
               {hero.name}
             </h1>
-          </div>
-          <div className="flex flex-1 items-start p-0">
             <p className="text-muted-foreground text-sm leading-none sm:text-base">
               {hero.role}
             </p>
