@@ -3,9 +3,7 @@ import Image from "next/image";
 export type ProfileHeroProps = {
   name: string;
   handle: string;
-  bannerSrc: string;
   avatarSrc: string;
-  bannerAlt: string;
   avatarAlt: string;
 };
 
@@ -16,23 +14,20 @@ export type ProfileHeroProps = {
 export function ProfileHero({
   name,
   handle,
-  bannerSrc,
   avatarSrc,
-  bannerAlt,
   avatarAlt,
 }: ProfileHeroProps) {
   return (
     <section className="w-full" aria-label={name}>
       <div className="relative">
-        <div className="relative aspect-[3/1] w-full overflow-hidden bg-muted">
-          <Image
-            src={bannerSrc}
-            alt={bannerAlt}
-            fill
-            priority
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 48rem"
-          />
+        {/* Minimalist gradient + soft grid (no image) */}
+        <div
+          className="relative aspect-[3/1] w-full overflow-hidden bg-muted"
+          aria-hidden
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-muted via-secondary to-muted dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-950" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,color-mix(in_oklch,var(--foreground)_12%,transparent)_1px,transparent_0)] bg-[length:18px_18px] opacity-40 dark:opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/25 via-transparent to-transparent" />
         </div>
 
         <div className="absolute bottom-0 left-3 translate-y-1/2 sm:left-4">
@@ -49,7 +44,6 @@ export function ProfileHero({
         </div>
       </div>
 
-      {/* Space under the overlapping avatar — like X profile text block */}
       <div className="flex flex-col gap-0.5 px-3 pt-14 pb-6 sm:px-4 sm:pt-16">
         <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{name}</h1>
         <p className="text-muted-foreground text-sm sm:text-base">{handle}</p>

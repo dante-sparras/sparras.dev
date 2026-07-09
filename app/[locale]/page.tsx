@@ -20,9 +20,7 @@ export default async function HomePage({ params }: Props) {
         <ProfileHero
           name={home.hero.name}
           handle={home.hero.handle}
-          bannerSrc={profileMedia.banner}
           avatarSrc={profileMedia.avatar}
-          bannerAlt={home.hero.bannerAlt}
           avatarAlt={home.hero.avatarAlt}
         />
       </main>

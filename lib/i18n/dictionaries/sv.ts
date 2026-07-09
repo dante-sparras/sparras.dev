@@ -18,7 +18,6 @@ export const dictionary = {
     hero: {
       name: "Dante Sparrås",
       handle: "@DanteSparras",
-      bannerAlt: "Profilbanner",
       avatarAlt: "Porträtt av Dante Sparrås",
     },
   },

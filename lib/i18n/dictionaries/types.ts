@@ -21,7 +21,6 @@ export type Dictionary = {
     hero: {
       name: string;
       handle: string;
-      bannerAlt: string;
       avatarAlt: string;
     };
   };
