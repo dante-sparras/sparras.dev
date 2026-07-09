@@ -49,7 +49,7 @@ function MetaRowGlyph({
 }
 
 /**
- * Profile header — tight grid borders flush to avatar / title / role text.
+ * Profile header — borders flush to avatar circle and title/role text.
  */
 export function ProfileHero({
   hero,
@@ -62,15 +62,16 @@ export function ProfileHero({
   return (
     <section className="w-full" aria-label={hero.name}>
       {/*
-        ┌──────────┬─────────────────────┐  ← title top border
-        │  Avatar  │  Name               │  ← no padding; borders hug content
+        ┌──────────┬─────────────────────┐  title: border-t + border-b, no pad
+        │  Avatar  │  Name               │
         │  (flush) ├─────────────────────┤
-        │          │  Role               │
+        │          │  Role               │  no pad
         └──────────┴─────────────────────┘
       */}
-      <div className="grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] border-b border-border">
-        <div className="row-span-2 flex items-center justify-center border-r border-border p-0">
-          <div className="relative size-28 overflow-hidden rounded-full bg-muted sm:size-36">
+      <div className="grid grid-cols-[auto_1fr] border-b border-border">
+        <div className="row-span-2 border-r border-border p-0">
+          {/* Circle fills cell height; width follows so borders hug the photo */}
+          <div className="relative aspect-square h-full min-h-28 overflow-hidden rounded-full bg-muted sm:min-h-36">
             <Image
               src={avatarSrc}
               alt={hero.avatarAlt}
@@ -82,14 +83,14 @@ export function ProfileHero({
           </div>
         </div>
 
-        <div className="flex min-h-24 items-end border-t border-b border-border px-0 py-0 sm:min-h-32">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <div className="border-t border-b border-border p-0 leading-none">
+          <h1 className="text-2xl font-semibold tracking-tight leading-none sm:text-3xl">
             {hero.name}
           </h1>
         </div>
 
-        <div className="flex items-center px-0 py-0">
-          <p className="text-muted-foreground text-sm sm:text-base">
+        <div className="p-0 leading-none">
+          <p className="text-muted-foreground text-sm leading-none sm:text-base">
             {hero.role}
           </p>
         </div>
