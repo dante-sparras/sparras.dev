@@ -35,8 +35,7 @@ bun run build   # production build
 | `components/ui/`         | shadcn primitives                                                    |
 | `lib/i18n/`              | Locale + paths (`locale.ts`), dictionaries/metadata, section factory |
 | `lib/constants.ts`       | Site URL / author / contact                                          |
-| `lib/theme.ts`           | Full shadcn/globals CSS tokens (`CSS_TOKENS`, `readCssTokens`)       |
-| `hooks/`                 | Client hooks (`useCssTokens`)                                        |
+| `hooks/`                 | Theme CSS tokens + client hooks (`useCssTokens`, `CSS_TOKENS`)       |
 | `lib/utils.ts`           | Shared pure helpers (`cn`, hex parse, …)                             |
 | `app/typeset.css`        | shadcn/typeset (apply with `typeset typeset-docs` when needed)       |
 | `public/images/`         | Static media (e.g. portrait)                                         |

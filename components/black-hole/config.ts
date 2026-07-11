@@ -5,7 +5,7 @@
  * Full `BlackHoleConfig` is internal — used by mesh / uniforms / theme.
  * Theme tokens supply **colors only** — never non-color knobs.
  */
-import type { CssTokens, ThemeMode } from "@/lib/theme";
+import type { CssTokens, ThemeMode } from "@/hooks";
 
 // ── Internal full config ────────────────────────────────────────────────────
 

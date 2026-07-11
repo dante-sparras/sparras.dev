@@ -17,8 +17,7 @@ import {
   WebGPUCanvas,
 } from "@/components/three";
 import { useTheme } from "@/components/providers";
-import { useCssTokens } from "@/hooks/use-css-tokens";
-import type { ThemeMode } from "@/lib/theme";
+import { useCssTokens, type ThemeMode } from "@/hooks";
 import { cn } from "@/lib/utils";
 import {
   buildBlackHoleConfig,
