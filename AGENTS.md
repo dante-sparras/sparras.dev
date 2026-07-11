@@ -64,8 +64,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Provider:** `components/providers/theme-provider.tsx` — class strategy on `<html>`, system / light / dark (`defaultTheme`, `disableTransitionOnChange` only — no next-themes parity props)
 - **FOUC script:** `THEME_INIT_SCRIPT` in `app/layout.tsx` `<head>` (server-rendered — not a client-component script)
 - **Switcher:** system / light / dark; labels passed in from server Navbar (not `getDictionary` on the client)
-- **React:** `useTheme()` from `@/components/providers` (`resolvedTheme` + `themeModeFromResolved` for non-React/DOM helpers)
-- **Non-React / tokens:** `@/lib/theme` — `readThemeMode`, `readCssHexToken`, `readThemeHexTokens`
+- **React:** `useTheme()` from `@/components/providers` (`resolvedTheme`)
+- **Non-React / tokens:** `@/lib/theme` — `readCssHexToken`, `readThemeHexTokens` (WebGPU/canvas colors; mode comes from `useTheme`, not DOM class fallbacks)
 - Do **not** reintroduce `next-themes` (React 19 / Next 16 client `<script>` warning)
 
 ## Quality checks (no Lefthook / Husky / custom install scripts)

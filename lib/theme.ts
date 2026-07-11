@@ -1,32 +1,17 @@
 /**
  * Theme helpers for class-based theme (`dark` / `light` on <html>).
  *
- * React: prefer `useTheme().resolvedTheme` + `themeModeFromResolved`.
- * Non-React: `readThemeMode` / `readCssHexToken` / `readThemeHexTokens`.
+ * React: prefer `useTheme().resolvedTheme`.
+ * Non-React / canvas: `readCssHexToken` / `readThemeHexTokens`.
  */
 import { normalizeHex } from "@/lib/utils";
 
 export type ThemeMode = "light" | "dark";
 
-/** Map `resolvedTheme` → mode (undefined until hydrated). */
-export function themeModeFromResolved(
-  resolvedTheme: string | undefined,
-): ThemeMode | undefined {
-  if (resolvedTheme === "dark" || resolvedTheme === "light") {
-    return resolvedTheme;
-  }
-  return undefined;
-}
-
 function rootOf(root?: Element | null): Element {
   if (root) return root;
   if (typeof document !== "undefined") return document.documentElement;
   throw new Error("theme helpers need a DOM root (client-only)");
-}
-
-/** DOM fallback when `useTheme` is unavailable. */
-export function readThemeMode(root?: Element | null): ThemeMode {
-  return rootOf(root).classList.contains("dark") ? "dark" : "light";
 }
 
 /** Read a CSS variable as hex (`#rrggbb` / `#rrggbbaa`). */

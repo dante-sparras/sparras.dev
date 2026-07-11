@@ -5,7 +5,7 @@
  * Full `BlackHoleConfig` is internal — used by mesh / uniforms / theme.
  * Theme tokens supply **colors only** — never non-color knobs.
  */
-import { readThemeHexTokens, readThemeMode, type ThemeMode } from "@/lib/theme";
+import { readThemeHexTokens, type ThemeMode } from "@/lib/theme";
 
 // ── Internal full config ────────────────────────────────────────────────────
 
@@ -175,6 +175,7 @@ function colorsForTheme(mode: ThemeMode, root: Element): ThemeColors {
 
 /**
  * Defaults + optional public overrides + optional theme colors.
+ * Themed colors require an explicit `mode` (from useTheme) — no DOM class fallback.
  * Never put `document` in a default parameter (runs even when omitted → SSR crash).
  */
 export function buildBlackHoleConfig(
@@ -182,16 +183,15 @@ export function buildBlackHoleConfig(
 ): BlackHoleConfig {
   const { overrides, themeColors = false, root, mode } = options;
   const base: BlackHoleConfig = { ...defaultBlackHoleConfig, ...overrides };
-  if (!themeColors) return base;
+  if (!themeColors || !mode) return base;
 
   const scope =
     root ?? (typeof document !== "undefined" ? document.documentElement : null);
   if (!scope) return base;
 
-  const resolved = mode ?? readThemeMode(scope);
   return {
     ...base,
-    ...colorsForTheme(resolved, scope),
-    diskInkMode: resolved === "light" ? 1 : 0,
+    ...colorsForTheme(mode, scope),
+    diskInkMode: mode === "light" ? 1 : 0,
   };
 }

@@ -17,7 +17,7 @@ import {
   WebGPUCanvas,
 } from "@/components/three";
 import { useTheme } from "@/components/providers";
-import { themeModeFromResolved } from "@/lib/theme";
+import type { ThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
   buildBlackHoleConfig,
@@ -83,7 +83,10 @@ export function BlackHole({
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const { resolvedTheme } = useTheme();
-  const mode = themeModeFromResolved(resolvedTheme);
+  const mode: ThemeMode | undefined =
+    resolvedTheme === "dark" || resolvedTheme === "light"
+      ? resolvedTheme
+      : undefined;
 
   useEffect(() => setReady(true), []);
 
@@ -91,7 +94,7 @@ export function BlackHole({
     () =>
       buildBlackHoleConfig({
         overrides,
-        themeColors: ready && themeColors,
+        themeColors: Boolean(ready && themeColors && mode),
         root: ready ? document.documentElement : null,
         mode,
       }),
