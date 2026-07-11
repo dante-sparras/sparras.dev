@@ -1,18 +1,52 @@
 "use client";
 
 /**
- * Profile banner black hole — faithful port of dgreenheck/webgpu-black-hole
- * (Three.js WebGPU + TSL raymarch + bloom) into the short identity-row slot.
+ * Universal WebGPU black hole (dgreenheck/webgpu-black-hole port).
  *
- * Ref: https://github.com/dgreenheck/webgpu-black-hole
- *   blackhole.js · blackhole-shader.js · main.js (defaults, OrbitControls, bloom)
+ * Non-color knobs → `./defaults.ts`
+ * Colors → `./theme.ts` (CSS tokens) when `themeColors` is on
  *
- * Hatch CSS remains under the canvas as progressive-enhancement fallback.
+ * @example
+ * <BlackHole className="h-40 w-full" />
+ * <BlackHole interactive={false} autoRotate config={{ diskBrightness: 6 }} />
  */
 
 import { useEffect, useRef, useState } from "react";
+import { cn, hexToInt, normalizeHexOpaque } from "@/lib/utils";
+import type { BlackHoleConfig, BlackHoleConfigPatch } from "./types";
 
-export function ProfileBannerBlackHole() {
+function themeMode(): "light" | "dark" {
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
+const VOID_FALLBACK = "#0a0a0a";
+
+function voidColorInt(hex: string | undefined): number {
+  return hexToInt(normalizeHexOpaque(hex ?? VOID_FALLBACK) ?? VOID_FALLBACK);
+}
+
+export type BlackHoleProps = {
+  className?: string;
+  /** Merge over defaultBlackHoleConfig (sim knobs, optional color overrides). */
+  config?: BlackHoleConfigPatch;
+  /** OrbitControls drag/zoom. Default true. */
+  interactive?: boolean;
+  /** Gentle idle spin when not interacting. Default true. */
+  autoRotate?: boolean;
+  /** Sample site theme tokens for colors. Default true. */
+  themeColors?: boolean;
+  "aria-label"?: string;
+};
+
+export function BlackHole({
+  className,
+  config: configOverride,
+  interactive = true,
+  autoRotate = true,
+  themeColors = true,
+  "aria-label":
+    ariaLabel = "Interactive black hole — drag to orbit, scroll to zoom",
+}: BlackHoleProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
 
@@ -22,28 +56,42 @@ export function ProfileBannerBlackHole() {
 
     let disposed = false;
     let raf = 0;
-    let detach: (() => void) | null = null;
+    let teardown: (() => void) | null = null;
 
     (async () => {
-      // Dynamic imports keep three/webgpu off the server bundle path.
       const THREE = await import("three/webgpu");
       const { pass } = await import("three/tsl");
       const { bloom } = await import("three/addons/tsl/display/BloomNode.js");
       const { OrbitControls } =
         await import("three/addons/controls/OrbitControls.js");
-      const { BlackHoleSimulation } =
-        await import("@/lib/black-hole/blackhole.js");
+      const { BlackHoleSimulation } = await import("./simulation");
       const { defaultBlackHoleConfig, defaultCamera } =
-        await import("@/lib/black-hole/defaults.js");
+        await import("./defaults");
+      const { getThemeBlackHolePatch } = await import("./theme");
 
       if (disposed || !host) return;
-
       while (host.firstChild) host.removeChild(host.firstChild);
 
-      const config = { ...defaultBlackHoleConfig };
+      const buildConfig = (): BlackHoleConfig => {
+        const base = {
+          ...defaultBlackHoleConfig,
+          ...configOverride,
+        } as BlackHoleConfig;
+        if (themeColors) {
+          const m = themeMode();
+          const colors = getThemeBlackHolePatch(m, document.documentElement);
+          Object.assign(base, colors, {
+            diskInkMode: m === "light" ? 1 : 0,
+          });
+        }
+        return base;
+      };
+
+      let config = buildConfig();
 
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x000000);
+      const voidInt = voidColorInt(config.starBackgroundColor);
+      scene.background = new THREE.Color(voidInt);
 
       const camera = new THREE.PerspectiveCamera(
         defaultCamera.fov,
@@ -64,29 +112,33 @@ export function ProfileBannerBlackHole() {
         powerPreference: "high-performance",
       });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.setClearColor(voidInt, 1);
+      // Content tonemapped in-shader; void stays raw sRGB
+      renderer.toneMapping = THREE.NoToneMapping;
+      renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
       const canvas = renderer.domElement;
-      canvas.style.display = "block";
-      canvas.style.position = "absolute";
-      canvas.style.inset = "0";
-      canvas.style.width = "100%";
-      canvas.style.height = "100%";
-      canvas.style.touchAction = "none";
-      canvas.style.cursor = "grab";
+      Object.assign(canvas.style, {
+        display: "block",
+        position: "absolute",
+        inset: "0",
+        width: "100%",
+        height: "100%",
+        touchAction: "none",
+        cursor: interactive ? "grab" : "default",
+      });
       canvas.setAttribute("aria-hidden", "true");
       host.appendChild(canvas);
 
       try {
         await renderer.init();
       } catch (err) {
-        console.error("[ProfileBannerBlackHole] WebGPU init failed:", err);
+        console.error("[BlackHole] WebGPU init failed:", err);
         renderer.dispose();
         while (host.firstChild) host.removeChild(host.firstChild);
         if (!disposed) setFailed(true);
         return;
       }
-
       if (disposed) {
         renderer.dispose();
         return;
@@ -99,6 +151,8 @@ export function ProfileBannerBlackHole() {
       controls.minDistance = defaultCamera.minDistance;
       controls.maxDistance = defaultCamera.maxDistance;
       controls.enablePan = false;
+      controls.enableRotate = interactive;
+      controls.enableZoom = interactive;
       controls.target.set(0, 0, 0);
       controls.update();
 
@@ -106,7 +160,6 @@ export function ProfileBannerBlackHole() {
         typeof window !== "undefined" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      // Gentle idle orbit (reference cinematic is off by default; banner uses soft spin).
       let userInteracting = false;
       let idleResumeTimer: ReturnType<typeof setTimeout> | null = null;
       const markInteract = () => {
@@ -120,18 +173,48 @@ export function ProfileBannerBlackHole() {
       const sim = new BlackHoleSimulation(scene, config);
       sim.createBlackHole();
 
-      // three r185+: RenderPipeline (PostProcessing is a deprecated subclass alias)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const Pipeline =
         (THREE as any).RenderPipeline ?? (THREE as any).PostProcessing;
       const postProcessing = new Pipeline(renderer);
-      const scenePass = pass(scene, camera);
-      const scenePassColor = scenePass.getTextureNode();
+      const scenePassColor = pass(scene, camera).getTextureNode();
       const bloomPassNode = bloom(scenePassColor);
       bloomPassNode.threshold.value = config.bloomThreshold;
       bloomPassNode.strength.value = config.bloomStrength;
       bloomPassNode.radius.value = config.bloomRadius;
       postProcessing.outputNode = scenePassColor.add(bloomPassNode);
+
+      let lastThemeKey = "";
+      const applyTheme = () => {
+        if (!themeColors) return;
+        const m = themeMode();
+        const key = `${m}|${document.documentElement.className}`;
+        if (key === lastThemeKey) return;
+        lastThemeKey = key;
+
+        config = buildConfig();
+        sim.updateUniforms(config);
+
+        const nextVoid = voidColorInt(config.starBackgroundColor);
+        scene.background = new THREE.Color(nextVoid);
+        renderer.setClearColor(nextVoid, 1);
+
+        bloomPassNode.threshold.value = config.bloomThreshold;
+        bloomPassNode.strength.value = config.bloomStrength;
+        bloomPassNode.radius.value = config.bloomRadius;
+      };
+      applyTheme();
+
+      const themeObserver = new MutationObserver(() => {
+        lastThemeKey = "";
+        applyTheme();
+      });
+      if (themeColors) {
+        themeObserver.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+      }
 
       const applySize = () => {
         if (disposed || !host) return;
@@ -147,30 +230,34 @@ export function ProfileBannerBlackHole() {
       ro.observe(host);
 
       const onPointerDown = () => {
+        if (!interactive) return;
         markInteract();
         canvas.style.cursor = "grabbing";
       };
       const onPointerUp = () => {
+        if (!interactive) return;
         canvas.style.cursor = "grab";
       };
       const onWheel = () => {
-        markInteract();
+        if (interactive) markInteract();
       };
 
-      canvas.addEventListener("pointerdown", onPointerDown);
-      canvas.addEventListener("pointerup", onPointerUp);
-      canvas.addEventListener("pointercancel", onPointerUp);
-      canvas.addEventListener("wheel", onWheel, { passive: true });
+      if (interactive) {
+        canvas.addEventListener("pointerdown", onPointerDown);
+        canvas.addEventListener("pointerup", onPointerUp);
+        canvas.addEventListener("pointercancel", onPointerUp);
+        canvas.addEventListener("wheel", onWheel, { passive: true });
+      }
 
       let lastFrameTime = performance.now();
-
       const tick = (now: number) => {
         if (disposed) return;
         const deltaTime = Math.min((now - lastFrameTime) / 1000, 0.033);
         lastFrameTime = now;
 
-        if (!reduceMotion && !userInteracting) {
-          // Slow azimuth spin around target (banner idle motion)
+        applyTheme();
+
+        if (autoRotate && !reduceMotion && !userInteracting) {
           const offset = camera.position.clone().sub(controls.target);
           const spherical = new THREE.Spherical().setFromVector3(offset);
           spherical.theta += 0.08 * deltaTime;
@@ -187,45 +274,44 @@ export function ProfileBannerBlackHole() {
       };
       raf = requestAnimationFrame(tick);
 
-      detach = () => {
+      teardown = () => {
         cancelAnimationFrame(raf);
         if (idleResumeTimer) clearTimeout(idleResumeTimer);
+        themeObserver.disconnect();
         ro.disconnect();
-        canvas.removeEventListener("pointerdown", onPointerDown);
-        canvas.removeEventListener("pointerup", onPointerUp);
-        canvas.removeEventListener("pointercancel", onPointerUp);
-        canvas.removeEventListener("wheel", onWheel);
-        controls.dispose();
-        if (sim.blackHoleMesh) {
-          scene.remove(sim.blackHoleMesh);
-          sim.blackHoleMesh.geometry?.dispose();
-          // Node materials dispose via material.dispose when available
-          const mat = sim.blackHoleMesh.material;
-          if (mat && !Array.isArray(mat)) mat.dispose();
+        if (interactive) {
+          canvas.removeEventListener("pointerdown", onPointerDown);
+          canvas.removeEventListener("pointerup", onPointerUp);
+          canvas.removeEventListener("pointercancel", onPointerUp);
+          canvas.removeEventListener("wheel", onWheel);
         }
+        controls.dispose();
+        sim.dispose();
         renderer.dispose();
         while (host.firstChild) host.removeChild(host.firstChild);
       };
     })().catch((err) => {
-      console.error("[ProfileBannerBlackHole]", err);
+      console.error("[BlackHole]", err);
       if (!disposed) setFailed(true);
     });
 
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
-      detach?.();
+      teardown?.();
     };
-  }, []);
+  }, [autoRotate, configOverride, interactive, themeColors]);
 
   return (
     <div
       ref={hostRef}
-      className="relative min-h-0 h-full w-full flex-1 bg-black"
-      aria-label="Interactive black hole simulation — drag to orbit, scroll to zoom"
+      className={cn(
+        "relative min-h-0 h-full w-full flex-1 bg-background",
+        className,
+      )}
+      aria-label={ariaLabel}
       data-webgpu-failed={failed ? "true" : undefined}
     >
-      {/* Hatch fallback only when WebGPU is unavailable */}
       {failed ? (
         <div
           className="absolute inset-0 bg-[repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_1px_10px)]"

@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
+  // three/webgpu + addons used by the black hole island
+  transpilePackages: ["three"],
 };
 
 export default nextConfig;

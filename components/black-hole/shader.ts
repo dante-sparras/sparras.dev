@@ -1,7 +1,12 @@
+// @ts-nocheck
+// Three.js TSL Fn() callbacks are not accurately typed (NodeBuilder iterable errors).
+// Runtime behavior is unchanged; simulation.ts / theme / defaults are fully typed.
+
 /**
  * Raymarching shader for black hole visualization using Three.js TSL.
  */
 
+import type { BlackHoleUniforms } from "./types";
 import {
   vec2,
   vec3,
@@ -18,8 +23,11 @@ import {
   asin,
   sqrt,
   pow,
+  exp,
   fract,
   clamp,
+  max,
+  min,
   smoothstep,
   mix,
   floor,
@@ -29,6 +37,7 @@ import {
   Break,
   If,
   screenUV,
+  fwidth,
 } from "three/tsl";
 
 // Hash functions for pseudo-random number generation
@@ -96,7 +105,7 @@ const fbm = Fn(([p, lacunarity, persistence]) => {
 // Mitchell Charity Blackbody Colors (CIE 1931 2-deg, sRGB)
 // Source: http://www.vendian.org/mncharity/dir3/blackbody/
 // Temperature range: 1000K - 40000K (100K steps for 1000-10000K, 1000K steps above)
-const BLACKBODY_COLORS = {
+const BLACKBODY_COLORS: Record<number, [number, number, number]> = {
   1000: [1, 0.0337, 0],
   1100: [1, 0.0592, 0],
   1200: [1, 0.0846, 0],
@@ -205,7 +214,7 @@ const BLACKBODY_COLORS = {
 };
 
 // Helper to interpolate blackbody colors
-function getBlackbodyColor(tempK) {
+function getBlackbodyColor(tempK: number): [number, number, number] {
   const temps = Object.keys(BLACKBODY_COLORS)
     .map(Number)
     .toSorted((a, b) => a - b);
@@ -234,10 +243,10 @@ function getBlackbodyColor(tempK) {
 }
 
 // Pre-build arrays for shader lookup (100K steps from 1000K-10000K, then 1000K steps to 40000K)
-const BLACKBODY_TEMPS = [];
-const BLACKBODY_R = [];
-const BLACKBODY_G = [];
-const BLACKBODY_B = [];
+const BLACKBODY_TEMPS: number[] = [];
+const BLACKBODY_R: number[] = [];
+const BLACKBODY_G: number[] = [];
+const BLACKBODY_B: number[] = [];
 for (let t = 1000; t <= 10000; t += 100) {
   BLACKBODY_TEMPS.push(t);
   const c = getBlackbodyColor(t);
@@ -283,42 +292,63 @@ const blackbodyColor = Fn(([tempK]) => {
   return vec3(r, g, b);
 });
 
-// Procedural star field using grid-based placement
-const createStarField = (uniforms) =>
+// Procedural star field — 3×3 cell neighborhood + soft kernels
+// (single-cell sampling + hard tips caused many stars to flicker while moving)
+const createStarField = (uniforms: BlackHoleUniforms) =>
   Fn(([rayDir]) => {
     const theta = atan(rayDir.z, rayDir.x);
     const phi = asin(clamp(rayDir.y, float(-1.0), float(1.0)));
 
-    const gridScale = float(60.0).div(uniforms.starSize);
+    const gridScale = float(55.0).div(max(uniforms.starSize, float(0.35)));
     const scaledCoord = vec2(theta, phi).mul(gridScale);
-    const cell = floor(scaledCoord);
-    const cellUV = fract(scaledCoord);
+    const baseCell = floor(scaledCoord);
 
-    const cellHash = hash21(cell);
-    const starProb = step(float(1.0).sub(uniforms.starDensity), cellHash);
+    const acc = vec3(0.0, 0.0, 0.0).toVar("starAcc");
 
-    const starPos = hash22(cell.add(42.0)).mul(0.8).add(0.1);
-    const distToStar = length(cellUV.sub(starPos));
+    // Unrolled 3×3 so stars near cell edges stay continuous across frames
+    for (const ox of [-1, 0, 1]) {
+      for (const oy of [-1, 0, 1]) {
+        const cell = baseCell.add(vec2(ox, oy));
+        // Local UV relative to this cell (not fract — correct for neighbors)
+        const cellUV = scaledCoord.sub(cell);
 
-    const baseSizeVar = hash21(cell.add(100.0)).mul(0.03).add(0.01);
-    const finalStarSize = baseSizeVar.mul(uniforms.starSize);
+        const cellHash = hash21(cell);
+        const starProb = step(float(1.0).sub(uniforms.starDensity), cellHash);
 
-    const starCore = smoothstep(finalStarSize, float(0.0), distToStar);
-    const starGlow = smoothstep(
-      finalStarSize.mul(3.0),
-      float(0.0),
-      distToStar,
-    ).mul(0.3);
-    const starIntensity = starCore.add(starGlow).mul(starProb);
+        const starPos = hash22(cell.add(42.0)).mul(0.75).add(0.125);
+        const distToStar = length(cellUV.sub(starPos));
 
-    const colorTemp = hash21(cell.add(200.0));
-    const starColor = mix(vec3(0.8, 0.9, 1.0), vec3(1.0, 0.95, 0.8), colorTemp);
+        // Slightly larger + Gaussian falloff = less temporal aliasing
+        const baseSizeVar = hash21(cell.add(100.0)).mul(0.028).add(0.014);
+        const finalStarSize = baseSizeVar
+          .mul(uniforms.starSize)
+          .mul(1.2)
+          .max(0.002);
+        const d = distToStar.div(finalStarSize);
+        const starCore = exp(d.mul(d).negate().mul(2.8));
+        const starGlow = exp(d.mul(d).negate().mul(0.5)).mul(0.25);
+        const starIntensity = starCore.add(starGlow).mul(starProb);
 
-    return starColor.mul(starIntensity).mul(uniforms.starBrightness);
+        const colorTemp = hash21(cell.add(200.0));
+        const starColor = mix(
+          vec3(0.92, 0.94, 1.0),
+          vec3(1.0, 0.97, 0.92),
+          colorTemp,
+        )
+          .mul(uniforms.starTint.xyz)
+          .mul(uniforms.starTint.w);
+
+        acc.addAssign(
+          starColor.mul(starIntensity).mul(uniforms.starBrightness),
+        );
+      }
+    }
+
+    return acc;
   });
 
 // Procedural nebula clouds - two FBM layers
-const createNebulaField = (uniforms) =>
+const createNebulaField = (uniforms: BlackHoleUniforms) =>
   Fn(([rayDir]) => {
     const noisePos1 = rayDir.mul(uniforms.nebula1Scale);
     const n1 = fbm(noisePos1, float(2.0), float(0.5)).mul(2.0).sub(1.0);
@@ -327,9 +357,10 @@ const createNebulaField = (uniforms) =>
       float(0.0),
       float(1.0),
     );
-    const color1 = uniforms.nebula1Color
-      .mul(layer1)
-      .mul(uniforms.nebula1Brightness);
+    // True color × alpha × density (supports #rrggbbaa e.g. border #ffffff1a)
+    const color1 = uniforms.nebula1Color.xyz
+      .mul(uniforms.nebula1Color.w)
+      .mul(layer1);
 
     const noisePos2 = rayDir.mul(uniforms.nebula2Scale);
     const n2 = fbm(noisePos2, float(2.0), float(0.5)).mul(2.0).sub(1.0);
@@ -338,15 +369,15 @@ const createNebulaField = (uniforms) =>
       float(0.0),
       float(1.0),
     );
-    const color2 = uniforms.nebula2Color
-      .mul(layer2)
-      .mul(uniforms.nebula2Brightness);
+    const color2 = uniforms.nebula2Color.xyz
+      .mul(uniforms.nebula2Color.w)
+      .mul(layer2);
 
     return color1.add(color2);
   });
 
 // Accretion disk color with blackbody temperature, Doppler beaming, and turbulence
-const createAccretionDiskColor = (uniforms) =>
+const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
   Fn(([hitR, hitAngle, time, rayDir]) => {
     const innerR = uniforms.diskInnerRadius;
     const outerR = uniforms.diskOuterRadius;
@@ -365,6 +396,13 @@ const createAccretionDiskColor = (uniforms) =>
     );
     const diskColor = blackbodyColor(tempK).toVar("diskColor");
 
+    // Site-tuned: blend blackbody toward luminance for monochrome UI harmony
+    const diskLum = dot(diskColor, vec3(0.2126, 0.7152, 0.0722)).toVar(
+      "diskLum",
+    );
+    const monoDisk = vec3(diskLum, diskLum, diskLum);
+    diskColor.assign(mix(monoDisk, diskColor, uniforms.diskSaturation));
+
     // Doppler beaming: D = 1/(1 - β·cos(θ)), brightness ∝ D³
     const rotationSign = sign(uniforms.diskRotationSpeed);
     const velocityDir = vec3(
@@ -378,9 +416,10 @@ const createAccretionDiskColor = (uniforms) =>
     const dopplerFactor = float(1.0).div(float(1.0).sub(beta.mul(cosTheta)));
     const dopplerBoost = pow(
       dopplerFactor,
-      float(3.0).mul(uniforms.dopplerStrength),
+      float(2.2).mul(uniforms.dopplerStrength),
     );
-    diskColor.mulAssign(clamp(dopplerBoost, float(0.1), float(5.0)));
+    // Narrower range → less harsh bright/dark split around the disk
+    diskColor.mulAssign(clamp(dopplerBoost, float(0.55), float(1.85)));
 
     // Edge falloff
     const edgeFalloff = smoothstep(
@@ -435,20 +474,42 @@ const createAccretionDiskColor = (uniforms) =>
       uniforms.turbulencePersistence,
     );
     const turbulence = mix(turbulence2, turbulence1, blendFactor);
-    ringOpacity.assign(
-      pow(
-        clamp(turbulence, float(0.0), float(1.0)),
-        uniforms.turbulenceSharpness,
-      ),
+    // Soft structure on a high floor — disk should read solid / filled, not sparse
+    const turb01 = clamp(turbulence, float(0.0), float(1.0));
+    const turbShaped = pow(turb01, uniforms.turbulenceSharpness);
+    // High base (~0.86) + light modulation so wisps sit on a filled ring
+    ringOpacity.assign(mix(float(0.86), float(1.0), turbShaped.mul(0.5)));
+
+    // Denser near the void (inner edge); slightly airier only at outer rim
+    const innerFill = mix(
+      float(1.2),
+      float(0.95),
+      smoothstep(float(0.0), float(0.65), normR),
+    );
+    const finalOpacity = clamp(
+      ringOpacity.mul(edgeFalloff).mul(innerFill),
+      float(0.0),
+      float(1.0),
     );
 
-    const finalOpacity = ringOpacity.mul(edgeFalloff);
-    const finalColor = diskColor.mul(uniforms.diskBrightness);
-    return vec4(finalColor, finalOpacity);
+    // Emissive (dark UI) vs ink stamp (light UI)
+    // ink: solid dark tint; structure comes from opacity only
+    const diskTintRgb = uniforms.diskTint.xyz.mul(uniforms.diskTint.w);
+    // Mild soft-knee: keep punch, avoid pure white blowout
+    const emissiveRaw = diskColor.mul(diskTintRgb).mul(uniforms.diskBrightness);
+    const emissiveSoft = emissiveRaw.div(emissiveRaw.add(vec3(1.0))).mul(1.35);
+    const emissiveCol = mix(emissiveRaw, emissiveSoft, float(0.55));
+    const inkCol = diskTintRgb;
+    const finalColor = mix(emissiveCol, inkCol, uniforms.diskInkMode);
+    const inkBoost = mix(float(1.0), float(1.45), uniforms.diskInkMode);
+    return vec4(
+      finalColor,
+      clamp(finalOpacity.mul(inkBoost), float(0.0), float(1.0)),
+    );
   });
 
 // Main raymarching shader
-export function createBlackHoleShader(uniforms) {
+export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
   const starField = createStarField(uniforms);
   const nebulaField = createNebulaField(uniforms);
   const accretionDiskColor = createAccretionDiskColor(uniforms);
@@ -483,12 +544,14 @@ export function createBlackHoleShader(uniforms) {
     const alpha = float(0.0).toVar("alpha");
     const escaped = float(0.0).toVar("escaped");
     const captured = float(0.0).toVar("captured");
+    // Closest approach — soft photon-ring / horizon AA
+    const minR = float(1.0e6).toVar("minR");
 
     const innerR = uniforms.diskInnerRadius;
     const outerR = uniforms.diskOuterRadius;
 
-    // Raymarching loop
-    Loop(64, () => {
+    // More steps + adaptive size near hole → smoother critical curve when zoomed out
+    Loop(96, () => {
       If(
         escaped
           .greaterThan(0.5)
@@ -500,37 +563,41 @@ export function createBlackHoleShader(uniforms) {
       );
 
       const r = length(rayPos);
+      minR.assign(min(minR, r));
 
-      // Captured by black hole
-      If(r.lessThan(rs.mul(1.01)), () => {
+      // Hard capture only deep inside (soft edge at composite)
+      If(r.lessThan(rs.mul(0.9)), () => {
         captured.assign(1.0);
         Break();
       });
 
-      // Escaped to infinity
       If(r.greaterThan(100.0), () => {
         escaped.assign(1.0);
         Break();
       });
 
-      // Gravitational light bending: a = -rs/r² toward center
+      // Much finer steps near the hole — thin photon ring aliases badly at coarse steps
+      const nearHole = float(1.0).sub(
+        smoothstep(rs.mul(1.05), rs.mul(14.0), r),
+      );
+      const dt = uniforms.stepSize.mul(mix(float(1.0), float(0.12), nearHole));
+
       const toCenter = rayPos.negate().div(r);
       const bendStrength = rs
         .div(r.mul(r))
-        .mul(uniforms.stepSize)
+        .mul(dt)
         .mul(uniforms.gravitationalLensing);
       rayDir.addAssign(toCenter.mul(bendStrength));
       rayDir.assign(normalize(rayDir));
 
       prevPos.assign(rayPos);
-      rayPos.addAssign(rayDir.mul(uniforms.stepSize));
+      rayPos.addAssign(rayDir.mul(dt));
 
-      // Disk plane intersection (Y = 0)
       const crossedPlane = prevPos.y.mul(rayPos.y).lessThan(0.0);
 
       If(crossedPlane.and(alpha.lessThan(0.99)), () => {
-        const t = prevPos.y.negate().div(rayPos.y.sub(prevPos.y));
-        const hitPos = mix(prevPos, rayPos, t);
+        const tHit = prevPos.y.negate().div(rayPos.y.sub(prevPos.y));
+        const hitPos = mix(prevPos, rayPos, tHit);
         const hitR = sqrt(hitPos.x.mul(hitPos.x).add(hitPos.z.mul(hitPos.z)));
         const inDisk = hitR.greaterThan(innerR).and(hitR.lessThan(outerR));
 
@@ -543,7 +610,6 @@ export function createBlackHoleShader(uniforms) {
             rayDir,
           );
 
-          // Front-to-back alpha compositing
           const remainingAlpha = float(1.0).sub(alpha);
           color.addAssign(diskResult.xyz.mul(diskResult.w).mul(remainingAlpha));
           alpha.addAssign(remainingAlpha.mul(diskResult.w));
@@ -551,27 +617,85 @@ export function createBlackHoleShader(uniforms) {
       });
     });
 
-    If(captured.lessThan(0.5), () => {
+    // Soft void edge + screen-space AA (fwidth) so thin rims aren't harsh 1px lines
+    const aaW = max(fwidth(minR).mul(2.25), rs.mul(0.025));
+    const softCapture = float(1.0)
+      .sub(smoothstep(rs.mul(0.88).sub(aaW), rs.mul(1.95).add(aaW), minR))
+      .toVar("softCapture");
+    If(captured.greaterThan(0.5), () => {
+      softCapture.assign(1.0);
+    });
+
+    const skyOk = float(1.0).sub(softCapture);
+
+    If(softCapture.lessThan(0.88), () => {
       escaped.assign(1.0);
     });
 
-    // Background for escaped rays
+    const starsCol = vec3(0.0, 0.0, 0.0).toVar("starsCol");
+    const nebCol = vec3(0.0, 0.0, 0.0).toVar("nebCol");
+
     If(escaped.greaterThan(0.5).and(alpha.lessThan(0.99)), () => {
-      const bgColor = uniforms.starBackgroundColor.toVar("bgColor");
-
       If(uniforms.starsEnabled.greaterThan(0.5), () => {
-        bgColor.addAssign(starField(rayDir));
+        starsCol.assign(starField(rayDir));
       });
-
       If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
-        bgColor.addAssign(nebulaField(rayDir));
+        nebCol.assign(nebulaField(rayDir));
       });
-
-      color.addAssign(bgColor.mul(float(1.0).sub(alpha)));
     });
 
-    // Gamma correction
-    const finalColor = pow(color, vec3(1.0 / 2.2));
+    // Mild peak compression — keep punch for the ring
+    const contentGamma = pow(max(color, vec3(0.0)), vec3(1.0 / 2.2)).toVar(
+      "contentGamma",
+    );
+    const contentTone = mix(
+      contentGamma,
+      contentGamma.div(contentGamma.add(vec3(0.75))),
+      float(0.32),
+    ).toVar("contentTone");
+
+    // Photon sphere ~1.5 rs — soft AA band + slight visibility boost
+    const photonR = rs.mul(1.5);
+    const distPhoton = minR.sub(photonR).abs();
+    const photonAa = max(fwidth(minR).mul(2.5), rs.mul(0.05));
+    const photonMask = float(1.0)
+      .sub(smoothstep(float(0.0), photonAa.add(rs.mul(0.14)), distPhoton))
+      .toVar("photonMask");
+    // Bring the rim back up a bit, then lightly compress pure white peaks only
+    contentTone.assign(mix(contentTone, contentTone.mul(1.22), photonMask));
+    contentTone.assign(
+      mix(
+        contentTone,
+        contentTone.div(contentTone.add(vec3(0.9))).mul(1.05),
+        photonMask.mul(0.35),
+      ),
+    );
+
+    // Soften void transition band (AA, not erase)
+    const edgeBand = softCapture.mul(float(1.0).sub(softCapture)).mul(4.0);
+    contentTone.assign(
+      mix(
+        contentTone,
+        contentTone.mul(0.94),
+        clamp(edgeBand, float(0.0), float(1.0)),
+      ),
+    );
+
+    const cover = mix(alpha, float(1.0), softCapture);
+
+    const voidCol = uniforms.starBackgroundColor;
+    const finalColor = mix(voidCol, contentTone, cover).toVar("finalColor");
+
+    If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
+      finalColor.addAssign(nebCol.mul(float(1.0).sub(alpha)).mul(skyOk));
+    });
+
+    If(uniforms.starsEnabled.greaterThan(0.5), () => {
+      const starsLit = pow(max(starsCol, vec3(0.0)), vec3(1.0 / 2.2)).mul(3.0);
+      finalColor.addAssign(starsLit.mul(float(1.0).sub(alpha)).mul(skyOk));
+    });
+    finalColor.assign(clamp(finalColor, float(0.0), float(1.12)));
+
     return vec4(finalColor, 1.0);
   })();
 }
