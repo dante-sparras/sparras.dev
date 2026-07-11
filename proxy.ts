@@ -5,7 +5,7 @@ import {
   isLocale,
   localeFromAcceptLanguage,
   locales,
-} from "@/lib/i18n/config";
+} from "@/lib/i18n";
 
 function pathnameHasLocale(pathname: string): boolean {
   return locales.some(

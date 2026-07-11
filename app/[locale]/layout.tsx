@@ -1,29 +1,33 @@
 import { notFound } from "next/navigation";
-import { isLocale, locales } from "@/lib/i18n/config";
-import { getSiteMetadata } from "@/lib/i18n/get-dictionary";
 import { Navbar } from "@/components/navbar";
+import {
+  getSiteMetadata,
+  isLocale,
+  locales,
+  type LocaleParams,
+} from "@/lib/i18n";
 
-type Props = {
+type Props = LocaleParams & {
   children: React.ReactNode;
-  params: Promise<{ locale: string }>;
 };
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({ params }: Props) {
-  const { locale: raw } = await params;
-  if (!isLocale(raw)) return {};
-  return getSiteMetadata(raw);
+export async function generateMetadata({ params }: LocaleParams) {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+  return getSiteMetadata(locale);
 }
 
 export default async function LocaleLayout({ children, params }: Props) {
-  const { locale: raw } = await params;
-  if (!isLocale(raw)) notFound();
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
+
   return (
     <div className="flex min-h-svh flex-1 flex-col">
-      <Navbar locale={raw} />
+      <Navbar locale={locale} />
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
   );

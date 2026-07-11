@@ -10,8 +10,9 @@
     "lint:fix": "oxlint . --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "check": "oxfmt --check && oxlint .",
-    "prepare": "lefthook install"
+    "check": "oxfmt --check && oxlint . && tsc --noEmit",
+    "prepare": "lefthook install",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

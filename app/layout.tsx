@@ -1,24 +1,25 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { GeistPixelSquare } from "geist/font/pixel";
 import { headers } from "next/headers";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/providers";
+import { SITE_URL } from "@/lib/constants";
+import { defaultLocale, isLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { geistPixelSquare } from "@/lib/fonts/geist-pixel";
-import { defaultLocale, isLocale } from "@/lib/i18n/config";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const geist = Geist({
   subsets: ["latin"],
+  variable: "--font-geist",
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sparras.dev"),
+  metadataBase: new URL(SITE_URL),
 };
 
 export default async function RootLayout({
@@ -36,9 +37,9 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={cn(
         "h-full antialiased font-sans",
-        geistSans.variable,
+        geist.variable,
         geistMono.variable,
-        geistPixelSquare.variable,
+        GeistPixelSquare.variable,
       )}
     >
       <body className="flex min-h-svh flex-col">

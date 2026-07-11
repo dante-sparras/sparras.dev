@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_AUTHOR, SITE_NAME, SITE_URL } from "@/lib/constants";
 import { dictionary as en } from "./dictionaries/en";
 import { dictionary as sv } from "./dictionaries/sv";
 import type { Dictionary } from "./dictionaries/types";
@@ -14,13 +15,13 @@ export function getDictionary(locale: Locale): Dictionary {
 }
 
 const sharedMetadata = {
-  metadataBase: new URL("https://sparras.dev"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Dante Sparrås",
     template: "%s · Dante Sparrås",
   },
-  applicationName: "sparras.dev",
-  authors: [{ name: "Dante Sparrås", url: "https://sparras.dev" }],
+  applicationName: SITE_NAME,
+  authors: [{ name: SITE_AUTHOR, url: SITE_URL }],
   creator: "Dante Sparrås",
   twitter: {
     card: "summary" as const,
@@ -50,7 +51,7 @@ export function getSiteMetadata(locale: Locale): Metadata {
       type: "website",
       locale: openGraphLocale[locale],
       url: `/${locale}`,
-      siteName: "sparras.dev",
+      siteName: SITE_NAME,
       title: "Dante Sparrås",
       description: meta.openGraphDescription,
     },
