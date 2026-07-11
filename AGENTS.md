@@ -47,13 +47,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **`next-themes`** via `components/providers/theme-provider.tsx` — `attribute="class"`, **`defaultTheme="system"`**, `enableSystem`
 - **Switcher:** system / light / dark (copy under `dictionary.theme`)
 
-## Git hooks (Lefthook)
+## Git hooks
 
-**Why Lefthook:** one `lefthook.yml`, fast on Windows, no `sh`. Oxfmt on **staged** files; **oxlint** via `bun run check`.
+Lightweight hooks via **`scripts/install-git-hooks.mjs`** (installed on `bun install` / `prepare`). No Lefthook.
 
-| Hook       | `lefthook.yml`                                   |
-| ---------- | ------------------------------------------------ |
-| pre-commit | `oxfmt --write {staged_files}` → `bun run check` |
-| pre-push   | `bun run build`                                  |
+| Hook       | Command                                        |
+| ---------- | ---------------------------------------------- |
+| pre-commit | `lint-staged` (oxfmt staged) → `bun run check` |
+| pre-push   | `bun run build`                                |
 
-After clone: **`bun install`** → `lefthook install`. Skip: `LEFTHOOK=0 git commit` or `--no-verify`.
+Skip: `SKIP_GIT_HOOKS=1 git commit` (or `--no-verify`).

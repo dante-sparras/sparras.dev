@@ -10,9 +10,11 @@
     "lint:fix": "oxlint . --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
+    "typecheck": "tsc --noEmit",
     "check": "oxfmt --check && oxlint . && tsc --noEmit",
-    "prepare": "lefthook install",
-    "typecheck": "tsc --noEmit"
+    "precommit": "lint-staged && bun run check",
+    "prepush": "bun run build",
+    "prepare": "bun scripts/install-git-hooks.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -36,11 +38,14 @@
     "@types/react-dom": "^19",
     "@types/three": "^0.185.1",
     "babel-plugin-react-compiler": "1.0.0",
-    "lefthook": "^2.1.9",
+    "lint-staged": "^16.2.7",
     "oxfmt": "^0.57.0",
     "oxlint": "^1.72.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,md,mdx}": "oxfmt --write"
   },
   "ignoreScripts": [
     "sharp",
@@ -48,7 +53,6 @@
   ],
   "trustedDependencies": [
     "sharp",
-    "unrs-resolver",
-    "lefthook"
+    "unrs-resolver"
   ]
 }

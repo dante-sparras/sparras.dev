@@ -7,7 +7,7 @@ Personal site for **Dante Sparrås** — Next.js App Router, bilingual (EN/SV), 
 - **Next.js 16** (App Router) + **React 19** + **TypeScript**
 - **Tailwind CSS v4** + **shadcn** (`base-sera` / Base UI)
 - **next-themes**, **Lucide**, **Three.js WebGPU** (black hole)
-- **Bun**, **Oxfmt** / **Oxlint**, **Lefthook**
+- **Bun**, **Oxfmt** / **Oxlint**, **lint-staged** git hooks
 
 ## Develop
 
@@ -19,7 +19,7 @@ bun dev
 Open [http://localhost:3000](http://localhost:3000). Locale is chosen from `Accept-Language` (`en` / `sv`).
 
 ```bash
-bun run check   # format + lint
+bun run check   # format + lint + typecheck
 bun run build   # production build
 ```
 
