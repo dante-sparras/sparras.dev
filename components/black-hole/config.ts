@@ -5,7 +5,7 @@
  * Full `BlackHoleConfig` is internal — used by mesh / uniforms / theme.
  * Theme tokens supply **colors only** — never non-color knobs.
  */
-import type { ThemeMode, ThemeSurfaceTokens } from "@/lib/theme";
+import type { CssTokens, ThemeMode } from "@/lib/theme";
 
 // ── Internal full config ────────────────────────────────────────────────────
 
@@ -82,11 +82,11 @@ export type BlackHoleOverrides = Partial<
 
 export type BuildBlackHoleConfigOptions = {
   overrides?: BlackHoleOverrides;
-  /** Map CSS surface tokens → sim colors (requires `mode` + `tokens`). */
+  /** Map CSS design tokens → sim colors (requires `mode` + `tokens`). */
   themeColors?: boolean;
   mode?: ThemeMode;
-  /** From `useSurfaceTokens()` / `readSurfaceTokens()` — no DOM reads here. */
-  tokens?: ThemeSurfaceTokens | null;
+  /** From `useCssTokens()` / `readCssTokens()` — no DOM reads here. */
+  tokens?: CssTokens | null;
 };
 
 // ── Defaults ────────────────────────────────────────────────────────────────
@@ -152,11 +152,11 @@ type ThemeColors = Pick<
   | "diskTint"
 >;
 
-function colorsForTheme(
-  mode: ThemeMode,
-  tokens: ThemeSurfaceTokens,
-): ThemeColors {
-  const { background, muted, border, foreground } = tokens;
+function colorsForTheme(mode: ThemeMode, tokens: CssTokens): ThemeColors {
+  const background = tokens.background || VOID;
+  const foreground = tokens.foreground || "#fafafa";
+  const muted = tokens.muted || "#262626";
+  const border = tokens.border || "#404040";
 
   if (mode === "light") {
     return {
@@ -179,7 +179,7 @@ function colorsForTheme(
 
 /**
  * Defaults + optional public overrides + optional theme colors.
- * Themed colors need `mode` + surface `tokens` (read outside this module).
+ * Themed colors need `mode` + full CSS `tokens` (read outside this module).
  */
 export function buildBlackHoleConfig(
   options: BuildBlackHoleConfigOptions = {},

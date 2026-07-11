@@ -17,7 +17,7 @@ import {
   WebGPUCanvas,
 } from "@/components/three";
 import { useTheme } from "@/components/providers";
-import { useSurfaceTokens } from "@/hooks/use-css-tokens";
+import { useCssTokens } from "@/hooks/use-css-tokens";
 import type { ThemeMode } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
@@ -84,7 +84,7 @@ export function BlackHole({
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const { resolvedTheme } = useTheme();
-  const surface = useSurfaceTokens();
+  const tokens = useCssTokens();
   const mode: ThemeMode | undefined =
     resolvedTheme === "dark" || resolvedTheme === "light"
       ? resolvedTheme
@@ -96,11 +96,11 @@ export function BlackHole({
     () =>
       buildBlackHoleConfig({
         overrides,
-        themeColors: Boolean(ready && themeColors && mode && surface),
+        themeColors: Boolean(ready && themeColors && mode && tokens),
         mode,
-        tokens: surface,
+        tokens,
       }),
-    [overrides, themeColors, mode, surface, ready],
+    [overrides, themeColors, mode, tokens, ready],
   );
 
   const onFailed = useCallback(() => setFailed(true), []);

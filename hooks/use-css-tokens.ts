@@ -2,44 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "@/components/providers";
-import {
-  readCssTokens,
-  readSurfaceTokens,
-  THEME_COLOR_TOKENS,
-  type ThemeColorName,
-  type ThemeColorTokens,
-  type ThemeSurfaceTokens,
-} from "@/lib/theme";
+import { readCssTokens, type CssTokens } from "@/lib/theme";
 
 /**
- * Live CSS color tokens; re-reads when the resolved theme changes.
+ * All shadcn / globals.css design tokens; re-reads when the theme changes.
  *
  * @example
- * const tokens = useCssTokens(); // all THEME_COLOR_TOKENS
- * const primary = tokens?.primary;
- *
- * const surface = useSurfaceTokens(); // background / foreground / muted / border
+ * const tokens = useCssTokens();
+ * if (!tokens) return null; // pre-hydration
+ * tokens.primary; // e.g. "#e5e5e5"
+ * tokens.radius;  // e.g. "0.875rem"
  */
-export function useCssTokens(
-  names: readonly ThemeColorName[] = THEME_COLOR_TOKENS,
-): Partial<ThemeColorTokens> | null {
+export function useCssTokens(): CssTokens | null {
   const { resolvedTheme } = useTheme();
-  const [tokens, setTokens] = useState<Partial<ThemeColorTokens> | null>(null);
+  const [tokens, setTokens] = useState<CssTokens | null>(null);
 
   useEffect(() => {
-    setTokens(readCssTokens(document.documentElement, names));
-  }, [resolvedTheme, names]);
-
-  return tokens;
-}
-
-/** Surface subset for canvases / WebGPU. */
-export function useSurfaceTokens(): ThemeSurfaceTokens | null {
-  const { resolvedTheme } = useTheme();
-  const [tokens, setTokens] = useState<ThemeSurfaceTokens | null>(null);
-
-  useEffect(() => {
-    setTokens(readSurfaceTokens(document.documentElement));
+    setTokens(readCssTokens(document.documentElement));
   }, [resolvedTheme]);
 
   return tokens;

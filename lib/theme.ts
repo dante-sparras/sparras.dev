@@ -1,76 +1,72 @@
 /**
- * CSS design tokens from the live document (`:root` / `.dark`).
+ * CSS design tokens from the live document (`:root` / `.dark` in app/globals.css).
  *
- * React: `useTheme()` for mode; `useCssTokens()` when you need reactive colors.
- * Imperative (canvas / R3F): `readCssTokens()` once after mount.
+ * Keep `CSS_TOKENS` in sync with the custom properties set on `:root` / `.dark`.
+ * (Tailwind `@theme inline` only aliases those — we read the source vars.)
+ *
+ * React: `useCssTokens()` · imperative: `readCssTokens()` after mount.
  */
 
 export type ThemeMode = "light" | "dark";
 
-/** Semantic color vars we expose outside CSS (canvas, hooks, etc.). */
-export const THEME_COLOR_TOKENS = [
+/**
+ * Every custom property set in `app/globals.css` on `:root` / `.dark`.
+ * Order matches the stylesheet for easy diffing when tokens change.
+ */
+export const CSS_TOKENS = [
   "background",
   "foreground",
-  "muted",
-  "muted-foreground",
-  "border",
+  "card",
+  "card-foreground",
+  "popover",
+  "popover-foreground",
   "primary",
   "primary-foreground",
   "secondary",
   "secondary-foreground",
+  "muted",
+  "muted-foreground",
   "accent",
   "accent-foreground",
-  "card",
-  "card-foreground",
   "destructive",
+  "border",
+  "input",
   "ring",
+  "chart-1",
+  "chart-2",
+  "chart-3",
+  "chart-4",
+  "chart-5",
+  "radius",
+  "sidebar",
+  "sidebar-foreground",
+  "sidebar-primary",
+  "sidebar-primary-foreground",
+  "sidebar-accent",
+  "sidebar-accent-foreground",
+  "sidebar-border",
+  "sidebar-ring",
 ] as const;
 
-export type ThemeColorName = (typeof THEME_COLOR_TOKENS)[number];
+export type CssTokenName = (typeof CSS_TOKENS)[number];
 
-export type ThemeColorTokens = Record<ThemeColorName, string>;
-
-/** Surface subset used by WebGPU / themed canvases. */
-export type ThemeSurfaceTokens = Pick<
-  ThemeColorTokens,
-  "background" | "foreground" | "muted" | "border"
->;
-
-const SURFACE_TOKENS = [
-  "background",
-  "foreground",
-  "muted",
-  "border",
-] as const satisfies readonly ThemeColorName[];
+export type CssTokens = Record<CssTokenName, string>;
 
 /**
- * Read CSS custom properties with a single `getComputedStyle` pass.
+ * Read all design tokens with a single `getComputedStyle` pass.
+ * Client-only — returns empty strings when `document` is unavailable.
  *
  * @example
- * const { primary, background } = readCssTokens();
- * // or: readCssTokens(document.documentElement, ["primary", "ring"])
+ * const { primary, background, radius } = readCssTokens();
  */
-export function readCssTokens(
-  root: Element = document.documentElement,
-  names: readonly ThemeColorName[] = THEME_COLOR_TOKENS,
-): Partial<ThemeColorTokens> & Record<string, string> {
-  const styles = getComputedStyle(root);
-  const tokens: Record<string, string> = {};
-  for (const name of names) {
+export function readCssTokens(root?: Element | null): CssTokens {
+  const empty = Object.fromEntries(CSS_TOKENS.map((n) => [n, ""])) as CssTokens;
+  if (typeof document === "undefined") return empty;
+
+  const styles = getComputedStyle(root ?? document.documentElement);
+  const tokens = { ...empty };
+  for (const name of CSS_TOKENS) {
     tokens[name] = styles.getPropertyValue(`--${name}`).trim();
   }
   return tokens;
-}
-
-/** Surface tokens only (background / foreground / muted / border). */
-export function readSurfaceTokens(
-  root: Element = document.documentElement,
-): ThemeSurfaceTokens {
-  const t = readCssTokens(root, SURFACE_TOKENS);
-  return {
-    background: t.background || "#0a0a0a",
-    foreground: t.foreground || "#fafafa",
-    muted: t.muted || "#262626",
-    border: t.border || "#404040",
-  };
 }

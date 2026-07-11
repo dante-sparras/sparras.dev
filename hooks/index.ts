@@ -1,1 +1,1 @@
-export { useCssTokens, useSurfaceTokens } from "./use-css-tokens";
+export { useCssTokens } from "./use-css-tokens";
