@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { getDictionary, type Locale } from "@/lib/i18n";
+import { getDictionary, locales, type Locale } from "@/lib/i18n";
 import { navLinkIds, navPath } from "./config";
 import { LanguageSwitcher } from "./language-switcher";
 import { NavbarMenu } from "./navbar-menu";
 import { ThemeSwitcher } from "./theme-switcher";
+
+// Server Component: prop arrays are built once per request, not per client re-render.
+/* oxlint-disable react-perf/jsx-no-new-array-as-prop */
 
 const navLinkClass =
   "text-muted-foreground hover:text-foreground text-sm transition-colors";
@@ -13,7 +16,18 @@ type NavbarProps = {
 };
 
 export function Navbar({ locale }: NavbarProps) {
-  const { nav } = getDictionary(locale);
+  const { nav, language, theme, locales: localeLabels } = getDictionary(locale);
+
+  const links = navLinkIds.map((id) => ({
+    href: navPath(locale, id),
+    label: nav.links[id],
+  }));
+
+  const languageOptions = locales.map((code) => ({
+    locale: code,
+    short: localeLabels[code].short,
+    name: localeLabels[code].name,
+  }));
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md supports-backdrop-filter:bg-background/70">
@@ -31,22 +45,28 @@ export function Navbar({ locale }: NavbarProps) {
             className="hidden h-full items-center gap-4 md:flex lg:gap-5"
             aria-label={nav.aria}
           >
-            {navLinkIds.map((id) => (
-              <Link
-                key={id}
-                href={navPath(locale, id)}
-                className={navLinkClass}
-              >
-                {nav.links[id]}
+            {links.map((link) => (
+              <Link key={link.href} href={link.href} className={navLinkClass}>
+                {link.label}
               </Link>
             ))}
           </nav>
           <div className="hidden h-full items-center md:flex" aria-hidden>
             <span className="mx-0.5 block h-6 w-px shrink-0 bg-border" />
           </div>
-          <ThemeSwitcher locale={locale} />
-          <LanguageSwitcher locale={locale} />
-          <NavbarMenu locale={locale} className="md:hidden" />
+          <ThemeSwitcher labels={theme} />
+          <LanguageSwitcher
+            locale={locale}
+            triggerAria={language.triggerAria}
+            options={languageOptions}
+          />
+          <NavbarMenu
+            className="md:hidden"
+            menuLabel={nav.menu}
+            menuTitle={nav.menuTitle}
+            navAria={nav.aria}
+            links={links}
+          />
         </div>
       </div>
     </header>

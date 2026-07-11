@@ -60,9 +60,6 @@ export type ThemeProviderProps = {
   children: ReactNode;
   /** default: system */
   defaultTheme?: ThemeChoice;
-  /** API parity with former next-themes layout props — class is always used */
-  attribute?: "class";
-  enableSystem?: boolean;
   disableTransitionOnChange?: boolean;
 };
 
@@ -166,7 +163,7 @@ export function ThemeProvider({
   );
 }
 
-/** Drop-in for former next-themes `useTheme` call sites. */
+/** Theme context for client components under ThemeProvider. */
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) {

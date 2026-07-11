@@ -11,10 +11,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getDictionary, locales, localizedPath, type Locale } from "@/lib/i18n";
+import { localizedPath, type Locale } from "@/lib/i18n/locale";
+
+export type LanguageOption = {
+  locale: Locale;
+  short: string;
+  name: string;
+};
 
 type LanguageSwitcherProps = {
   locale: Locale;
+  triggerAria: string;
+  options: readonly LanguageOption[];
   className?: string;
 };
 
@@ -47,20 +55,24 @@ function LocaleMenuItem({
   );
 }
 
-export function LanguageSwitcher({ locale, className }: LanguageSwitcherProps) {
+export function LanguageSwitcher({
+  locale,
+  triggerAria,
+  options,
+  className,
+}: LanguageSwitcherProps) {
   const pathname = usePathname();
-  const messages = getDictionary(locale);
 
   const triggerRender = useMemo(
     () => (
       <Button
         variant="outline"
         size="icon-sm"
-        aria-label={messages.language.triggerAria}
+        aria-label={triggerAria}
         className="shrink-0"
       />
     ),
-    [messages.language.triggerAria],
+    [triggerAria],
   );
 
   return (
@@ -69,19 +81,16 @@ export function LanguageSwitcher({ locale, className }: LanguageSwitcherProps) {
         <Languages className="size-4" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {locales.map((target) => {
-          const label = messages.locales[target];
-          return (
-            <LocaleMenuItem
-              key={target}
-              target={target}
-              pathname={pathname}
-              active={target === locale}
-              short={label.short}
-              name={label.name}
-            />
-          );
-        })}
+        {options.map((option) => (
+          <LocaleMenuItem
+            key={option.locale}
+            target={option.locale}
+            pathname={pathname}
+            active={option.locale === locale}
+            short={option.short}
+            name={option.name}
+          />
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

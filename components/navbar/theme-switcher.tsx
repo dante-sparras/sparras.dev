@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getDictionary, type Locale } from "@/lib/i18n";
 
 const themeChoices = [
   "system",
@@ -24,8 +23,15 @@ const icons: Record<ThemeChoice, typeof Sun> = {
   dark: Moon,
 };
 
+export type ThemeSwitcherLabels = {
+  triggerAria: string;
+  system: string;
+  light: string;
+  dark: string;
+};
+
 type ThemeSwitcherProps = {
-  locale: Locale;
+  labels: ThemeSwitcherLabels;
   className?: string;
 };
 
@@ -55,11 +61,9 @@ function ThemeMenuItem({
   );
 }
 
-export function ThemeSwitcher({ locale, className }: ThemeSwitcherProps) {
+export function ThemeSwitcher({ labels, className }: ThemeSwitcherProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const messages = getDictionary(locale);
-  const copy = messages.theme;
 
   useEffect(() => {
     setMounted(true);
@@ -90,17 +94,17 @@ export function ThemeSwitcher({ locale, className }: ThemeSwitcherProps) {
       <Button
         variant="outline"
         size="icon-sm"
-        aria-label={copy.triggerAria}
+        aria-label={labels.triggerAria}
         className="shrink-0"
       />
     ),
-    [copy.triggerAria],
+    [labels.triggerAria],
   );
 
   const choiceLabels: Record<ThemeChoice, string> = {
-    system: copy.system,
-    light: copy.light,
-    dark: copy.dark,
+    system: labels.system,
+    light: labels.light,
+    dark: labels.dark,
   };
 
   return (

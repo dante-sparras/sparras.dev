@@ -50,12 +50,7 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={THEME_SCRIPT_PROP} />
       </head>
       <body className="flex min-h-svh flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider defaultTheme="system" disableTransitionOnChange>
           {children}
         </ThemeProvider>
       </body>

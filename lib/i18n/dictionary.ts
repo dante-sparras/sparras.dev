@@ -3,7 +3,7 @@ import { SITE_AUTHOR, SITE_NAME, SITE_URL } from "@/lib/constants";
 import { dictionary as en } from "./dictionaries/en";
 import { dictionary as sv } from "./dictionaries/sv";
 import type { Dictionary } from "./dictionaries/types";
-import type { Locale } from "./config";
+import type { Locale } from "./locale";
 
 const messagesByLocale = {
   en,
@@ -17,15 +17,15 @@ export function getDictionary(locale: Locale): Dictionary {
 const sharedMetadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Dante Sparrås",
-    template: "%s · Dante Sparrås",
+    default: SITE_AUTHOR,
+    template: `%s · ${SITE_AUTHOR}`,
   },
   applicationName: SITE_NAME,
   authors: [{ name: SITE_AUTHOR, url: SITE_URL }],
-  creator: "Dante Sparrås",
+  creator: SITE_AUTHOR,
   twitter: {
     card: "summary" as const,
-    title: "Dante Sparrås",
+    title: SITE_AUTHOR,
     creator: "@DanteSparras",
   },
   robots: { index: true, follow: true },
@@ -52,7 +52,7 @@ export function getSiteMetadata(locale: Locale): Metadata {
       locale: openGraphLocale[locale],
       url: `/${locale}`,
       siteName: SITE_NAME,
-      title: "Dante Sparrås",
+      title: SITE_AUTHOR,
       description: meta.openGraphDescription,
     },
     twitter: {

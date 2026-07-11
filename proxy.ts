@@ -4,14 +4,8 @@ import {
   defaultLocale,
   isLocale,
   localeFromAcceptLanguage,
-  locales,
+  pathnameHasLocale,
 } from "@/lib/i18n";
-
-function pathnameHasLocale(pathname: string): boolean {
-  return locales.some(
-    (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
-  );
-}
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

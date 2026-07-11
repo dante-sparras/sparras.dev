@@ -25,22 +25,22 @@ bun run build   # production build
 
 ## Layout
 
-| Path                     | Role                                                           |
-| ------------------------ | -------------------------------------------------------------- |
-| `app/`                   | Routes, layouts, `globals.css`                                 |
-| `components/navbar/`     | Header, menu, theme + language switchers                       |
-| `components/three/`      | Shared R3F + WebGPU kit (`WebGPUCanvas`, bloom, camera/orbit)  |
-| `components/black-hole/` | Profile black hole (feature scene on the shared kit)           |
-| `components/providers/`  | Theme provider                                                 |
-| `components/ui/`         | shadcn primitives                                              |
-| `lib/i18n/`              | Locales, dictionaries, metadata (`@/lib/i18n` barrel)          |
-| `lib/constants.ts`       | Site URL / contact                                             |
-| `lib/weather/`           | Open-Meteo (Norrköping)                                        |
-| `lib/utils.ts`           | Shared pure helpers (`cn`, hex, …)                             |
-| `app/typeset.css`        | shadcn/typeset (apply with `typeset typeset-docs` when needed) |
-| `public/images/`         | Static media (e.g. portrait)                                   |
-| `githooks/`              | Local pre-commit / pre-push shell hooks                        |
-| `.github/workflows/`     | CI                                                             |
+| Path                     | Role                                                                 |
+| ------------------------ | -------------------------------------------------------------------- |
+| `app/`                   | Routes, layouts, `globals.css`                                       |
+| `components/navbar/`     | Header, menu, theme + language switchers                             |
+| `components/three/`      | Shared R3F + WebGPU kit (`WebGPUCanvas`, bloom, camera/orbit)        |
+| `components/black-hole/` | Profile black hole (feature scene on the shared kit)                 |
+| `components/providers/`  | Theme provider                                                       |
+| `components/ui/`         | shadcn primitives                                                    |
+| `lib/i18n/`              | Locale + paths (`locale.ts`), dictionaries/metadata, section factory |
+| `lib/constants.ts`       | Site URL / author / contact                                          |
+| `lib/weather/`           | Open-Meteo (Norrköping)                                              |
+| `lib/utils.ts`           | Shared pure helpers (`cn`, hex parse, …)                             |
+| `app/typeset.css`        | shadcn/typeset (apply with `typeset typeset-docs` when needed)       |
+| `public/images/`         | Static media (e.g. portrait)                                         |
+| `githooks/`              | Local pre-commit / pre-push shell hooks                              |
+| `.github/workflows/`     | CI                                                                   |
 
 ## Conventions
 

@@ -30,13 +30,6 @@ export function normalizeHexOpaque(value: string): string | undefined {
   return undefined;
 }
 
-/** `#rrggbb` (or longer) → 0xrrggbb integer. Invalid input → 0. */
-export function hexToInt(hex: string): number {
-  const opaque = normalizeHexOpaque(hex);
-  if (!opaque) return 0;
-  return parseInt(opaque.slice(1), 16);
-}
-
 export type Rgba = { r: number; g: number; b: number; a: number };
 
 /** Parse hex to sRGB 0–1 + alpha (no color-management linearization). */

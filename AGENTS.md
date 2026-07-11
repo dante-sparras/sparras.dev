@@ -26,16 +26,19 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## i18n
 
 - **Locales:** `en`, `sv` under `app/[locale]/`; default **`en`**
-- **Detection:** `proxy.ts` + `Accept-Language` → `/en` or `/sv`
-- **Barrel:** import from `@/lib/i18n` (config, dictionary, locale helpers, section factory)
-- **Copy:** `lib/i18n/dictionaries/`; `getDictionary` / `getSiteMetadata`
+- **Detection:** `proxy.ts` + `Accept-Language` → `/en` or `/sv` (uses `pathnameHasLocale` / `localeFromAcceptLanguage` from `@/lib/i18n`)
+- **Barrel:** import from `@/lib/i18n`
+  - `locale.ts` — locale set, Accept-Language, path helpers, `requireLocale`, section page helpers
+  - `dictionary.ts` — `getDictionary` / `getSiteMetadata`
+  - `section-page.tsx` — `createSectionPage` (placeholder routes only)
+  - `dictionaries/` — en/sv copy
+- **Navbar chrome:** resolve copy in the **server** `Navbar`; pass labels/links as props into client switchers/menu (do **not** call `getDictionary` in client leaves)
 - **Section pages:** `createSectionPage("about" | …)` for about/work/resume/contact
-- **Site identity:** `lib/constants.ts` (`SITE_URL`, `SITE_CONTACT`, …)
-- **Switchers:** `components/navbar/language-switcher.tsx`, `theme-switcher.tsx`
+- **Site identity:** `lib/constants.ts` (`SITE_URL`, `SITE_AUTHOR`, `SITE_CONTACT`, …)
 
 ## Layout
 
-- **`components/navbar/`** — header, mobile menu, theme + language switchers, `config.ts` routes
+- **`components/navbar/`** — header, mobile menu, theme + language switchers, `config.ts` routes; public export is **`Navbar` only** (`@/components/navbar`)
 - **Navbar chrome (do not regress):** logo **alone** on the far left; nav links in a **right cluster immediately before** theme + language switchers, with a **vertical separator** between links and switchers — **never** place primary links beside the logo
 - **Resume:** on-site page only — **not** a navbar download button
 - **Naming:** short names (`Navbar`, `NavbarMenu`); theme/language triggers **icon-only**; logo initials in **Geist Pixel Square**
@@ -58,10 +61,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Theme
 
-- **Provider:** `components/providers/theme-provider.tsx` — class strategy on `<html>`, system / light / dark
+- **Provider:** `components/providers/theme-provider.tsx` — class strategy on `<html>`, system / light / dark (`defaultTheme`, `disableTransitionOnChange` only — no next-themes parity props)
 - **FOUC script:** `THEME_INIT_SCRIPT` in `app/layout.tsx` `<head>` (server-rendered — not a client-component script)
-- **Switcher:** system / light / dark (copy under `dictionary.theme`)
-- **React:** `useTheme()` from `@/components/providers` (`resolvedTheme` + `themeModeFromResolved`)
+- **Switcher:** system / light / dark; labels passed in from server Navbar (not `getDictionary` on the client)
+- **React:** `useTheme()` from `@/components/providers` (`resolvedTheme` + `themeModeFromResolved` for non-React/DOM helpers)
 - **Non-React / tokens:** `@/lib/theme` — `readThemeMode`, `readCssHexToken`, `readThemeHexTokens`
 - Do **not** reintroduce `next-themes` (React 19 / Next 16 client `<script>` warning)
 
