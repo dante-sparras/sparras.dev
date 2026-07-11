@@ -16,7 +16,7 @@ import {
   IdleOrbit,
   WebGPUCanvas,
 } from "@/components/three";
-import { useTheme } from "@/components/providers";
+import { useTheme } from "next-themes";
 import { useCssTokens } from "@/hooks";
 import { cn } from "@/lib/utils";
 import {
@@ -87,15 +87,20 @@ export function BlackHole({
 
   useEffect(() => setReady(true), []);
 
+  const mode =
+    resolvedTheme === "light" || resolvedTheme === "dark"
+      ? resolvedTheme
+      : undefined;
+
   const config = useMemo(
     () =>
       buildBlackHoleConfig({
         overrides,
-        themeColors: Boolean(ready && themeColors && resolvedTheme && tokens),
-        mode: resolvedTheme,
+        themeColors: Boolean(ready && themeColors && mode && tokens),
+        mode,
         tokens,
       }),
-    [overrides, themeColors, resolvedTheme, tokens, ready],
+    [overrides, themeColors, mode, tokens, ready],
   );
 
   const onFailed = useCallback(() => setFailed(true), []);

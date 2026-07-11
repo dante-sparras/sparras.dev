@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useTheme, type ThemeChoice } from "@/components/providers";
+import { useTheme } from "next-themes";
+import { type ThemeChoice } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -62,6 +63,11 @@ function ThemeMenuItem({
   );
 }
 
+function asThemeChoice(value: string | undefined): ThemeChoice {
+  if (value === "light" || value === "dark" || value === "system") return value;
+  return "system";
+}
+
 export function ThemeSwitcher({ labels, className }: ThemeSwitcherProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -69,6 +75,8 @@ export function ThemeSwitcher({ labels, className }: ThemeSwitcherProps) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const active = asThemeChoice(theme);
 
   const handleThemeSelect = useCallback(
     (choice: ThemeChoice) => {
@@ -79,11 +87,11 @@ export function ThemeSwitcher({ labels, className }: ThemeSwitcherProps) {
 
   const TriggerIcon = useMemo(() => {
     if (!mounted) return Monitor;
-    if (theme === "system") {
+    if (active === "system") {
       return resolvedTheme === "dark" ? Moon : Sun;
     }
-    return icons[theme];
-  }, [theme, mounted, resolvedTheme]);
+    return icons[active];
+  }, [active, mounted, resolvedTheme]);
 
   const triggerRender = useMemo(
     () => (
@@ -114,7 +122,7 @@ export function ThemeSwitcher({ labels, className }: ThemeSwitcherProps) {
             key={choice}
             choice={choice}
             label={choiceLabels[choice]}
-            active={theme === choice}
+            active={active === choice}
             onSelect={handleThemeSelect}
           />
         ))}

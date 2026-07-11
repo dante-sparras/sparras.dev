@@ -6,11 +6,11 @@
  * Keep `CSS_TOKENS` in sync with custom properties on `:root` / `.dark`.
  * (Tailwind `@theme inline` only aliases those — we read the source vars.)
  *
- * Theme mode types live on ThemeProvider (`ResolvedTheme` / `ThemeChoice`).
+ * Theme mode: use `useTheme` from `next-themes` (re-reads tokens on change).
  */
 
 import { useEffect, useState } from "react";
-import { useTheme } from "@/components/providers";
+import { useTheme } from "next-themes";
 
 /**
  * Every custom property set in `app/globals.css` on `:root` / `.dark`.
