@@ -7,7 +7,7 @@
  * <BlackHole className="h-40 w-full" />
  * <BlackHole overrides={{ diskBrightness: 6, bloomStrength: 0.7 }} />
  *
- * From Server Components use `BlackHoleBanner` (Next 16 forbids ssr:false in RSC).
+ * From Server Components use `BlackHoleBanner` in `@/components/black-hole-banner`.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {

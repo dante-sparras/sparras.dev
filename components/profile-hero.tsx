@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import { GraduationCap, Link2, Mail, MapPin, Phone } from "lucide-react";
-import { BlackHoleBanner } from "@/components/black-hole";
+import { BlackHoleBanner } from "@/components/black-hole-banner";
 import { SITE_CONTACT } from "@/lib/constants";
 import type { Dictionary } from "@/lib/i18n";
 

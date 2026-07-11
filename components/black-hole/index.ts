@@ -1,10 +1,8 @@
 /**
- * Public API — deep module surface.
+ * Public API — black-hole sim surface.
  *
- * RSC:  `BlackHoleBanner`
- * Client: `BlackHole`
- * Tweaks: `overrides?: BlackHoleOverrides` (not the full sim bag)
+ * Client: `BlackHole` + `overrides?: BlackHoleOverrides`
+ * RSC: import `BlackHoleBanner` from `@/components/black-hole-banner`
  */
 export { BlackHole, type BlackHoleProps } from "./black-hole";
-export { BlackHoleBanner } from "./banner";
 export type { BlackHoleOverrides } from "./config";
