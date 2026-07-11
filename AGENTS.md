@@ -47,13 +47,21 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **`next-themes`** via `components/providers/theme-provider.tsx` — `attribute="class"`, **`defaultTheme="system"`**, `enableSystem`
 - **Switcher:** system / light / dark (copy under `dictionary.theme`)
 
-## Git hooks
+## Quality checks (no Lefthook / Husky / custom install scripts)
 
-Lightweight hooks via **`scripts/install-git-hooks.mjs`** (installed on `bun install` / `prepare`). No Lefthook.
+**How popular repos usually do it:**
 
-| Hook       | Command                                        |
-| ---------- | ---------------------------------------------- |
-| pre-commit | `lint-staged` (oxfmt staged) → `bun run check` |
-| pre-push   | `bun run build`                                |
+1. **CI (GitHub Actions)** — source of truth on every push/PR
+2. **Optional local git hooks** — plain shell files in a tracked folder (`githooks/`), enabled with `git config core.hooksPath githooks`
+3. Or **no local hooks** and rely on CI only
 
-Skip: `SKIP_GIT_HOOKS=1 git commit` (or `--no-verify`).
+This project uses (1) + (2):
+
+| Layer                                    | What runs                                      |
+| ---------------------------------------- | ---------------------------------------------- |
+| Local pre-commit (`githooks/pre-commit`) | `lint-staged` (oxfmt staged) → `bun run check` |
+| Local pre-push (`githooks/pre-push`)     | `bun run build`                                |
+| CI (`.github/workflows/ci.yml`)          | `bun run check` + `bun run build`              |
+
+After clone: `bun install` runs `prepare` → `git config core.hooksPath githooks`.  
+Skip local hooks: `git commit --no-verify` / `git push --no-verify`.

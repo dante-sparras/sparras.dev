@@ -14,7 +14,7 @@
     "check": "oxfmt --check && oxlint . && tsc --noEmit",
     "precommit": "lint-staged && bun run check",
     "prepush": "bun run build",
-    "prepare": "bun scripts/install-git-hooks.mjs"
+    "prepare": "git config core.hooksPath githooks || true"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

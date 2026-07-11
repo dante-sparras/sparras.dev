@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Ensure the branch builds before push.
+set -e
+bun run prepush

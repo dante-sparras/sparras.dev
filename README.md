@@ -7,7 +7,7 @@ Personal site for **Dante Sparrås** — Next.js App Router, bilingual (EN/SV), 
 - **Next.js 16** (App Router) + **React 19** + **TypeScript**
 - **Tailwind CSS v4** + **shadcn** (`base-sera` / Base UI)
 - **next-themes**, **Lucide**, **Three.js WebGPU** (black hole)
-- **Bun**, **Oxfmt** / **Oxlint**, **lint-staged** git hooks
+- **Bun**, **Oxfmt** / **Oxlint**, **lint-staged** + plain `githooks/` + GitHub Actions CI
 
 ## Develop
 
@@ -25,17 +25,21 @@ bun run build   # production build
 
 ## Layout
 
-| Path                     | Role                                     |
-| ------------------------ | ---------------------------------------- |
-| `app/`                   | Routes, layouts, `globals.css`           |
-| `components/navbar/`     | Header, menu, theme + language switchers |
-| `components/black-hole/` | WebGPU black hole island                 |
-| `components/providers/`  | Theme provider                           |
-| `components/ui/`         | shadcn primitives                        |
-| `lib/i18n/`              | Locales, dictionaries, metadata          |
-| `lib/weather/`           | Open-Meteo (Norrköping)                  |
-| `lib/utils.ts`           | Shared pure helpers (`cn`, hex, …)       |
-| `public/images/`         | Static media (e.g. portrait)             |
+| Path                     | Role                                                           |
+| ------------------------ | -------------------------------------------------------------- |
+| `app/`                   | Routes, layouts, `globals.css`                                 |
+| `components/navbar/`     | Header, menu, theme + language switchers                       |
+| `components/black-hole/` | WebGPU black hole island                                       |
+| `components/providers/`  | Theme provider                                                 |
+| `components/ui/`         | shadcn primitives                                              |
+| `lib/i18n/`              | Locales, dictionaries, metadata (`@/lib/i18n` barrel)          |
+| `lib/constants.ts`       | Site URL / contact                                             |
+| `lib/weather/`           | Open-Meteo (Norrköping)                                        |
+| `lib/utils.ts`           | Shared pure helpers (`cn`, hex, …)                             |
+| `app/typeset.css`        | shadcn/typeset (apply with `typeset typeset-docs` when needed) |
+| `public/images/`         | Static media (e.g. portrait)                                   |
+| `githooks/`              | Local pre-commit / pre-push shell hooks                        |
+| `.github/workflows/`     | CI                                                             |
 
 ## Conventions
 

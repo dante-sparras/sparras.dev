@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Format staged files, then full project check (fmt + lint + tsc).
+set -e
+bun run precommit
