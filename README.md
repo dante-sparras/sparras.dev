@@ -25,23 +25,24 @@ bun run build   # production build
 
 ## Layout
 
-| Path                       | Role                                                                 |
-| -------------------------- | -------------------------------------------------------------------- |
-| `app/`                     | Routes, layouts, `globals.css`                                       |
-| `components/navbar/`       | Header, menu, theme + language switchers                             |
-| `components/three/`        | Shared R3F + WebGPU kit (`WebGPUCanvas`, bloom, camera/orbit)        |
-| `components/black-hole/`   | Profile black hole (feature scene on the shared kit)                 |
-| `components/hero-section/` | Home hero (`ProfileHero`, `HeroBanner`)                              |
-| `components/providers/`    | Theme provider                                                       |
-| `components/ui/`           | shadcn primitives                                                    |
-| `lib/i18n/`                | Locale + paths (`locale.ts`), dictionaries/metadata, section factory |
-| `lib/constants.ts`         | Site URL / author / contact                                          |
-| `hooks/`                   | Theme CSS tokens + client hooks (`useCssTokens`, `CSS_TOKENS`)       |
-| `lib/utils.ts`             | Shared pure helpers (`cn`)                                           |
-| `app/typeset.css`          | shadcn/typeset (apply with `typeset typeset-docs` when needed)       |
-| `public/images/`           | Static media (e.g. portrait)                                         |
-| `githooks/`                | Local pre-commit / pre-push shell hooks                              |
-| `.github/workflows/`       | CI                                                                   |
+| Path                             | Role                                                                 |
+| -------------------------------- | -------------------------------------------------------------------- |
+| `app/`                           | Routes, layouts, `globals.css`                                       |
+| `components/navbar/`             | Header, menu, theme + language switchers                             |
+| `components/three/`              | Shared R3F + WebGPU kit (`WebGPUCanvas`, bloom, camera/orbit)        |
+| `components/black-hole/`         | Profile black hole (feature scene on the shared kit)                 |
+| `components/hero-section/`       | Home hero (`HeroSection`, `HeroBanner`) — portrait/banner/title      |
+| `components/profile-details.tsx` | Home bio/contact facts under the hero                                |
+| `components/providers/`          | Theme provider                                                       |
+| `components/ui/`                 | shadcn primitives                                                    |
+| `lib/i18n/`                      | Locale + paths (`locale.ts`), dictionaries/metadata, section factory |
+| `lib/constants.ts`               | Site URL / author / contact                                          |
+| `hooks/`                         | Theme CSS tokens + client hooks (`useCssTokens`, `CSS_TOKENS`)       |
+| `lib/utils.ts`                   | Shared pure helpers (`cn`)                                           |
+| `app/typeset.css`                | shadcn/typeset (apply with `typeset typeset-docs` when needed)       |
+| `public/images/`                 | Static media (e.g. portrait)                                         |
+| `githooks/`                      | Local pre-commit / pre-push shell hooks                              |
+| `.github/workflows/`             | CI                                                                   |
 
 ## Conventions
 

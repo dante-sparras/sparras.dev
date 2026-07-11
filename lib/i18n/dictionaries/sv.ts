@@ -19,6 +19,8 @@ export const dictionary = {
       name: "Dante Sparrås",
       role: "Framtida .NET-utvecklare",
       avatarAlt: "Porträtt av Dante Sparrås",
+    },
+    details: {
       student: "Student vid YH Akademin",
       location: "Norrköping, Sverige",
       pronouns: "han/honom",

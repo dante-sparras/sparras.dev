@@ -1,14 +1,10 @@
-import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import { GraduationCap, Link2, Mail, MapPin, Phone } from "lucide-react";
 import { SITE_CONTACT } from "@/lib/constants";
 import type { Dictionary } from "@/lib/i18n";
-import { HeroBanner } from "./hero-banner";
 
-type HeroCopy = Dictionary["home"]["hero"];
-
-export type ProfileHeroProps = {
-  hero: HeroCopy;
+export type ProfileDetailsProps = {
+  details: Dictionary["home"]["details"];
 };
 
 function MetaRow({
@@ -37,48 +33,14 @@ function MetaRow({
   );
 }
 
-/**
- * Profile header:
- * - Avatar flush in left cell
- * - Right column matches avatar height
- * - Banner zone: WebGPU black hole (`<HeroBanner />`)
- * - Title + role pinned to the bottom with tight borders
- */
-export function ProfileHero({ hero }: ProfileHeroProps) {
+/** Bio + contact facts under the home hero (not part of the hero chrome). */
+export function ProfileDetails({ details }: ProfileDetailsProps) {
   return (
-    <section className="w-full" aria-label={hero.name}>
-      <div className="flex items-stretch border-b border-border">
-        <div className="shrink-0 border-r border-border p-0">
-          <div className="relative size-40 overflow-hidden rounded-full border border-border bg-muted sm:size-48 md:size-56">
-            <Image
-              src="/images/portrait.webp"
-              alt={hero.avatarAlt}
-              fill
-              priority
-              className="object-cover object-[center_18%]"
-              sizes="(max-width: 640px) 160px, (max-width: 768px) 192px, 224px"
-            />
-          </div>
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <HeroBanner />
-
-          <div className="shrink-0 border-t border-border p-0">
-            <h1 className="border-b border-border px-2 py-0.5 text-2xl font-semibold tracking-tight leading-none sm:px-2.5 sm:text-3xl">
-              {hero.name}
-            </h1>
-            <p className="text-muted-foreground px-2 py-0.5 text-sm leading-none sm:px-2.5 sm:text-base">
-              {hero.role}
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <section className="w-full" aria-label={details.location}>
       <div className="grid sm:grid-cols-2">
         <ul className="flex flex-col gap-3 border-b border-border px-4 py-5 sm:border-r sm:border-b-0 sm:px-5 sm:py-6">
-          <MetaRow icon={GraduationCap}>{hero.student}</MetaRow>
-          <MetaRow icon={MapPin}>{hero.location}</MetaRow>
+          <MetaRow icon={GraduationCap}>{details.student}</MetaRow>
+          <MetaRow icon={MapPin}>{details.location}</MetaRow>
           <MetaRow icon={Mail}>
             <a
               href={`mailto:${SITE_CONTACT.email}`}
@@ -99,7 +61,7 @@ export function ProfileHero({ hero }: ProfileHeroProps) {
         </ul>
 
         <ul className="flex flex-col gap-3 px-4 py-5 sm:px-5 sm:py-6">
-          <MetaRow glyph="♂">{hero.pronouns}</MetaRow>
+          <MetaRow glyph="♂">{details.pronouns}</MetaRow>
           <MetaRow icon={Phone}>
             <a
               href={SITE_CONTACT.phoneHref}

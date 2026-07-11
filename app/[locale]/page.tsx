@@ -1,4 +1,5 @@
-import { ProfileHero } from "@/components/hero-section";
+import { HeroSection } from "@/components/hero-section";
+import { ProfileDetails } from "@/components/profile-details";
 import { SiteMain } from "@/components/site-main";
 import { getDictionary, requireLocale, type LocaleParams } from "@/lib/i18n";
 
@@ -8,7 +9,8 @@ export default async function HomePage({ params }: LocaleParams) {
 
   return (
     <SiteMain>
-      <ProfileHero hero={home.hero} />
+      <HeroSection hero={home.hero} />
+      <ProfileDetails details={home.details} />
     </SiteMain>
   );
 }

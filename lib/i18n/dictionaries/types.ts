@@ -22,6 +22,8 @@ export type Dictionary = {
       name: string;
       role: string;
       avatarAlt: string;
+    };
+    details: {
       student: string;
       location: string;
       pronouns: string;

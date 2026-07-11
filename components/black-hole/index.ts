@@ -2,7 +2,7 @@
  * Public API — black-hole sim surface.
  *
  * Client: `BlackHole` + `overrides?: BlackHoleOverrides`
- * RSC: import `HeroBanner` / `ProfileHero` from `@/components/hero-section`
+ * RSC: import `HeroBanner` / `HeroSection` from `@/components/hero-section`
  */
 export { BlackHole, type BlackHoleProps } from "./black-hole";
 export type { BlackHoleOverrides } from "./config";

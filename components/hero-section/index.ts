@@ -1,8 +1,7 @@
 /**
- * Home hero section — profile header + WebGPU banner boundary.
+ * Home hero — portrait, banner, title + role.
  *
- * Public: `ProfileHero` (pages). Prefer this over importing leaves.
- * Internal: `HeroBanner` (Next dynamic shell around black-hole).
+ * Public: `HeroSection`. Internal: `HeroBanner` (Next dynamic shell).
  */
-export { ProfileHero, type ProfileHeroProps } from "./profile-hero";
+export { HeroSection, type HeroSectionProps } from "./hero";
 export { HeroBanner } from "./hero-banner";

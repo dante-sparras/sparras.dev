@@ -56,8 +56,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Black hole** (`@/components/black-hole`):
   - Public: `BlackHole` + `overrides?: BlackHoleOverrides` from `@/components/black-hole`
   - Private: `constants`, `mesh`, `config` (full bag internal), `shader/*` (noise · blackbody · stars · nebula · disk · march)
-- **Hero section** (`@/components/hero-section`): `ProfileHero` + RSC `HeroBanner` (dynamic shell around black-hole)
-- **Next SSR:** Server Components import `HeroBanner` / `ProfileHero` only. Never use `dynamic(..., { ssr: false })` inside RSCs (Next 16).
+- **Hero section** (`@/components/hero-section`): portrait + banner + name/role only (`HeroSection` / `HeroBanner`)
+- **Profile details** (`@/components/profile-details`): bio/contact facts under the hero — not part of hero chrome
+- **Next SSR:** Server Components import `HeroBanner` / `HeroSection` only. Never use `dynamic(..., { ssr: false })` inside RSCs (Next 16).
 - Never import `three` / R3F into Server Components. Site void hex via raw color path (`starBackgroundColor`).
 
 ## Theme
