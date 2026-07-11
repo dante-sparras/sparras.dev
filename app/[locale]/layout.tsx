@@ -28,7 +28,12 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <div className="flex min-h-svh flex-1 flex-col">
       <Navbar locale={locale} />
-      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      {/* Content column: max-w-3xl, side borders, horizontal padding (aligns with navbar). */}
+      <div className="flex min-h-0 flex-1 flex-col px-6">
+        <main className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col border-x border-border">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
