@@ -1,21 +1,21 @@
-import { siteProfile } from "@/lib/site/profile";
-
 export type WeatherSnapshot = {
   temperatureC: number;
 };
 
-/**
- * Current temperature in Norrköping via Open-Meteo (no API key).
- * Fails soft — callers hide the weather row when null.
- */
+/** Norrköping (Open-Meteo, no API key). Soft-fail → hide weather row. */
+const NORRKOPING = {
+  latitude: 58.5877,
+  longitude: 16.1924,
+  timezone: "Europe/Stockholm",
+} as const;
+
 export async function getNorrkopingWeather(): Promise<WeatherSnapshot | null> {
   try {
-    const { latitude, longitude } = siteProfile.weather;
     const url = new URL("https://api.open-meteo.com/v1/forecast");
-    url.searchParams.set("latitude", String(latitude));
-    url.searchParams.set("longitude", String(longitude));
+    url.searchParams.set("latitude", String(NORRKOPING.latitude));
+    url.searchParams.set("longitude", String(NORRKOPING.longitude));
     url.searchParams.set("current", "temperature_2m");
-    url.searchParams.set("timezone", "Europe/Stockholm");
+    url.searchParams.set("timezone", NORRKOPING.timezone);
 
     const res = await fetch(url, {
       next: { revalidate: 1800 },
