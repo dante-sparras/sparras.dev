@@ -1,32 +1,42 @@
 # sparras.dev
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Personal site for **Dante Sparrås** — Next.js App Router, bilingual (EN/SV), dark/light theme, WebGPU black hole banner.
 
-## Getting Started
+## Stack
 
-First, run the development server:
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS v4** + **shadcn** (`base-sera` / Base UI)
+- **next-themes**, **Lucide**, **Three.js WebGPU** (black hole)
+- **Bun**, **Oxfmt** / **Oxlint**, **Lefthook**
+
+## Develop
 
 ```bash
+bun install
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Locale is chosen from `Accept-Language` (`en` / `sv`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+bun run check   # format + lint
+bun run build   # production build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Layout
 
-## Learn More
+| Path                     | Role                                     |
+| ------------------------ | ---------------------------------------- |
+| `app/`                   | Routes, layouts, `globals.css`           |
+| `components/navbar/`     | Header, menu, theme + language switchers |
+| `components/black-hole/` | WebGPU black hole island                 |
+| `components/providers/`  | Theme provider                           |
+| `components/ui/`         | shadcn primitives                        |
+| `lib/i18n/`              | Locales, dictionaries, metadata          |
+| `lib/weather/`           | Open-Meteo (Norrköping)                  |
+| `lib/utils.ts`           | Shared pure helpers (`cn`, hex, …)       |
+| `public/images/`         | Static media (e.g. portrait)             |
 
-To learn more about Next.js, take a look at the following resources:
+## Conventions
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See **`AGENTS.md`** for agent/editor rules (navbar chrome, fonts, i18n, hooks).
