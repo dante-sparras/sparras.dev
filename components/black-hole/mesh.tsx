@@ -8,7 +8,6 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three/webgpu";
 import { uniform } from "three/tsl";
-import { parseHexRgba } from "@/lib/utils";
 import type { BlackHoleConfig } from "./config";
 import { createBlackHoleShader } from "./shader";
 
@@ -76,15 +75,27 @@ const COLOR4 = [
 
 const tmp3 = new THREE.Vector3();
 const tmp4 = new THREE.Vector4();
+const tmpColor = new THREE.Color();
 
+/** Theme colors are `#rrggbb` (optional `#rrggbbaa`). Uses Three's parser. */
 function hexToVec3(hex: string, out = new THREE.Vector3()) {
-  const { r, g, b } = parseHexRgba(hex);
-  return out.set(r, g, b);
+  tmpColor.set(hex);
+  return out.set(tmpColor.r, tmpColor.g, tmpColor.b);
 }
 
 function hexToVec4(hex: string, out = new THREE.Vector4()) {
-  const { r, g, b, a } = parseHexRgba(hex);
-  return out.set(r, g, b, a);
+  const h = hex.trim().replace(/^#/, "");
+  if (h.length === 8) {
+    tmpColor.set(`#${h.slice(0, 6)}`);
+    return out.set(
+      tmpColor.r,
+      tmpColor.g,
+      tmpColor.b,
+      parseInt(h.slice(6, 8), 16) / 255,
+    );
+  }
+  tmpColor.set(hex.startsWith("#") ? hex : `#${h}`);
+  return out.set(tmpColor.r, tmpColor.g, tmpColor.b, 1);
 }
 
 function createUniforms(config: BlackHoleConfig): BlackHoleUniforms {

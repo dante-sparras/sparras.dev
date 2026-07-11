@@ -18,7 +18,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Preset:** **`base-sera`** (Base UI + **sera** style), **neutral** base, **RSC** + Tailwind v4 (`components.json`)
 - **Primitives:** `@base-ui/react` — use **`render`** prop (not Radix `asChild`) on triggers
 - **Add components:** `bunx shadcn@latest add <name>` → `@/components/ui`
-- **Utils:** `cn()`, hex helpers in `@/lib/utils`
+- **Utils:** `cn()` in `@/lib/utils` (shadcn class merge only)
 - **Icons:** Lucide only (no SVG icon assets in `public/`)
 - **Fonts:** Geist (`--font-geist`) + Geist Mono + Geist Pixel in `app/layout.tsx`; navbar logo uses `font-pixel`; typeset uses `app/typeset.css` + `.typeset-docs`
 - **Page chrome:** `components/site-main.tsx` for the max-w-3xl bordered column
