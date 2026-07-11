@@ -25,7 +25,6 @@ export type Dictionary = {
       student: string;
       location: string;
       pronouns: string;
-      weatherPlace: string;
     };
   };
   nav: {

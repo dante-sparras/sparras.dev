@@ -22,7 +22,6 @@ export const dictionary = {
       student: "Student at YH Akademin",
       location: "Norrköping, Sweden",
       pronouns: "he/him",
-      weatherPlace: "Norrköping",
     },
   },
   nav: {

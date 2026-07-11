@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, Link2, Mail, MapPin, Phone, Sun } from "lucide-react";
+import { GraduationCap, Link2, Mail, MapPin, Phone } from "lucide-react";
 import { BlackHoleBanner } from "@/components/black-hole";
 import { SITE_CONTACT } from "@/lib/constants";
 import type { Dictionary } from "@/lib/i18n";
@@ -9,8 +9,6 @@ type HeroCopy = Dictionary["home"]["hero"];
 
 export type ProfileHeroProps = {
   hero: HeroCopy;
-  /** Whole °C; omit weather row when null */
-  temperatureC: number | null;
 };
 
 function MetaRow({
@@ -46,10 +44,7 @@ function MetaRow({
  * - Banner zone: WebGPU black hole (`<BlackHoleBanner />`)
  * - Title + role pinned to the bottom with tight borders
  */
-export function ProfileHero({ hero, temperatureC }: ProfileHeroProps) {
-  const weatherLabel =
-    temperatureC === null ? null : `${temperatureC}°C (${hero.weatherPlace})`;
-
+export function ProfileHero({ hero }: ProfileHeroProps) {
   return (
     <section className="w-full" aria-label={hero.name}>
       <div className="flex items-stretch border-b border-border">
@@ -84,7 +79,6 @@ export function ProfileHero({ hero, temperatureC }: ProfileHeroProps) {
         <ul className="flex flex-col gap-3 border-b border-border px-4 py-5 sm:border-r sm:border-b-0 sm:px-5 sm:py-6">
           <MetaRow icon={GraduationCap}>{hero.student}</MetaRow>
           <MetaRow icon={MapPin}>{hero.location}</MetaRow>
-          {weatherLabel ? <MetaRow icon={Sun}>{weatherLabel}</MetaRow> : null}
           <MetaRow icon={Mail}>
             <a
               href={`mailto:${SITE_CONTACT.email}`}
