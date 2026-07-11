@@ -51,17 +51,27 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **How popular repos usually do it:**
 
-1. **CI (GitHub Actions)** — source of truth on every push/PR
-2. **Optional local git hooks** — plain shell files in a tracked folder (`githooks/`), enabled with `git config core.hooksPath githooks`
+1. **CI (GitHub Actions)** — hard guarantee on every push/PR (cannot skip without admin rights)
+2. **Local git hooks** — convenience; always optional (`--no-verify`)
 3. Or **no local hooks** and rely on CI only
 
 This project uses (1) + (2):
 
-| Layer                                    | What runs                                      |
-| ---------------------------------------- | ---------------------------------------------- |
-| Local pre-commit (`githooks/pre-commit`) | `lint-staged` (oxfmt staged) → `bun run check` |
-| Local pre-push (`githooks/pre-push`)     | `bun run build`                                |
-| CI (`.github/workflows/ci.yml`)          | `bun run check` + `bun run build`              |
+| Layer                                    | What runs                         | Guarantee                      |
+| ---------------------------------------- | --------------------------------- | ------------------------------ |
+| **CI** (`.github/workflows/ci.yml`)      | `bun run check` + `bun run build` | **Hard** — blocks merge if red |
+| Local pre-commit (`githooks/pre-commit`) | staged oxfmt → full check         | Soft — skippable               |
+| Local pre-push (`githooks/pre-push`)     | build                             | Soft — skippable               |
 
-After clone: `bun install` runs `prepare` → `git config core.hooksPath githooks`.  
-Skip local hooks: `git commit --no-verify` / `git push --no-verify`.
+### Making sure `core.hooksPath` is set
+
+`prepare` alone is **not** enough (`--ignore-scripts`, partial clones, etc.).  
+So **`hooks:enable`** re-applies `git config core.hooksPath githooks` whenever you run common scripts:
+
+- `bun install` → `prepare` → `hooks:enable`
+- `bun run dev` / `check` / `build` / `precommit` / `prepush` → all call `hooks:enable` first
+
+So the first normal `bun run dev` or `bun run check` wires hooks even if `prepare` never ran.
+
+Skip local hooks: `git commit --no-verify` / `git push --no-verify`.  
+You still cannot skip **CI** without changing branch protection.

@@ -3,18 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "hooks:enable": "git config core.hooksPath githooks",
+    "prepare": "bun run hooks:enable || true",
+    "dev": "bun run hooks:enable && next dev",
+    "build": "bun run hooks:enable && next build",
     "start": "next start",
     "lint": "oxlint .",
     "lint:fix": "oxlint . --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "typecheck": "tsc --noEmit",
-    "check": "oxfmt --check && oxlint . && tsc --noEmit",
-    "precommit": "lint-staged && bun run check",
-    "prepush": "bun run build",
-    "prepare": "git config core.hooksPath githooks || true"
+    "check": "bun run hooks:enable && oxfmt --check && oxlint . && tsc --noEmit",
+    "precommit": "bun run hooks:enable && lint-staged && oxfmt --check && oxlint . && tsc --noEmit",
+    "prepush": "bun run hooks:enable && next build"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
