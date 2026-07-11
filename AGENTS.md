@@ -42,10 +42,28 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Mobile:** `navbar-menu.tsx` — shadcn **Sheet** (`md:hidden`)
 - **Feature folders:** colocate (e.g. `components/black-hole/`, `components/navbar/`, `components/providers/`)
 
+## Three.js / WebGPU (React Three Fiber)
+
+- **Stack:** `three` (WebGPU + TSL) + `@react-three/fiber` + `@react-three/drei`
+- **Shared kit** (`@/components/three` — 4 files):
+  - `WebGPUCanvas` — official R3F async `WebGPURenderer(props)` + `init()`, `extend(THREE)`, error boundary, NoToneMapping/LinearSRGB
+  - `Bloom` — TSL RenderPipeline bloom (re-entrancy / depth guard)
+  - `CameraLookAt` + `IdleOrbit` — in `camera.tsx` (aim + OrbitControls idle spin)
+- **Feature scenes** live under `components/<feature>/` as R3F children of `WebGPUCanvas`
+- **Black hole** (`@/components/black-hole`):
+  - Public: `BlackHole` / `BlackHoleBanner` + `overrides?: BlackHoleOverrides` (small stable knob set)
+  - Private: `constants`, `mesh`, `config` (full bag internal), `shader/*` (noise · blackbody · stars · nebula · disk · march)
+- **Next SSR:** Server Components import `BlackHoleBanner` only. Never use `dynamic(..., { ssr: false })` inside RSCs (Next 16).
+- Never import `three` / R3F into Server Components. Site void hex via raw color path (`starBackgroundColor`).
+
 ## Theme
 
-- **`next-themes`** via `components/providers/theme-provider.tsx` — `attribute="class"`, **`defaultTheme="system"`**, `enableSystem`
+- **Provider:** `components/providers/theme-provider.tsx` — class strategy on `<html>`, system / light / dark
+- **FOUC script:** `THEME_INIT_SCRIPT` in `app/layout.tsx` `<head>` (server-rendered — not a client-component script)
 - **Switcher:** system / light / dark (copy under `dictionary.theme`)
+- **React:** `useTheme()` from `@/components/providers` (`resolvedTheme` + `themeModeFromResolved`)
+- **Non-React / tokens:** `@/lib/theme` — `readThemeMode`, `readCssHexToken`, `readThemeHexTokens`
+- Do **not** reintroduce `next-themes` (React 19 / Next 16 client `<script>` warning)
 
 ## Quality checks (no Lefthook / Husky / custom install scripts)
 

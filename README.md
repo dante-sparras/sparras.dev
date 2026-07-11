@@ -6,7 +6,7 @@ Personal site for **Dante Sparrås** — Next.js App Router, bilingual (EN/SV), 
 
 - **Next.js 16** (App Router) + **React 19** + **TypeScript**
 - **Tailwind CSS v4** + **shadcn** (`base-sera` / Base UI)
-- **next-themes**, **Lucide**, **Three.js WebGPU** (black hole)
+- **class theme provider**, **Lucide**, **R3F + Three WebGPU** (black hole)
 - **Bun**, **Oxfmt** / **Oxlint**, **lint-staged** + plain `githooks/` + GitHub Actions CI
 
 ## Develop
@@ -29,7 +29,8 @@ bun run build   # production build
 | ------------------------ | -------------------------------------------------------------- |
 | `app/`                   | Routes, layouts, `globals.css`                                 |
 | `components/navbar/`     | Header, menu, theme + language switchers                       |
-| `components/black-hole/` | WebGPU black hole island                                       |
+| `components/three/`      | Shared R3F + WebGPU kit (`WebGPUCanvas`, bloom, camera/orbit)  |
+| `components/black-hole/` | Profile black hole (feature scene on the shared kit)           |
 | `components/providers/`  | Theme provider                                                 |
 | `components/ui/`         | shadcn primitives                                              |
 | `lib/i18n/`              | Locales, dictionaries, metadata (`@/lib/i18n` barrel)          |

@@ -1,8 +1,8 @@
 "use client";
 
-import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
+import { useTheme, type ThemeChoice } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,8 +12,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getDictionary, type Locale } from "@/lib/i18n";
 
-const themeChoices = ["system", "light", "dark"] as const;
-type ThemeChoice = (typeof themeChoices)[number];
+const themeChoices = [
+  "system",
+  "light",
+  "dark",
+] as const satisfies readonly ThemeChoice[];
 
 const icons: Record<ThemeChoice, typeof Sun> = {
   system: Monitor,
@@ -62,9 +65,16 @@ export function ThemeSwitcher({ locale, className }: ThemeSwitcherProps) {
     setMounted(true);
   }, []);
 
+  const handleThemeSelect = useCallback(
+    (choice: ThemeChoice) => {
+      setTheme(choice);
+    },
+    [setTheme],
+  );
+
   const active: ThemeChoice =
     theme === "light" || theme === "dark" || theme === "system"
-      ? theme
+      ? (theme as ThemeChoice)
       : "system";
 
   const TriggerIcon = useMemo(() => {
@@ -105,7 +115,7 @@ export function ThemeSwitcher({ locale, className }: ThemeSwitcherProps) {
             choice={choice}
             label={choiceLabels[choice]}
             active={active === choice}
-            onSelect={setTheme}
+            onSelect={handleThemeSelect}
           />
         ))}
       </DropdownMenuContent>

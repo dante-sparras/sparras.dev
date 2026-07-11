@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import { GraduationCap, Link2, Mail, MapPin, Phone, Sun } from "lucide-react";
-import { BlackHole } from "@/components/black-hole";
+import { BlackHoleBanner } from "@/components/black-hole";
 import { SITE_CONTACT } from "@/lib/constants";
 import type { Dictionary } from "@/lib/i18n";
 
@@ -43,7 +43,7 @@ function MetaRow({
  * Profile header:
  * - Avatar flush in left cell
  * - Right column matches avatar height
- * - Banner zone: WebGPU black hole (`<BlackHole />`)
+ * - Banner zone: WebGPU black hole (`<BlackHoleBanner />`)
  * - Title + role pinned to the bottom with tight borders
  */
 export function ProfileHero({ hero, temperatureC }: ProfileHeroProps) {
@@ -67,7 +67,7 @@ export function ProfileHero({ hero, temperatureC }: ProfileHeroProps) {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <BlackHole />
+          <BlackHoleBanner />
 
           <div className="shrink-0 border-t border-border p-0">
             <h1 className="border-b border-border px-2 py-0.5 text-2xl font-semibold tracking-tight leading-none sm:px-2.5 sm:text-3xl">

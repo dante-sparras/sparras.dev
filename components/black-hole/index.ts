@@ -1,13 +1,10 @@
+/**
+ * Public API — deep module surface.
+ *
+ * RSC:  `BlackHoleBanner`
+ * Client: `BlackHole`
+ * Tweaks: `overrides?: BlackHoleOverrides` (not the full sim bag)
+ */
 export { BlackHole, type BlackHoleProps } from "./black-hole";
-export { defaultBlackHoleConfig, defaultCamera } from "./defaults";
-export type {
-  BlackHoleCameraConfig,
-  BlackHoleColorConfig,
-  BlackHoleConfig,
-  BlackHoleConfigPatch,
-  BlackHoleSimConfig,
-  BlackHoleUniforms,
-  HexColor,
-} from "./types";
-export { getThemeBlackHolePatch, readTokenHex } from "./theme";
-export { BlackHoleSimulation } from "./simulation";
+export { BlackHoleBanner } from "./banner";
+export type { BlackHoleOverrides } from "./config";

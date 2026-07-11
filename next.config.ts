@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  // three/webgpu + addons used by the black hole island
+  // three + R3F WebGPU (`@/components/three`) + feature scenes
   transpilePackages: ["three"],
 };
 
