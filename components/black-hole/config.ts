@@ -5,7 +5,7 @@
  * Full `BlackHoleConfig` is internal — used by mesh / uniforms / theme.
  * Theme tokens supply **colors only** — never non-color knobs.
  */
-import { readThemeHexTokens, type ThemeMode } from "@/lib/theme";
+import type { ThemeMode, ThemeSurfaceTokens } from "@/lib/theme";
 
 // ── Internal full config ────────────────────────────────────────────────────
 
@@ -82,10 +82,11 @@ export type BlackHoleOverrides = Partial<
 
 export type BuildBlackHoleConfigOptions = {
   overrides?: BlackHoleOverrides;
-  /** Map CSS theme tokens → colors. */
+  /** Map CSS surface tokens → sim colors (requires `mode` + `tokens`). */
   themeColors?: boolean;
-  root?: Element | null;
   mode?: ThemeMode;
+  /** From `useSurfaceTokens()` / `readSurfaceTokens()` — no DOM reads here. */
+  tokens?: ThemeSurfaceTokens | null;
 };
 
 // ── Defaults ────────────────────────────────────────────────────────────────
@@ -151,8 +152,11 @@ type ThemeColors = Pick<
   | "diskTint"
 >;
 
-function colorsForTheme(mode: ThemeMode, root: Element): ThemeColors {
-  const { background, muted, border, foreground } = readThemeHexTokens(root);
+function colorsForTheme(
+  mode: ThemeMode,
+  tokens: ThemeSurfaceTokens,
+): ThemeColors {
+  const { background, muted, border, foreground } = tokens;
 
   if (mode === "light") {
     return {
@@ -175,23 +179,18 @@ function colorsForTheme(mode: ThemeMode, root: Element): ThemeColors {
 
 /**
  * Defaults + optional public overrides + optional theme colors.
- * Themed colors require an explicit `mode` (from useTheme) — no DOM class fallback.
- * Never put `document` in a default parameter (runs even when omitted → SSR crash).
+ * Themed colors need `mode` + surface `tokens` (read outside this module).
  */
 export function buildBlackHoleConfig(
   options: BuildBlackHoleConfigOptions = {},
 ): BlackHoleConfig {
-  const { overrides, themeColors = false, root, mode } = options;
+  const { overrides, themeColors = false, mode, tokens } = options;
   const base: BlackHoleConfig = { ...defaultBlackHoleConfig, ...overrides };
-  if (!themeColors || !mode) return base;
-
-  const scope =
-    root ?? (typeof document !== "undefined" ? document.documentElement : null);
-  if (!scope) return base;
+  if (!themeColors || !mode || !tokens) return base;
 
   return {
     ...base,
-    ...colorsForTheme(mode, scope),
+    ...colorsForTheme(mode, tokens),
     diskInkMode: mode === "light" ? 1 : 0,
   };
 }

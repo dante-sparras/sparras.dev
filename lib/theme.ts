@@ -1,54 +1,76 @@
 /**
- * Theme helpers for class-based theme (`dark` / `light` on <html>).
+ * CSS design tokens from the live document (`:root` / `.dark`).
  *
- * React: prefer `useTheme().resolvedTheme`.
- * Non-React / canvas: `readCssHexToken` / `readThemeHexTokens`.
+ * React: `useTheme()` for mode; `useCssTokens()` when you need reactive colors.
+ * Imperative (canvas / R3F): `readCssTokens()` once after mount.
  */
-import { normalizeHex } from "@/lib/utils";
 
 export type ThemeMode = "light" | "dark";
 
-function rootOf(root?: Element | null): Element {
-  if (root) return root;
-  if (typeof document !== "undefined") return document.documentElement;
-  throw new Error("theme helpers need a DOM root (client-only)");
+/** Semantic color vars we expose outside CSS (canvas, hooks, etc.). */
+export const THEME_COLOR_TOKENS = [
+  "background",
+  "foreground",
+  "muted",
+  "muted-foreground",
+  "border",
+  "primary",
+  "primary-foreground",
+  "secondary",
+  "secondary-foreground",
+  "accent",
+  "accent-foreground",
+  "card",
+  "card-foreground",
+  "destructive",
+  "ring",
+] as const;
+
+export type ThemeColorName = (typeof THEME_COLOR_TOKENS)[number];
+
+export type ThemeColorTokens = Record<ThemeColorName, string>;
+
+/** Surface subset used by WebGPU / themed canvases. */
+export type ThemeSurfaceTokens = Pick<
+  ThemeColorTokens,
+  "background" | "foreground" | "muted" | "border"
+>;
+
+const SURFACE_TOKENS = [
+  "background",
+  "foreground",
+  "muted",
+  "border",
+] as const satisfies readonly ThemeColorName[];
+
+/**
+ * Read CSS custom properties with a single `getComputedStyle` pass.
+ *
+ * @example
+ * const { primary, background } = readCssTokens();
+ * // or: readCssTokens(document.documentElement, ["primary", "ring"])
+ */
+export function readCssTokens(
+  root: Element = document.documentElement,
+  names: readonly ThemeColorName[] = THEME_COLOR_TOKENS,
+): Partial<ThemeColorTokens> & Record<string, string> {
+  const styles = getComputedStyle(root);
+  const tokens: Record<string, string> = {};
+  for (const name of names) {
+    tokens[name] = styles.getPropertyValue(`--${name}`).trim();
+  }
+  return tokens;
 }
 
-/** Read a CSS variable as hex (`#rrggbb` / `#rrggbbaa`). */
-export function readCssHexToken(
-  varName: string,
-  fallback: string,
-  root?: Element | null,
-): string {
-  const name = varName.startsWith("--") ? varName : `--${varName}`;
-  const raw = getComputedStyle(rootOf(root)).getPropertyValue(name).trim();
-  return normalizeHex(raw) ?? normalizeHex(fallback) ?? fallback;
-}
-
-/** Common surface tokens used for themed WebGPU / canvas colors. */
-export type ThemeHexTokens = {
-  background: string;
-  foreground: string;
-  muted: string;
-  border: string;
-};
-
-const FALLBACKS: ThemeHexTokens = {
-  background: "#0a0a0a",
-  foreground: "#fafafa",
-  muted: "#262626",
-  border: "#404040",
-};
-
-export function readThemeHexTokens(
-  root?: Element | null,
-  fallbacks: ThemeHexTokens = FALLBACKS,
-): ThemeHexTokens {
-  const scope = rootOf(root);
+/** Surface tokens only (background / foreground / muted / border). */
+export function readSurfaceTokens(
+  root: Element = document.documentElement,
+): ThemeSurfaceTokens {
+  const t = readCssTokens(root, SURFACE_TOKENS);
   return {
-    background: readCssHexToken("--background", fallbacks.background, scope),
-    foreground: readCssHexToken("--foreground", fallbacks.foreground, scope),
-    muted: readCssHexToken("--muted", fallbacks.muted, scope),
-    border: readCssHexToken("--border", fallbacks.border, scope),
+    background: t.background || "#0a0a0a",
+    foreground: t.foreground || "#fafafa",
+    muted: t.muted || "#262626",
+    border: t.border || "#404040",
   };
 }

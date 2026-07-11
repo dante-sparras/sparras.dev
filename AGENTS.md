@@ -65,7 +65,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **FOUC script:** `THEME_INIT_SCRIPT` in `app/layout.tsx` `<head>` (server-rendered — not a client-component script)
 - **Switcher:** system / light / dark; labels passed in from server Navbar (not `getDictionary` on the client)
 - **React:** `useTheme()` from `@/components/providers` (`resolvedTheme`)
-- **Non-React / tokens:** `@/lib/theme` — `readCssHexToken`, `readThemeHexTokens` (WebGPU/canvas colors; mode comes from `useTheme`, not DOM class fallbacks)
+- **CSS tokens:** `@/lib/theme` — `readCssTokens` / `readSurfaceTokens` (one `getComputedStyle` pass); React: `useCssTokens` / `useSurfaceTokens` from `@/hooks` (re-read on theme change)
+- **WebGPU colors:** pass surface tokens into feature config (e.g. black hole) — config modules do not read the DOM
 - Do **not** reintroduce `next-themes` (React 19 / Next 16 client `<script>` warning)
 
 ## Quality checks (no Lefthook / Husky / custom install scripts)
