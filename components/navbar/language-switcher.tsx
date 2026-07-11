@@ -11,9 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { type Locale, locales } from "@/lib/i18n/config";
-import { getDictionary } from "@/lib/i18n/get-dictionary";
-import { localizedPath } from "@/lib/i18n/paths";
+import { getDictionary, locales, localizedPath, type Locale } from "@/lib/i18n";
 
 type LanguageSwitcherProps = {
   locale: Locale;

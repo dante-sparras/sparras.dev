@@ -10,9 +10,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Locale } from "@/lib/i18n/config";
-import { getDictionary } from "@/lib/i18n/get-dictionary";
-import { themeChoices, type ThemeChoice } from "@/lib/theme/choices";
+import { getDictionary, type Locale } from "@/lib/i18n";
+
+const themeChoices = ["system", "light", "dark"] as const;
+type ThemeChoice = (typeof themeChoices)[number];
 
 const icons: Record<ThemeChoice, typeof Sun> = {
   system: Monitor,

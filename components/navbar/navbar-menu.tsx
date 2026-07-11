@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import type { Locale } from "@/lib/i18n/config";
-import { getDictionary } from "@/lib/i18n/get-dictionary";
-import { navLinkIds, navPath } from "@/lib/nav/config";
+import { getDictionary, type Locale } from "@/lib/i18n";
+import { navLinkIds, navPath } from "./config";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,

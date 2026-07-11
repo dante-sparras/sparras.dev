@@ -1,10 +1,9 @@
 import Link from "next/link";
-import type { Locale } from "@/lib/i18n/config";
-import { getDictionary } from "@/lib/i18n/get-dictionary";
-import { navLinkIds, navPath } from "@/lib/nav/config";
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { NavbarMenu } from "@/components/navbar-menu";
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { getDictionary, type Locale } from "@/lib/i18n";
+import { navLinkIds, navPath } from "./config";
+import { LanguageSwitcher } from "./language-switcher";
+import { NavbarMenu } from "./navbar-menu";
+import { ThemeSwitcher } from "./theme-switcher";
 
 const navLinkClass =
   "text-muted-foreground hover:text-foreground text-sm transition-colors";
@@ -21,7 +20,7 @@ export function Navbar({ locale }: NavbarProps) {
       <div className="mx-auto flex h-14 max-w-3xl items-center border-x border-border px-3 sm:px-4">
         <Link
           href={`/${locale}`}
-          className="flex h-14 items-center font-pixel text-2xl leading-none tracking-normal text-foreground shrink-0 sm:text-3xl"
+          className="flex h-14 shrink-0 items-center font-pixel text-2xl leading-none tracking-normal text-foreground sm:text-3xl"
           aria-label={nav.logoAria}
         >
           {nav.logo}
@@ -29,7 +28,7 @@ export function Navbar({ locale }: NavbarProps) {
 
         <div className="ml-auto flex h-14 min-w-0 items-center gap-2 self-stretch sm:gap-3">
           <nav
-            className="hidden h-full items-center gap-4 lg:gap-5 md:flex"
+            className="hidden h-full items-center gap-4 md:flex lg:gap-5"
             aria-label={nav.aria}
           >
             {navLinkIds.map((id) => (
