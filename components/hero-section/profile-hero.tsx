@@ -1,9 +1,9 @@
 import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import { GraduationCap, Link2, Mail, MapPin, Phone } from "lucide-react";
-import { HeroBanner } from "@/components/hero-banner";
 import { SITE_CONTACT } from "@/lib/constants";
 import type { Dictionary } from "@/lib/i18n";
+import { HeroBanner } from "./hero-banner";
 
 type HeroCopy = Dictionary["home"]["hero"];
 

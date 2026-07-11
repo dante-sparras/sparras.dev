@@ -1,4 +1,4 @@
-import { ProfileHero } from "@/components/profile-hero";
+import { ProfileHero } from "@/components/hero-section";
 import { SiteMain } from "@/components/site-main";
 import { getDictionary, requireLocale, type LocaleParams } from "@/lib/i18n";
 

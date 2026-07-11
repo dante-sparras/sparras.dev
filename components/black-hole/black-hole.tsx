@@ -7,7 +7,7 @@
  * <BlackHole className="h-40 w-full" />
  * <BlackHole overrides={{ diskBrightness: 6, bloomStrength: 0.7 }} />
  *
- * From Server Components use `HeroBanner` in `@/components/hero-banner`.
+ * From Server Components use `HeroBanner` via `@/components/hero-section`.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
