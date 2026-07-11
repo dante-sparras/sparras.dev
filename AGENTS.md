@@ -54,9 +54,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `CameraLookAt` + `IdleOrbit` — in `camera.tsx` (aim + OrbitControls idle spin)
 - **Feature scenes** live under `components/<feature>/` as R3F children of `WebGPUCanvas`
 - **Black hole** (`@/components/black-hole`):
-  - Public: `BlackHole` + `overrides?: BlackHoleOverrides` from `@/components/black-hole`; RSC wrapper `BlackHoleBanner` from `@/components/black-hole-banner`
+  - Public: `BlackHole` + `overrides?: BlackHoleOverrides` from `@/components/black-hole`; RSC hero wrapper `HeroBanner` from `@/components/hero-banner`
   - Private: `constants`, `mesh`, `config` (full bag internal), `shader/*` (noise · blackbody · stars · nebula · disk · march)
-- **Next SSR:** Server Components import `BlackHoleBanner` only. Never use `dynamic(..., { ssr: false })` inside RSCs (Next 16).
+- **Next SSR:** Server Components import `HeroBanner` only. Never use `dynamic(..., { ssr: false })` inside RSCs (Next 16).
 - Never import `three` / R3F into Server Components. Site void hex via raw color path (`starBackgroundColor`).
 
 ## Theme
