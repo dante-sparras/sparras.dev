@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+/** Menu order: system first, then light / dark. */
 const themeChoices = [
   "system",
   "light",
@@ -76,18 +77,13 @@ export function ThemeSwitcher({ labels, className }: ThemeSwitcherProps) {
     [setTheme],
   );
 
-  const active: ThemeChoice =
-    theme === "light" || theme === "dark" || theme === "system"
-      ? (theme as ThemeChoice)
-      : "system";
-
   const TriggerIcon = useMemo(() => {
     if (!mounted) return Monitor;
-    if (active === "system") {
+    if (theme === "system") {
       return resolvedTheme === "dark" ? Moon : Sun;
     }
-    return icons[active];
-  }, [active, mounted, resolvedTheme]);
+    return icons[theme];
+  }, [theme, mounted, resolvedTheme]);
 
   const triggerRender = useMemo(
     () => (
@@ -118,7 +114,7 @@ export function ThemeSwitcher({ labels, className }: ThemeSwitcherProps) {
             key={choice}
             choice={choice}
             label={choiceLabels[choice]}
-            active={active === choice}
+            active={theme === choice}
             onSelect={handleThemeSelect}
           />
         ))}

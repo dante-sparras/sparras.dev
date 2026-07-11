@@ -3,5 +3,4 @@ export {
   useCssTokens,
   type CssTokenName,
   type CssTokens,
-  type ThemeMode,
 } from "./use-css-tokens";

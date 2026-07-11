@@ -4,6 +4,9 @@
  * Next-safe theme provider (class strategy on <html>).
  * Replaces next-themes to avoid React 19 / Next 16 client <script> warnings.
  * Blocking FOUC script lives in app/layout.tsx (THEME_INIT_SCRIPT).
+ *
+ * Owns all theme mode types — import `ThemeChoice` / `ResolvedTheme` from here
+ * (via `@/components/providers`), not from hooks.
  */
 import {
   createContext,
@@ -16,14 +19,24 @@ import {
 } from "react";
 import { THEME_STORAGE_KEY } from "./theme-script";
 
-export type ThemeChoice = "light" | "dark" | "system";
-export type ResolvedTheme = "light" | "dark";
+/** User-selectable themes (stored preference). */
+export const THEME_CHOICES = ["light", "dark", "system"] as const;
+export type ThemeChoice = (typeof THEME_CHOICES)[number];
+
+/** Applied document theme (`light` / `dark` class on <html>). */
+export type ResolvedTheme = Exclude<ThemeChoice, "system">;
+
+const THEME_CHOICE_SET: ReadonlySet<string> = new Set(THEME_CHOICES);
+
+function isThemeChoice(value: string): value is ThemeChoice {
+  return THEME_CHOICE_SET.has(value);
+}
 
 type ThemeContextValue = {
   theme: ThemeChoice;
   setTheme: (theme: ThemeChoice | ((prev: ThemeChoice) => ThemeChoice)) => void;
   resolvedTheme: ResolvedTheme | undefined;
-  themes: ThemeChoice[];
+  themes: readonly ThemeChoice[];
   systemTheme: ResolvedTheme | undefined;
 };
 
@@ -49,7 +62,7 @@ function readStored(defaultTheme: ThemeChoice): ThemeChoice {
   if (typeof window === "undefined") return defaultTheme;
   try {
     const raw = localStorage.getItem(THEME_STORAGE_KEY);
-    if (raw === "light" || raw === "dark" || raw === "system") return raw;
+    if (raw && isThemeChoice(raw)) return raw;
   } catch {
     /* ignore */
   }
@@ -152,7 +165,7 @@ export function ThemeProvider({
       theme,
       setTheme,
       resolvedTheme,
-      themes: ["light", "dark", "system"],
+      themes: THEME_CHOICES,
       systemTheme,
     }),
     [theme, setTheme, resolvedTheme, systemTheme],
@@ -171,7 +184,7 @@ export function useTheme(): ThemeContextValue {
       theme: "system",
       setTheme: () => {},
       resolvedTheme: undefined,
-      themes: ["light", "dark", "system"],
+      themes: THEME_CHOICES,
       systemTheme: undefined,
     };
   }

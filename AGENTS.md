@@ -64,8 +64,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Provider:** `components/providers/theme-provider.tsx` — class strategy on `<html>`, system / light / dark (`defaultTheme`, `disableTransitionOnChange` only — no next-themes parity props)
 - **FOUC script:** `THEME_INIT_SCRIPT` in `app/layout.tsx` `<head>` (server-rendered — not a client-component script)
 - **Switcher:** system / light / dark; labels passed in from server Navbar (not `getDictionary` on the client)
-- **React:** `useTheme()` from `@/components/providers` (`resolvedTheme`)
-- **CSS tokens:** `useCssTokens` / `CSS_TOKENS` in `@/hooks` — mirrors every custom property on `:root` / `.dark` in `app/globals.css` (one `getComputedStyle` pass; re-reads on theme change). Keep the list in sync when globals change.
+- **React:** `useTheme()` from `@/components/providers` — owns `ThemeChoice` / `ResolvedTheme` / `THEME_CHOICES`
+- **CSS tokens:** `useCssTokens` / `CSS_TOKENS` in `@/hooks` (tokens only — not mode types). Mirrors every custom property on `:root` / `.dark` in `app/globals.css`. Keep the list in sync when globals change.
 - **WebGPU colors:** pass full token bag into feature config (e.g. black hole picks what it needs) — config modules do not read the DOM
 - Do **not** reintroduce `next-themes` (React 19 / Next 16 client `<script>` warning)
 

@@ -5,7 +5,8 @@
  * Full `BlackHoleConfig` is internal — used by mesh / uniforms / theme.
  * Theme tokens supply **colors only** — never non-color knobs.
  */
-import type { CssTokens, ThemeMode } from "@/hooks";
+import type { ResolvedTheme } from "@/components/providers";
+import type { CssTokens } from "@/hooks";
 
 // ── Internal full config ────────────────────────────────────────────────────
 
@@ -84,7 +85,7 @@ export type BuildBlackHoleConfigOptions = {
   overrides?: BlackHoleOverrides;
   /** Map CSS design tokens → sim colors (requires `mode` + `tokens`). */
   themeColors?: boolean;
-  mode?: ThemeMode;
+  mode?: ResolvedTheme;
   /** From `useCssTokens()` / `readCssTokens()` — no DOM reads here. */
   tokens?: CssTokens | null;
 };
@@ -152,7 +153,7 @@ type ThemeColors = Pick<
   | "diskTint"
 >;
 
-function colorsForTheme(mode: ThemeMode, tokens: CssTokens): ThemeColors {
+function colorsForTheme(mode: ResolvedTheme, tokens: CssTokens): ThemeColors {
   const background = tokens.background || VOID;
   const foreground = tokens.foreground || "#fafafa";
   const muted = tokens.muted || "#262626";
