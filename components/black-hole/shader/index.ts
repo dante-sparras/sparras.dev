@@ -161,8 +161,9 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     const skyOk = float(1.0).sub(softCapture);
 
-    // Sky only if we clearly did not plunge
-    If(softCapture.lessThan(0.5), () => {
+    // Any non-captured ray may see the sky. (Requiring r>100 escape was flaky —
+    // many miss-rays never leave the march domain in 96 steps; stars never ran.)
+    If(captured.lessThan(0.5), () => {
       escaped.assign(1.0);
     });
 
@@ -224,11 +225,16 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     });
 
     If(uniforms.starsEnabled.greaterThan(0.5), () => {
-      // Stars authored as display values — light lift, no second heavy gamma
-      const s = max(starsCol, vec3(0.0)).mul(2.2).mul(skyW);
+      // starField is very dim (brightness×tint); lift for banner visibility.
+      // skyW already kills stars on the capture silhouette.
+      const starsLit = pow(max(starsCol, vec3(0.0)), vec3(0.9)).mul(6.0);
+      const s = starsLit.mul(skyW);
       rgb.addAssign(s);
       const sLuma = max(s.x, max(s.y, s.z));
-      outAlpha.assign(max(outAlpha, sLuma.mul(4.0).min(float(1.0))));
+      // Keep star pixels above Discard threshold
+      outAlpha.assign(
+        max(outAlpha, max(sLuma.mul(8.0), step(float(1.0e-5), sLuma).mul(0.2))),
+      );
     });
 
     // Capture: raise opacity with pure black behind the disk (does not erase disk).
@@ -237,8 +243,9 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     rgb.assign(clamp(rgb, float(0.0), float(1.12)));
     outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
 
-    // Empty sky → CSS bg-background.
-    Discard(outAlpha.lessThan(0.002));
+    // Empty sky → CSS bg-background (keep any lit star/disk pixel).
+    const luma = max(rgb.x, max(rgb.y, rgb.z));
+    Discard(outAlpha.lessThan(0.002).and(luma.lessThan(0.002)));
 
     return rgb.toVec4(outAlpha);
   })();
