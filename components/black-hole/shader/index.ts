@@ -3,9 +3,8 @@
 
 /**
  * Schwarzschild raymarch (dgreenheck port) — Three.js TSL.
- * Export: createBlackHoleShader(uniforms) → colorNode for MeshBasicNodeMaterial.
+ * Export: createBlackHoleShader(uniforms) → fragmentNode for MeshBasicNodeMaterial.
  */
-
 import type { BlackHoleUniforms } from "../mesh";
 import {
   vec2,
@@ -50,10 +49,12 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     const camPos = uniforms.cameraPosition;
     const camTarget = uniforms.cameraTarget;
+    // Match Three.js lookAt: right = cross(forward, up), camUp = cross(right, forward)
+    // (was cross(up, forward) → mirrored X / skewed silhouette)
     const camForward = normalize(camTarget.sub(camPos));
     const worldUp = vec3(0.0, 1.0, 0.0);
-    const camRight = normalize(cross(worldUp, camForward));
-    const camUp = cross(camForward, camRight);
+    const camRight = normalize(cross(camForward, worldUp));
+    const camUp = cross(camRight, camForward);
 
     const fov = float(1.0);
     const rayDir = normalize(
@@ -122,7 +123,12 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       const crossedPlane = prevPos.y.mul(rayPos.y).lessThan(0.0);
 
       If(crossedPlane.and(alpha.lessThan(0.99)), () => {
-        const tHit = prevPos.y.negate().div(rayPos.y.sub(prevPos.y));
+        // Segment parameter must stay in [0,1]
+        const tHit = clamp(
+          prevPos.y.negate().div(rayPos.y.sub(prevPos.y)),
+          float(0.0),
+          float(1.0),
+        );
         const hitPos = mix(prevPos, rayPos, tHit);
         const hitR = sqrt(hitPos.x.mul(hitPos.x).add(hitPos.z.mul(hitPos.z)));
         const inDisk = hitR.greaterThan(innerR).and(hitR.lessThan(outerR));
@@ -143,10 +149,11 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       });
     });
 
-    // Soft void edge + screen-space AA (fwidth) so thin rims aren't harsh 1px lines
+    // Soft horizon AA. Outer edge near photon sphere (1.5 rs) — wider ranges
+    // (e.g. 1.95 rs) visually swallowed the inner disk / photon ring.
     const aaW = max(fwidth(minR).mul(2.25), rs.mul(0.025));
     const softCapture = float(1.0)
-      .sub(smoothstep(rs.mul(0.88).sub(aaW), rs.mul(1.95).add(aaW), minR))
+      .sub(smoothstep(rs.mul(0.9).sub(aaW), rs.mul(1.55).add(aaW), minR))
       .toVar("softCapture");
     If(captured.greaterThan(0.5), () => {
       softCapture.assign(1.0);
@@ -154,7 +161,8 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     const skyOk = float(1.0).sub(softCapture);
 
-    If(softCapture.lessThan(0.88), () => {
+    // Sky only if we clearly did not plunge
+    If(softCapture.lessThan(0.5), () => {
       escaped.assign(1.0);
     });
 
@@ -170,42 +178,42 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       });
     });
 
-    // Mild peak compression — keep punch for the ring
-    const contentGamma = pow(max(color, vec3(0.0)), vec3(1.0 / 2.2)).toVar(
-      "contentGamma",
+    // Grade in *straight* (unassociated) color, then re-premultiply.
+    // Gamma on premultiplied `color` washed the disk and dulled highlights.
+    const diskA = alpha;
+    const safeA = max(diskA, float(1.0e-4));
+    const straight = color.div(safeA).toVar("straight");
+    const graded = pow(max(straight, vec3(0.0)), vec3(1.0 / 2.2)).toVar(
+      "graded",
     );
-    const contentTone = mix(
-      contentGamma,
-      contentGamma.div(contentGamma.add(vec3(0.75))),
-      float(0.32),
-    ).toVar("contentTone");
+    const toned = mix(
+      graded,
+      graded.div(graded.add(vec3(0.75))),
+      float(0.28),
+    ).toVar("toned");
 
-    // Photon sphere ~1.5 rs — soft AA band + slight visibility boost
+    // Photon sphere ~1.5 rs — slight boost on the critical curve
     const photonR = rs.mul(1.5);
     const distPhoton = minR.sub(photonR).abs();
     const photonAa = max(fwidth(minR).mul(2.5), rs.mul(0.05));
     const photonMask = float(1.0)
-      .sub(smoothstep(float(0.0), photonAa.add(rs.mul(0.14)), distPhoton))
+      .sub(smoothstep(float(0.0), photonAa.add(rs.mul(0.12)), distPhoton))
       .toVar("photonMask");
-    // Bring the rim back up a bit, then lightly compress pure white peaks only
-    contentTone.assign(mix(contentTone, contentTone.mul(1.22), photonMask));
-    contentTone.assign(
+    toned.assign(mix(toned, toned.mul(1.18), photonMask));
+    toned.assign(
       mix(
-        contentTone,
-        contentTone.div(contentTone.add(vec3(0.9))).mul(1.05),
-        photonMask.mul(0.35),
+        toned,
+        toned.div(toned.add(vec3(0.9))).mul(1.04),
+        photonMask.mul(0.3),
       ),
     );
 
-    // Composite: disk in front, void/stars only in the remaining transmittance.
-    // softCapture must NOT wipe disk — it only fills *behind* with pure black.
-    // (Previously mul(cover) + force-black erased lensed disk over the hole.)
-    const diskA = alpha;
+    // Re-premultiply disk; hole/stars only use remaining transmittance.
+    const diskPm = toned.mul(diskA).toVar("diskPm");
     const remaining = float(1.0).sub(diskA);
     const skyW = remaining.mul(skyOk);
 
-    // Disk PM contribution (tonemapped from march accumulation).
-    const rgb = contentTone.toVar("rgb");
+    const rgb = diskPm.toVar("rgb");
     const outAlpha = diskA.toVar("outAlpha");
 
     If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
@@ -216,21 +224,20 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     });
 
     If(uniforms.starsEnabled.greaterThan(0.5), () => {
-      const starsLit = pow(max(starsCol, vec3(0.0)), vec3(1.0 / 2.2)).mul(3.0);
-      const s = starsLit.mul(skyW);
+      // Stars authored as display values — light lift, no second heavy gamma
+      const s = max(starsCol, vec3(0.0)).mul(2.2).mul(skyW);
       rgb.addAssign(s);
       const sLuma = max(s.x, max(s.y, s.z));
-      outAlpha.assign(max(outAlpha, sLuma.mul(6.0).min(float(1.0))));
+      outAlpha.assign(max(outAlpha, sLuma.mul(4.0).min(float(1.0))));
     });
 
-    // Event horizon / capture: opaque pure black *behind* the disk only.
-    // outAlpha → 1 where captured; rgb stays (disk in front, black fills gaps).
+    // Capture: raise opacity with pure black behind the disk (does not erase disk).
     outAlpha.assign(max(outAlpha, softCapture));
 
     rgb.assign(clamp(rgb, float(0.0), float(1.12)));
     outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
 
-    // Empty sky (no disk, no hole, no stars) → CSS bg-background.
+    // Empty sky → CSS bg-background.
     Discard(outAlpha.lessThan(0.002));
 
     return rgb.toVec4(outAlpha);
