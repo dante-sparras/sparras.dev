@@ -49,6 +49,14 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
     const monoDisk = vec3(diskLum, diskLum, diskLum);
     diskColor.assign(mix(monoDisk, diskColor, uniforms.diskSaturation));
 
+    // Mild warm shift on the inner disk (hotter gas), keeps outer cooler tone
+    const warmInner = mix(
+      vec3(1.0, 0.92, 0.86),
+      vec3(1.0, 1.0, 1.0),
+      smoothstep(float(0.0), float(0.55), normR),
+    );
+    diskColor.mulAssign(warmInner);
+
     // Doppler beaming: D = 1/(1 - β·cos(θ)), brightness ∝ D³
     const rotationSign = sign(uniforms.diskRotationSpeed);
     const velocityDir = vec3(

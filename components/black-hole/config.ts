@@ -97,30 +97,30 @@ const VOID = "#050505";
 
 export const defaultBlackHoleConfig = {
   blackHoleMass: 0.4,
-  gravitationalLensing: 2.95,
-  dopplerStrength: 0.55,
+  gravitationalLensing: 3.05,
+  dopplerStrength: 0.62,
 
-  diskInnerRadius: 4.1,
+  diskInnerRadius: 4.0,
   diskOuterRadius: 14.5,
-  diskBrightness: 4.4,
-  diskTemperature: 50,
-  temperatureFalloff: 0.45,
-  diskEdgeSoftnessInner: 0.55,
-  diskEdgeSoftnessOuter: 0.75,
+  diskBrightness: 4.8,
+  diskTemperature: 52,
+  temperatureFalloff: 0.48,
+  diskEdgeSoftnessInner: 0.48,
+  diskEdgeSoftnessOuter: 0.72,
   diskSaturation: 1.0,
 
   turbulenceScale: 1.15,
   turbulenceStretch: 6.0,
-  turbulenceSharpness: 1.25,
+  turbulenceSharpness: 1.2,
   diskRotationSpeed: -8.7,
   turbulenceCycleTime: 5,
   turbulenceLacunarity: 2.1,
   turbulencePersistence: 0.55,
 
   starsEnabled: true,
-  starDensity: 0.1,
-  starSize: 3,
-  starBrightness: 0.1,
+  starDensity: 0.05,
+  starSize: 1.3,
+  starBrightness: 0.14,
 
   nebulaEnabled: false,
   nebula1Scale: 2,
@@ -132,13 +132,13 @@ export const defaultBlackHoleConfig = {
   bloomRadius: 0.32,
   bloomThreshold: 0.36,
 
-  stepSize: 0.75,
+  stepSize: 0.7,
   diskInkMode: 0,
 
   starBackgroundColor: VOID,
   nebula1Color: "#000000",
   nebula2Color: "#121212",
-  starTint: "#404040",
+  starTint: "#b0b4c0",
   diskTint: "#fafafa",
 } as const satisfies BlackHoleConfig;
 
