@@ -22,9 +22,10 @@ export type BlackHoleUniforms = {
   resolution: UniformNode;
   cameraPosition: UniformNode;
   cameraTarget: UniformNode;
+  /** Vertical FOV in degrees (matches PerspectiveCamera). */
+  cameraFov: UniformNode;
 } & Record<(typeof SCALARS)[number], UniformNode> &
   Record<(typeof BOOLS)[number], UniformNode> &
-  Record<(typeof COLOR3)[number], UniformNode> &
   Record<(typeof COLOR4)[number], UniformNode>;
 
 const SCALARS = [
@@ -63,10 +64,6 @@ const BOOLS = [
   "nebulaEnabled",
 ] as const satisfies readonly (keyof BlackHoleConfig)[];
 
-const COLOR3 = [
-  "starBackgroundColor",
-] as const satisfies readonly (keyof BlackHoleConfig)[];
-
 const COLOR4 = [
   "starTint",
   "diskTint",
@@ -74,20 +71,15 @@ const COLOR4 = [
   "nebula2Color",
 ] as const satisfies readonly (keyof BlackHoleConfig)[];
 
-const tmp3 = new THREE.Vector3();
 const tmp4 = new THREE.Vector4();
 const tmpColor = new THREE.Color();
 
 /**
  * CSS hex → RGB as *display* values (no sRGB→linear decode).
- *
- * The black-hole shader + WebGPUCanvas use a display-referred path
- * (manual γ on disk, LinearSRGB framebuffer). Default THREE.Color.set(hex)
- * would store ~0.0015 for #050505 and the canvas would read as near-black.
+ * Shader + WebGPUCanvas use a display-referred path.
  */
 function parseCssColor(hex: string): THREE.Color {
   const raw = hex.trim();
-  // Prefer explicit channels so unknown CSS never leaves a stale Color.
   if (/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(raw) || /^rgba?\(/i.test(raw)) {
     tmpColor.setStyle(
       raw.length === 9 && raw.startsWith("#") ? raw.slice(0, 7) : raw,
@@ -97,11 +89,6 @@ function parseCssColor(hex: string): THREE.Color {
     tmpColor.setRGB(5 / 255, 5 / 255, 5 / 255, THREE.LinearSRGBColorSpace);
   }
   return tmpColor;
-}
-
-function hexToVec3(hex: string, out = new THREE.Vector3()) {
-  const c = parseCssColor(hex);
-  return out.set(c.r, c.g, c.b);
 }
 
 function hexToVec4(hex: string, out = new THREE.Vector4()) {
@@ -125,11 +112,11 @@ function createUniforms(config: BlackHoleConfig): BlackHoleUniforms {
     resolution: uniform(new THREE.Vector2(1, 1)),
     cameraPosition: uniform(new THREE.Vector3()),
     cameraTarget: uniform(new THREE.Vector3()),
+    cameraFov: uniform(48),
   } as unknown as BlackHoleUniforms;
 
   for (const k of SCALARS) u[k] = uniform(config[k]);
   for (const k of BOOLS) u[k] = uniform(config[k] ? 1 : 0);
-  for (const k of COLOR3) u[k] = uniform(hexToVec3(config[k]));
   for (const k of COLOR4) u[k] = uniform(hexToVec4(config[k]));
   return u;
 }
@@ -137,7 +124,6 @@ function createUniforms(config: BlackHoleConfig): BlackHoleUniforms {
 function applyConfig(u: BlackHoleUniforms, config: BlackHoleConfig) {
   for (const k of SCALARS) u[k].value = config[k];
   for (const k of BOOLS) u[k].value = config[k] ? 1 : 0;
-  for (const k of COLOR3) u[k].value.copy(hexToVec3(config[k], tmp3));
   for (const k of COLOR4) u[k].value.copy(hexToVec4(config[k], tmp4));
 }
 
@@ -149,6 +135,12 @@ function syncCamera(
   u.cameraPosition.value.copy(camera.position);
   lookDir.set(0, 0, -1).applyQuaternion(camera.quaternion);
   u.cameraTarget.value.copy(camera.position).addScaledVector(lookDir, 10);
+  if (
+    "fov" in camera &&
+    typeof (camera as THREE.PerspectiveCamera).fov === "number"
+  ) {
+    u.cameraFov.value = (camera as THREE.PerspectiveCamera).fov;
+  }
 }
 
 // ── Mesh ────────────────────────────────────────────────────────────────────
