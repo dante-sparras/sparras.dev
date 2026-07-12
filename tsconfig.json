@@ -24,6 +24,7 @@
   },
   "include": [
     "next-env.d.ts",
+    "bun-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/*.d.ts",

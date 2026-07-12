@@ -13,6 +13,7 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "typecheck": "tsc --noEmit",
+    "test": "bun test tests",
     "check": "bun run hooks:enable && oxfmt --check && oxlint . && tsc --noEmit",
     "precommit": "bun run hooks:enable && lint-staged && oxfmt --check && oxlint . && tsc --noEmit",
     "prepush": "bun run hooks:enable && next build"
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bun": "^1.3.14",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

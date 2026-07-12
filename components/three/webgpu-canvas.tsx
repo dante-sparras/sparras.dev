@@ -132,6 +132,11 @@ export type WebGPUCanvasProps = Omit<CanvasProps, "gl" | "children"> & {
   fallback?: ReactNode;
   /** Extra flags merged into the WebGPURenderer constructor (e.g. antialias). */
   glProps?: GlInitProps;
+  /**
+   * R3F frameloop. Default `"always"` so idle auto-rotate / time-based sims
+   * keep animating. Pass `"demand"` for static scenes that call `invalidate`.
+   */
+  frameloop?: CanvasProps["frameloop"];
 };
 
 /** Full-bleed WebGPU R3F canvas. Feature scenes are pure children. */
@@ -143,6 +148,7 @@ export function WebGPUCanvas({
   dpr = DPR,
   camera = DEFAULT_CAMERA,
   glProps,
+  frameloop = "always",
   ...rest
 }: WebGPUCanvasProps) {
   const [failed, setFailed] = useState(false);
@@ -182,7 +188,7 @@ export function WebGPUCanvas({
         <Canvas
           dpr={dpr}
           camera={camera}
-          frameloop="always"
+          frameloop={frameloop}
           gl={gl as never}
           style={CANVAS_STYLE}
           {...rest}

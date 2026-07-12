@@ -8,6 +8,7 @@
  * - {@link BlackHoleMesh} — inverted sphere + TSL material + uniforms
  *
  * Physics knobs live in `./config` (`defaultPhysics` / `BlackHoleOverrides`).
+ * GPU bag plumbing: `./uniforms`.
  *
  * @example
  * ```tsx
@@ -25,21 +26,31 @@ import {
   useState,
 } from "react";
 import * as THREE from "three/webgpu";
-import { uniform } from "three/tsl";
-import { CameraLookAt, IdleOrbit, WebGPUCanvas } from "@/components/three";
+import {
+  Bloom,
+  CameraLookAt,
+  IdleOrbit,
+  WebGPUCanvas,
+  type BloomProps,
+} from "@/components/three";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import {
   buildBlackHoleConfig,
   cameraPositionFromObserver,
+  CAMERA_FOV_DEG,
+  orbitDistanceLimits,
+  skyDomeRadius,
   type BlackHoleConfig,
   type BlackHoleOverrides,
 } from "./config";
+import { createBlackHoleShader, type BlackHoleUniforms } from "./shader";
 import {
-  CONFIG_SCALAR_KEYS,
-  createBlackHoleShader,
-  type BlackHoleUniforms,
-} from "./shader";
+  applyConfig,
+  createCameraAxes,
+  createUniforms,
+  syncCamera,
+} from "./uniforms";
 
 // ── Shell / a11y (also used by HeroBanner loading hatch) ────────────────────
 
@@ -54,85 +65,36 @@ export const FALLBACK_CLASS =
 export const ARIA_LABEL =
   "Interactive binary black hole — drag to orbit, scroll to zoom";
 
-// ── GPU uniforms ────────────────────────────────────────────────────────────
-
-/** Create the uniform bag once; scalar fields start from `config`. */
-function createUniforms(config: BlackHoleConfig): BlackHoleUniforms {
-  const uniforms = {
-    time: uniform(0),
-    resolution: uniform(new THREE.Vector2(1, 1)),
-    cameraPosition: uniform(new THREE.Vector3()),
-    cameraForward: uniform(new THREE.Vector3(0, 0, -1)),
-    cameraRight: uniform(new THREE.Vector3(1, 0, 0)),
-    cameraUp: uniform(new THREE.Vector3(0, 1, 0)),
-    cameraFov: uniform(48),
-  } as unknown as BlackHoleUniforms;
-
-  for (const key of CONFIG_SCALAR_KEYS) {
-    uniforms[key] = uniform(config[key]);
-  }
-  return uniforms;
-}
-
-/** Push every physics/render scalar from config into live uniforms. */
-function applyConfig(uniforms: BlackHoleUniforms, config: BlackHoleConfig) {
-  for (const key of CONFIG_SCALAR_KEYS) {
-    uniforms[key].value = config[key];
-  }
-}
-
-/** Scratch space for camera basis vectors (avoid alloc each frame). */
-type CameraAxes = {
-  right: THREE.Vector3;
-  up: THREE.Vector3;
-  forward: THREE.Vector3;
-};
-
-/**
- * Copy world camera pose into uniforms so the shader can build rays.
- * Three.js cameras look down local −Z; we store that as `cameraForward`.
- */
-function syncCamera(
-  uniforms: BlackHoleUniforms,
-  camera: THREE.Camera,
-  axes: CameraAxes,
-) {
-  camera.updateMatrixWorld();
-  const e = camera.matrixWorld.elements;
-
-  axes.right.set(e[0], e[1], e[2]).normalize();
-  axes.up.set(e[4], e[5], e[6]).normalize();
-  axes.forward.set(-e[8], -e[9], -e[10]).normalize();
-
-  uniforms.cameraPosition.value.copy(camera.position);
-  uniforms.cameraRight.value.copy(axes.right);
-  uniforms.cameraUp.value.copy(axes.up);
-  uniforms.cameraForward.value.copy(axes.forward);
-
-  const fov = (camera as THREE.PerspectiveCamera).fov;
-  if (typeof fov === "number" && Number.isFinite(fov)) {
-    uniforms.cameraFov.value = fov;
-  }
-}
-
 /** Cap dt so orbital phase stays stable if the tab freezes. */
 const MAX_DT = 1 / 30;
 /** Flip X so the sphere is inside-out (we render the interior sky). */
 const SKY_SCALE: [number, number, number] = [-1, 1, 1];
-/** Sphere radius, width segments, height segments. */
-const SKY_GEO: [number, number, number] = [80, 24, 24];
+/** Sphere width/height segments (shell is fullscreen; low poly is fine). */
+const SKY_SEGMENTS = 24;
+
+/** Gentle default bloom when `bloom` is enabled without custom props. */
+const DEFAULT_BLOOM: BloomProps = {
+  strength: 0.35,
+  radius: 0.25,
+  threshold: 0.4,
+};
 
 /**
  * Full-sky raymarch surface: inverted sphere + MeshBasicNodeMaterial.
  * Uniforms live for the lifetime of the mesh; config is patched on change.
  */
-function BlackHoleMesh({ config }: { config: BlackHoleConfig }) {
-  const { camera, size } = useThree();
-  const axes = useRef<CameraAxes>({
-    right: new THREE.Vector3(1, 0, 0),
-    up: new THREE.Vector3(0, 1, 0),
-    forward: new THREE.Vector3(0, 0, -1),
-  });
+function BlackHoleMesh({
+  config,
+  skyRadius,
+  simActive,
+}: {
+  config: BlackHoleConfig;
+  skyRadius: number;
+  /** When false, skip time advance (tab hidden or off-screen). */
+  simActive: boolean;
+}) {
+  const { camera, size, invalidate } = useThree();
+  const axes = useRef(createCameraAxes());
 
   // Create uniforms once (stable identity → stable TSL graph)
   const uniformsRef = useRef<BlackHoleUniforms | null>(null);
@@ -157,14 +119,32 @@ function BlackHoleMesh({ config }: { config: BlackHoleConfig }) {
     );
   }, [size.width, size.height, uniforms]);
 
+  // When becoming active again under demand/always switch, force a frame
+  useLayoutEffect(() => {
+    if (simActive) invalidate();
+  }, [simActive, invalidate]);
+
   useFrame((_, delta) => {
-    uniforms.time.value += Math.min(delta, MAX_DT);
+    // Always sync camera so first visible frame is correct
     syncCamera(uniforms, camera, axes.current);
+    if (!simActive) return;
+    if (
+      typeof document !== "undefined" &&
+      document.visibilityState === "hidden"
+    ) {
+      return;
+    }
+    uniforms.time.value += Math.min(delta, MAX_DT);
   });
+
+  const geoArgs = useMemo(
+    (): [number, number, number] => [skyRadius, SKY_SEGMENTS, SKY_SEGMENTS],
+    [skyRadius],
+  );
 
   return (
     <mesh frustumCulled={false} scale={SKY_SCALE}>
-      <sphereGeometry args={SKY_GEO} />
+      <sphereGeometry args={geoArgs} />
       <meshBasicNodeMaterial
         fragmentNode={fragmentNode}
         transparent
@@ -188,6 +168,11 @@ export type BlackHoleProps = {
   autoRotate?: boolean;
   /** Dim disks in light theme. @defaultValue true */
   themeColors?: boolean;
+  /**
+   * Optional TSL bloom (premultiplied-safe). Default off for the hero grade.
+   * Pass `true` for gentle defaults, or a {@link BloomProps} object.
+   */
+  bloom?: boolean | BloomProps;
   /** Physics overrides (see `BlackHoleOverrides` / `defaultPhysics`). */
   overrides?: BlackHoleOverrides;
   "aria-label"?: string;
@@ -205,13 +190,33 @@ function TransparentClear() {
     scene.background = null;
     gl.setClearColor(0x000000, 0);
     gl.setClearAlpha(0);
-    const el = gl.domElement as HTMLCanvasElement | undefined;
-    if (el?.style) {
-      el.style.background = "transparent";
-      el.style.backgroundColor = "transparent";
-      el.style.imageRendering = "pixelated";
-    }
   }, [gl, scene]);
+  return null;
+}
+
+/**
+ * Apply observer knobs to the live R3F camera when inclination / D change.
+ * Canvas `camera={{ position }}` only seeds mount; OrbitControls owns pose after.
+ */
+function ObserverCamera({
+  inclination,
+  cameraDistance,
+}: {
+  inclination: number;
+  cameraDistance: number;
+}) {
+  const { camera } = useThree();
+
+  useLayoutEffect(() => {
+    const [x, y, z] = cameraPositionFromObserver(inclination, cameraDistance);
+    camera.position.set(x, y, z);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+    if ("updateProjectionMatrix" in camera) {
+      (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+    }
+  }, [camera, inclination, cameraDistance]);
+
   return null;
 }
 
@@ -219,21 +224,47 @@ function Scene({
   config,
   interactive,
   autoRotate,
+  skyRadius,
+  orbitMin,
+  orbitMax,
+  simActive,
+  bloom,
 }: {
   config: BlackHoleConfig;
   interactive: boolean;
   autoRotate: boolean;
+  skyRadius: number;
+  orbitMin: number;
+  orbitMax: number;
+  simActive: boolean;
+  bloom?: boolean | BloomProps;
 }) {
+  const bloomProps =
+    bloom === true
+      ? DEFAULT_BLOOM
+      : bloom && typeof bloom === "object"
+        ? bloom
+        : null;
+
   return (
     <>
       <TransparentClear />
+      <ObserverCamera
+        inclination={config.inclination}
+        cameraDistance={config.cameraDistance}
+      />
       <CameraLookAt />
-      <BlackHoleMesh config={config} />
+      <BlackHoleMesh
+        config={config}
+        skyRadius={skyRadius}
+        simActive={simActive}
+      />
+      {bloomProps ? <Bloom {...bloomProps} /> : null}
       <IdleOrbit
         interactive={interactive}
-        autoRotate={autoRotate}
-        minDistance={Math.max(4, config.cameraDistance * 0.45)}
-        maxDistance={config.cameraDistance * 2.8}
+        autoRotate={autoRotate && simActive}
+        minDistance={orbitMin}
+        maxDistance={orbitMax}
       />
     </>
   );
@@ -248,14 +279,28 @@ export function BlackHole({
   interactive = true,
   autoRotate = true,
   themeColors = true,
+  bloom = false,
   overrides,
   "aria-label": ariaLabel = ARIA_LABEL,
 }: BlackHoleProps) {
-  const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  /** IntersectionObserver: pause sim when the banner is off-screen. */
+  const [inView, setInView] = useState(true);
+  const shellRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
 
-  useEffect(() => setReady(true), []);
+  useEffect(() => {
+    const el = shellRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry?.isIntersecting ?? true);
+      },
+      { root: null, threshold: 0.01 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const theme =
     resolvedTheme === "light" || resolvedTheme === "dark"
@@ -266,58 +311,70 @@ export function BlackHole({
     () =>
       buildBlackHoleConfig({
         overrides,
-        themeColors: Boolean(ready && themeColors && theme),
+        themeColors: Boolean(themeColors && theme),
         mode: theme,
       }),
-    [overrides, themeColors, theme, ready],
+    [overrides, themeColors, theme],
   );
+
+  const orbit = useMemo(
+    () => orbitDistanceLimits(config.cameraDistance),
+    [config.cameraDistance],
+  );
+  const skyRadius = useMemo(() => skyDomeRadius(orbit.max), [orbit.max]);
 
   const camera = useMemo(
     () => ({
-      fov: 48,
+      fov: CAMERA_FOV_DEG,
       near: 0.1,
-      far: 1000,
+      far: Math.max(1000, skyRadius * 2),
       position: cameraPositionFromObserver(
         config.inclination,
         config.cameraDistance,
       ),
     }),
-    [config.inclination, config.cameraDistance],
+    [config.inclination, config.cameraDistance, skyRadius],
   );
 
-  // Lower DPR ≈ fewer fragments ≈ chunkier pixels (matches pixelSize intent)
+  // Pixel art: lower DPR = fewer fragments = chunkier pixels (single path)
   const dpr = useMemo(() => {
     const cell = Math.max(2, config.pixelSize);
     return Math.min(1, Math.max(0.2, 1 / cell));
   }, [config.pixelSize]);
 
   const onFailed = useCallback(() => setFailed(true), []);
+  const simActive = inView;
+  // Always while on-screen (orbit + time); demand off-screen to free GPU
+  const frameloop = simActive ? "always" : "demand";
 
   return (
     <div
+      ref={shellRef}
       className={cn(SHELL_CLASS, className)}
       aria-label={ariaLabel}
       style={PIXEL_STYLE}
       data-webgpu-failed={failed ? "true" : undefined}
     >
-      {!ready ? (
-        Hatch
-      ) : (
-        <WebGPUCanvas
-          className="absolute inset-0 h-full w-full"
-          camera={camera}
-          dpr={dpr}
-          fallback={Hatch}
-          onFailed={onFailed}
-          glProps={GL_NO_AA}
-        >
-          <Scene
-            config={config}
-            interactive={interactive}
-            autoRotate={autoRotate}
-          />
-        </WebGPUCanvas>
-      )}
+      <WebGPUCanvas
+        className="absolute inset-0 h-full w-full"
+        camera={camera}
+        dpr={dpr}
+        fallback={Hatch}
+        onFailed={onFailed}
+        glProps={GL_NO_AA}
+        frameloop={frameloop}
+      >
+        <Scene
+          config={config}
+          interactive={interactive}
+          autoRotate={autoRotate}
+          skyRadius={skyRadius}
+          orbitMin={orbit.min}
+          orbitMax={orbit.max}
+          simActive={simActive}
+          bloom={bloom}
+        />
+      </WebGPUCanvas>
     </div>
   );
 }

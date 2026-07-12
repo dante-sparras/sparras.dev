@@ -10,146 +10,51 @@
  * 2. {@link BlackHoleConfig} — resolved masses, Kerr scales, Kepler Ω, render
  * 3. {@link defaultRender} — pixel-art only (not public overrides)
  *
- * Kerr helpers: {@link kerrScales}, {@link keplerOmega}.
+ * Kerr helpers live in `./kerr` ({@link kerrScales}, {@link keplerOmega}) and
+ * are re-exported here for a stable public path.
  *
  * @module components/black-hole/config
  */
 
 import type { ResolvedTheme } from "@/components/providers";
+import { clampSpin, kerrScales } from "./kerr";
 
-// ── Kerr / Schwarzschild (geometric units G=c=1) ──────────────────────
+export type { KerrScales } from "./kerr";
+export {
+  clampSpin,
+  iscoRadius,
+  keplerOmega,
+  kerrScales,
+  photonSphereRadius,
+} from "./kerr";
 
-export type KerrScales = {
-  /** Mass M. */
-  mass: number;
-  /** Dimensionless spin χ = a/M. */
-  spin: number;
-  /** Dimensional spin a = χ M. */
-  a: number;
-  /** Outer event horizon r₊. */
-  eventHorizon: number;
-  /** Inner Cauchy horizon r₋ (zero when χ = 0). */
-  eventHorizonInner: number;
-  /**
-   * Equatorial photon-sphere radius (co-rotating branch).
-   * Approaches M as χ → +1; equals 3M when χ = 0.
-   */
-  photonSphere: number;
-  /** Prograde (co-rotating) innermost stable circular orbit. */
-  iscoPrograde: number;
-  /** Retrograde (counter-rotating) ISCO. */
-  iscoRetrograde: number;
-  /** Schwarzschild radius r_s = 2M (equals r₊ only when χ = 0). */
-  schwarzschildRadius: number;
-};
-
-/**
- * Clamp dimensionless spin into a safe open interval (−1, 1).
- * Avoids √0 edge cases and naked-singularity parameters.
- */
-function clampSpin(chi: number): number {
-  if (!Number.isFinite(chi)) return 0;
-  return Math.min(0.998, Math.max(-0.998, chi));
+/** Inclination degrees from orbital normal — avoids pole singularities. */
+function clampInclinationDegrees(inclination: number): number {
+  if (!Number.isFinite(inclination)) return 62;
+  return Math.min(89.5, Math.max(0.5, inclination));
 }
 
-/**
- * Equatorial photon orbit radius (Bardeen 1973).
- *
- * r_ph / M = 2 (1 + cos(⅔ arccos(∓|χ|)))
- * - co-rotating (prograde): arccos(−|χ|) → r_ph → M as χ → 1
- * - counter-rotating: arccos(+|χ|) → r_ph → 4M as χ → 1
- *
- * @param mass - Black-hole mass M
- * @param chi - Dimensionless spin (sign ignored; branch from `prograde`)
- * @param prograde - `true` for co-rotating photon orbit
- */
-function photonSphereRadius(
-  mass: number,
-  chi: number,
-  prograde: boolean,
-): number {
-  const chiAbs = Math.abs(clampSpin(chi));
-  const argument = Math.acos(
-    Math.min(1, Math.max(-1, prograde ? -chiAbs : chiAbs)),
-  );
-  return 2 * mass * (1 + Math.cos((2 / 3) * argument));
-}
+/** Vertical FOV used by the host canvas and shader ray basis. */
+export const CAMERA_FOV_DEG = 48;
 
-/**
- * ISCO for Kerr equatorial circular orbits (Bardeen, Press & Teukolsky 1972).
- *
- * With a\* = |χ|:
- * - Z₁ = 1 + (1−a\*²)^{1/3} [(1+a\*)^{1/3} + (1−a\*)^{1/3}]
- * - Z₂ = √(3 a\*² + Z₁²)
- * - r_ISCO / M = 3 + Z₂ ∓ √[(3−Z₁)(3+Z₁+2Z₂)]
- *   - **minus** → prograde / co-rotating (smaller radius)
- *   - **plus**  → retrograde / counter-rotating
- *
- * Spin **sign** does not flip the branch: co-rotating always uses the closer root.
- *
- * @param mass - Black-hole mass M
- * @param chi - Dimensionless spin
- * @param prograde - `true` for co-rotating ISCO
- */
-function iscoRadius(mass: number, chi: number, prograde: boolean): number {
-  const chiAbs = Math.abs(clampSpin(chi));
-  if (chiAbs < 1e-8) return 6 * mass;
-
-  const z1 =
-    1 +
-    Math.pow(1 - chiAbs * chiAbs, 1 / 3) *
-      (Math.pow(1 + chiAbs, 1 / 3) + Math.pow(1 - chiAbs, 1 / 3));
-  const z2 = Math.sqrt(3 * chiAbs * chiAbs + z1 * z1);
-  const radical = Math.sqrt(Math.max(0, (3 - z1) * (3 + z1 + 2 * z2)));
-  const radiusOverMass = prograde ? 3 + z2 - radical : 3 + z2 + radical;
-  return Math.max(radiusOverMass, 1.001) * mass;
-}
-
-/**
- * Derive all Kerr length scales from mass + dimensionless spin.
- *
- * @param mass - Black-hole mass M (> 0)
- * @param spin - Dimensionless spin χ = a/M
- */
-export function kerrScales(mass: number, spin: number): KerrScales {
-  const M = Math.max(1e-4, mass);
-  const chi = clampSpin(spin);
-  const a = chi * M;
-  const discriminant = Math.sqrt(Math.max(0, 1 - chi * chi));
-  const outerHorizon = M * (1 + discriminant);
-  const innerHorizon = M * (1 - discriminant);
-
+/** Orbit zoom limits from observer distance D. */
+export function orbitDistanceLimits(cameraDistance: number): {
+  min: number;
+  max: number;
+} {
+  const d = Math.max(8, cameraDistance);
   return {
-    mass: M,
-    spin: chi,
-    a,
-    eventHorizon: outerHorizon,
-    eventHorizonInner: innerHorizon,
-    photonSphere: photonSphereRadius(M, chi, true),
-    iscoPrograde: iscoRadius(M, chi, true),
-    iscoRetrograde: iscoRadius(M, chi, false),
-    schwarzschildRadius: 2 * M,
+    min: Math.max(4, d * 0.45),
+    max: d * 2.8,
   };
 }
 
 /**
- * Angular velocity of a prograde circular equatorial orbit (geometric units).
- *
- * Ω = 1 / (r^{3/2} / √M + a)
- *
- * @param radius - Orbital radius r
- * @param mass - Black-hole mass M
- * @param spin - Dimensionless spin χ
+ * Inverted skydome radius — must stay larger than orbit max zoom so the
+ * camera never leaves the raymarch shell.
  */
-export function keplerOmega(
-  radius: number,
-  mass: number,
-  spin: number,
-): number {
-  const M = Math.max(1e-4, mass);
-  const a = clampSpin(spin) * M;
-  const sqrtMass = Math.sqrt(M);
-  return 1 / (Math.pow(Math.max(radius, 1e-3), 1.5) / sqrtMass + a);
+export function skyDomeRadius(orbitMaxDistance: number): number {
+  return Math.max(80, orbitMaxDistance * 1.2);
 }
 
 // ── Public physics surface ──────────────────────────────────────────────────
@@ -192,7 +97,9 @@ export type BlackHoleOverrides = Partial<{
 
   /**
    * Dimensionless spin **χ = a / M**, applied to **both** holes (`|χ| < 1`).
-   * Feeds Kerr outer horizon r₊, equatorial photon sphere, and prograde ISCO.
+   * Feeds Kerr outer horizon r₊, equatorial photon sphere, and prograde ISCO
+   * on the **CPU**. Light bending in the shader is still superposed weak-field
+   * Schwarzschild (∝ 2M/r²); χ does not alter the deflection law yet.
    * @defaultValue 0.35
    */
   spin: number;
@@ -234,10 +141,12 @@ export type BlackHoleOverrides = Partial<{
    * Example: `48` → T_peak = 48 000 K.
    *
    * Used for:
-   * - Thin-disk profile `T(r) = T_peak · (r_in / r)^temperatureIndex` (brightness)
-   * - Slight bias of the fire red→amber radial color curve
+   * - Thin-disk brightness: `T(r) = T_peak · (r_in / r)^temperatureIndex`
+   * - Mild warmer/cooler bias on the geometric red→amber radial fire curve
+   *   (hue is primarily **where you are between r_in and r_out**, not pure
+   *   blackbody(T) — keeps Interstellar peach without white plate)
    *
-   * Visual guide:
+   * Visual guide (try ±15, not ±2):
    * - ~30 → redder outer annuli
    * - ~48 → reference-like fire orange
    * - ~70 → brighter amber inner (still not white)
@@ -315,10 +224,15 @@ export type BlackHoleConfig = {
   /** Aspect ratio H/R. */
   diskAspectRatio: number;
   /**
-   * Absolute vertical scale height in geometric units,
-   * ≈ (H/R) × characteristic mid-disk radius.
+   * Primary mini-disk vertical scale height (geometric units),
+   * ≈ (H/R) × characteristic mid-disk radius of hole 1.
    */
-  diskScaleHeight: number;
+  diskScaleHeightPrimary: number;
+  /**
+   * Secondary mini-disk vertical scale height (geometric units),
+   * ≈ (H/R) × characteristic mid-disk radius of hole 2.
+   */
+  diskScaleHeightSecondary: number;
   /** T_peak in 1000 K units. */
   peakTemperature: number;
   /** Temperature index α. */
@@ -394,19 +308,7 @@ function mergePhysics(
   base: typeof defaultPhysics,
   overrides: BlackHoleOverrides,
 ): Required<BlackHoleOverrides> {
-  return {
-    primaryMass: overrides.primaryMass ?? base.primaryMass,
-    massRatio: overrides.massRatio ?? base.massRatio,
-    separation: overrides.separation ?? base.separation,
-    spin: overrides.spin ?? base.spin,
-    inclination: overrides.inclination ?? base.inclination,
-    cameraDistance: overrides.cameraDistance ?? base.cameraDistance,
-    diskOuterRadiusM: overrides.diskOuterRadiusM ?? base.diskOuterRadiusM,
-    diskAspectRatio: overrides.diskAspectRatio ?? base.diskAspectRatio,
-    peakTemperature: overrides.peakTemperature ?? base.peakTemperature,
-    temperatureIndex: overrides.temperatureIndex ?? base.temperatureIndex,
-    accretionRate: overrides.accretionRate ?? base.accretionRate,
-  };
+  return { ...base, ...overrides };
 }
 
 /**
@@ -423,12 +325,71 @@ export function cameraPositionFromObserver(
   cameraDistance: number,
 ): [number, number, number] {
   const inclinationRadians =
-    (Math.min(89.5, Math.max(0.5, inclination)) * Math.PI) / 180;
+    (clampInclinationDegrees(inclination) * Math.PI) / 180;
   const distance = Math.max(8, cameraDistance);
-  const x = distance * Math.sin(inclinationRadians) * 0.12;
+  // Slight azimuthal offset — not a free art knob; keeps edge-on view asymmetric
+  const azimuthBias = 0.12;
+  const x = distance * Math.sin(inclinationRadians) * azimuthBias;
   const y = distance * Math.cos(inclinationRadians);
   const z = distance * Math.sin(inclinationRadians);
   return [x, y, z];
+}
+
+/** Mid-disk characteristic radius for scale-height: ½ (ISCO + r_out). */
+function characteristicDiskRadius(
+  isco: number,
+  mass: number,
+  diskOuterRadiusM: number,
+): number {
+  return 0.5 * (isco + diskOuterRadiusM * mass);
+}
+
+function scaleHeightFromAspect(
+  aspect: number,
+  isco: number,
+  mass: number,
+  diskOuterRadiusM: number,
+): number {
+  return Math.max(
+    0.05,
+    aspect * characteristicDiskRadius(isco, mass, diskOuterRadiusM),
+  );
+}
+
+/**
+ * Per-hole resolved scales used while building config.
+ * Flattened to Primary/Secondary fields for the GPU uniform bag.
+ */
+type ResolvedHole = {
+  mass: number;
+  eventHorizon: number;
+  photonSphere: number;
+  isco: number;
+  diskScaleHeight: number;
+  /** Dimensional spin a = χ M (primary only needed on public config today). */
+  a: number;
+};
+
+function resolveHole(
+  mass: number,
+  spin: number,
+  diskAspectRatio: number,
+  diskOuterRadiusM: number,
+): ResolvedHole {
+  const scales = kerrScales(mass, spin);
+  return {
+    mass: scales.mass,
+    eventHorizon: scales.eventHorizon,
+    photonSphere: scales.photonSphere,
+    isco: scales.iscoPrograde,
+    diskScaleHeight: scaleHeightFromAspect(
+      diskAspectRatio,
+      scales.iscoPrograde,
+      scales.mass,
+      diskOuterRadiusM,
+    ),
+    a: scales.a,
+  };
 }
 
 /**
@@ -448,8 +409,8 @@ export function buildBlackHoleConfig(
   const secondaryMass = primaryMass * massRatio;
   const totalMass = primaryMass + secondaryMass;
   const separation = Math.max(2.5, physics.separation);
-  const spin = Math.min(0.998, Math.max(-0.998, physics.spin));
-  const inclination = Math.min(89.5, Math.max(0.5, physics.inclination));
+  const spin = clampSpin(physics.spin);
+  const inclination = clampInclinationDegrees(physics.inclination);
   const diskOuterRadiusM = Math.max(3, physics.diskOuterRadiusM);
   const diskAspectRatio = Math.min(
     0.25,
@@ -468,44 +429,43 @@ export function buildBlackHoleConfig(
   // Pull back only if the binary would leave the FOV — keeps separation visible
   cameraDistance = Math.max(cameraDistance, separation * 1.55 + 4, 12);
 
-  const primaryScales = kerrScales(primaryMass, spin);
-  const secondaryScales = kerrScales(secondaryMass, spin);
-  /** Circular two-body mean motion Ω = √(M / d³). */
+  const [primary, secondary] = [
+    resolveHole(primaryMass, spin, diskAspectRatio, diskOuterRadiusM),
+    resolveHole(secondaryMass, spin, diskAspectRatio, diskOuterRadiusM),
+  ];
+
+  /** Circular two-body mean motion Ω = √(M / d³) (Newtonian CM; not keplerOmega). */
   const orbitalFrequency = Math.sqrt(totalMass / separation ** 3);
 
-  const characteristicRadius =
-    0.5 * (primaryScales.iscoPrograde + diskOuterRadiusM * primaryMass);
-  const diskScaleHeight = Math.max(
-    0.05,
-    diskAspectRatio * characteristicRadius,
-  );
-
+  // Light theme: dim emissivity so fire doesn't blow out on pale page bg
   if (themeColors && mode === "light") {
     accretionRate *= 0.55;
   }
 
   return {
-    primaryMass,
-    secondaryMass,
+    primaryMass: primary.mass,
+    secondaryMass: secondary.mass,
     totalMass,
     massRatio,
     separation,
     orbitalFrequency,
     spin,
-    spinParameter: primaryScales.a,
-    eventHorizonPrimary: primaryScales.eventHorizon,
-    eventHorizonSecondary: secondaryScales.eventHorizon,
-    photonSpherePrimary: primaryScales.photonSphere,
-    photonSphereSecondary: secondaryScales.photonSphere,
-    iscoPrimary: primaryScales.iscoPrograde,
-    iscoSecondary: secondaryScales.iscoPrograde,
+    /** Primary a = χ M₁ (CPU-only; light bend is Schwarzschild). */
+    spinParameter: primary.a,
+    eventHorizonPrimary: primary.eventHorizon,
+    eventHorizonSecondary: secondary.eventHorizon,
+    photonSpherePrimary: primary.photonSphere,
+    photonSphereSecondary: secondary.photonSphere,
+    iscoPrimary: primary.isco,
+    iscoSecondary: secondary.isco,
 
     inclination,
     cameraDistance,
 
     diskOuterRadiusM,
     diskAspectRatio,
-    diskScaleHeight,
+    diskScaleHeightPrimary: primary.diskScaleHeight,
+    diskScaleHeightSecondary: secondary.diskScaleHeight,
     peakTemperature,
     temperatureIndex,
     accretionRate,

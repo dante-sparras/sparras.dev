@@ -17,6 +17,9 @@ export {
   defaultRender,
   buildBlackHoleConfig,
   cameraPositionFromObserver,
+  CAMERA_FOV_DEG,
+  orbitDistanceLimits,
+  skyDomeRadius,
   kerrScales,
   keplerOmega,
 } from "./config";

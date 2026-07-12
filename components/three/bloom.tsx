@@ -3,9 +3,9 @@
 /**
  * TSL bloom via RenderPipeline — optional glow only.
  *
- * Black-hole shader writes a buffer that is already correct for a
- * premultiplied WebGPU canvas (disk = lit*coverage, stars additive).
- * Bloom must only ADD glow — never re-scale scene.rgb by alpha.
+ * Scene color is already display-referred for a premultiplied WebGPU canvas
+ * (disk = lit×coverage). Bloom must only ADD glow — never re-scale scene.rgb
+ * by alpha.
  *
  * If setup fails, bloom is skipped; the scene still renders normally.
  */
@@ -132,7 +132,7 @@ export function Bloom({
           initial.current.threshold,
         );
 
-        // scene.rgb is already the final buffer color (PM disk + additive stars).
+        // scene.rgb is already the final buffer color (premultiplied disk).
         // Bloom is additive only — do not multiply by alpha.
         const bloomRgb = node.rgb;
         const bloomLuma = max(bloomRgb.r, max(bloomRgb.g, bloomRgb.b));
