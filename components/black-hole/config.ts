@@ -98,34 +98,34 @@ export type BuildBlackHoleConfigOptions = {
 const VOID = "#050505";
 
 export const defaultBlackHoleConfig = {
-  blackHoleMass: 0.42,
-  gravitationalLensing: 3.8,
-  dopplerStrength: 0.72,
+  blackHoleMass: 0.48,
+  gravitationalLensing: 4.8,
+  dopplerStrength: 0.75,
 
-  diskInnerRadius: 3.4,
-  diskOuterRadius: 16.0,
-  // Lower brightness — was blowing out to a white bar
-  diskBrightness: 3.1,
-  diskTemperature: 48,
-  temperatureFalloff: 0.58,
-  diskEdgeSoftnessInner: 0.32,
-  diskEdgeSoftnessOuter: 0.9,
+  // Compact disk relative to a larger silhouette (fills banner like the refs)
+  diskInnerRadius: 2.9,
+  diskOuterRadius: 11.5,
+  diskBrightness: 3.8,
+  diskTemperature: 50,
+  temperatureFalloff: 0.55,
+  diskEdgeSoftnessInner: 0.28,
+  diskEdgeSoftnessOuter: 0.82,
   diskSaturation: 1.0,
-  // Razor-thin slab (refs: thin band through the void, not a fat fog)
-  diskScaleHeight: 0.14,
+  // Thin through the void, thicker outer wings (not a fat fog, not a hairline)
+  diskScaleHeight: 0.34,
 
-  turbulenceScale: 2.1,
-  turbulenceStretch: 18.0,
-  turbulenceSharpness: 1.85,
+  turbulenceScale: 2.0,
+  turbulenceStretch: 17.0,
+  turbulenceSharpness: 1.7,
   diskRotationSpeed: -9.2,
   turbulenceCycleTime: 7,
-  turbulenceLacunarity: 2.3,
-  turbulencePersistence: 0.45,
+  turbulenceLacunarity: 2.25,
+  turbulencePersistence: 0.48,
 
   starsEnabled: true,
-  starDensity: 0.035,
-  starSize: 1.2,
-  starBrightness: 0.11,
+  starDensity: 0.04,
+  starSize: 1.25,
+  starBrightness: 0.12,
 
   nebulaEnabled: false,
   nebula1Scale: 2,
@@ -137,7 +137,7 @@ export const defaultBlackHoleConfig = {
   bloomRadius: 0.32,
   bloomThreshold: 0.36,
 
-  stepSize: 0.6,
+  stepSize: 0.55,
   diskInkMode: 0,
 
   starBackgroundColor: VOID,

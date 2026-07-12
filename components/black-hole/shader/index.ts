@@ -114,10 +114,10 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         float(0.0),
         float(1.0),
       );
-      // Scale height: *very* thin near the hole so the band crossing the void
-      // stays razor-thin (reference images). Mild outer flare only.
+      // Thin at the hole (void stays mostly black); thicker outer wings for the
+      // Interstellar “dome” / side structure when lensed or slightly tilted.
       const scaleH = uniforms.diskScaleHeight.mul(
-        mix(float(0.35), float(1.15), pow(normR, float(0.85))),
+        mix(float(0.22), float(1.85), pow(normR, float(0.72))),
       );
       const absY = abs(rayPos.y);
       // Soft radial gate (0–1 floats — no boolean .toFloat())
@@ -127,7 +127,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         cylR,
       ).mul(smoothstep(outerR.mul(1.06), outerR.mul(1.0), cylR));
       const nearDisk = radialGate.mul(
-        float(1.0).sub(smoothstep(float(0.0), scaleH.mul(3.5), absY)),
+        float(1.0).sub(smoothstep(float(0.0), scaleH.mul(3.0), absY)),
       );
 
       const nearHole = float(1.0).sub(
@@ -162,16 +162,17 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
           float(1.0),
         );
         const mH = uniforms.diskScaleHeight.mul(
-          mix(float(0.35), float(1.15), pow(mNorm, float(0.85))),
+          mix(float(0.22), float(1.85), pow(mNorm, float(0.72))),
         );
         const mAbsY = abs(mid.y);
-        // Sharp vertical Gaussian — thin ribbon when edge-on through the void
+        // Sharp near the hole, soft enough outer for volume wings
         const yOverH = mAbsY.div(max(mH, float(1.0e-4)));
-        const vert = exp(yOverH.mul(yOverH).mul(float(2.4)).negate());
+        const sharp = mix(float(2.6), float(1.35), mNorm);
+        const vert = exp(yOverH.mul(yOverH).mul(sharp).negate());
         const inVol = mR
           .greaterThan(innerR)
           .and(mR.lessThan(outerR))
-          .and(vert.greaterThan(0.02));
+          .and(vert.greaterThan(0.015));
 
         If(inVol, () => {
           const hitAngle = atan(mid.z, mid.x);
@@ -182,8 +183,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
             rayDir,
           );
 
-          // Higher density in a thinner slab so the ribbon still reads solid
-          const dens = vert.mul(diskResult.w).mul(float(3.4));
+          const dens = vert.mul(diskResult.w).mul(float(2.55));
           const optical = dens.mul(dt);
           const stepA = float(1.0).sub(exp(optical.negate())).min(float(1.0));
 
@@ -201,6 +201,59 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       .toVar("softCapture");
     If(captured.greaterThan(0.5), () => {
       softCapture.assign(1.0);
+    });
+
+    // ── Lensed secondary disk images (upper dome + lower ring) ─────────────
+    // Primary march alone reads as a thin equator. Interstellar’s wrap is
+    // higher-order light: sample the disk again near the critical curve.
+    const photonR = rs.mul(1.5);
+    const distPhoton = minR.sub(photonR).abs();
+    const secondaryBand = float(1.0)
+      .sub(smoothstep(float(0.0), rs.mul(0.55), distPhoton))
+      .mul(float(1.0).sub(softCapture.mul(0.85)))
+      .toVar("secondaryBand");
+
+    If(secondaryBand.greaterThan(0.04).and(alpha.lessThan(0.97)), () => {
+      // Map closest approach → disk radius (inner bright secondary)
+      const secR = mix(
+        innerR.mul(1.05),
+        outerR.mul(0.62),
+        clamp(minR.sub(rs.mul(1.15)).div(rs.mul(1.4)), float(0.0), float(1.0)),
+      );
+      // Two opposite azimuths = near-side + far-side contribution
+      const a0 = atan(rayDir.z, rayDir.x);
+      const a1 = a0.add(float(3.14159265));
+      const secA = accretionDiskColor(secR, a0, uniforms.time, rayDir);
+      const secB = accretionDiskColor(secR, a1, uniforms.time, rayDir);
+      // Bias lower screen half slightly (classic secondary ring below)
+      const lowerBias = smoothstep(float(0.15), float(-0.55), screenPos.y)
+        .mul(float(0.35))
+        .add(float(0.65));
+      const upperBias = smoothstep(float(-0.1), float(0.65), screenPos.y)
+        .mul(float(0.4))
+        .add(float(0.55));
+      // Mix opposites; weight by lobe
+      const secMix = mix(secA, secB, float(0.5));
+      const lobeW = mix(lowerBias, upperBias, float(0.5)).mul(secondaryBand);
+      const rem = float(1.0).sub(alpha);
+      const w = lobeW.mul(float(0.72)).mul(rem);
+      color.addAssign(secMix.xyz.mul(secMix.w).mul(w));
+      alpha.addAssign(rem.mul(secMix.w).mul(lobeW).mul(float(0.55)));
+
+      // Extra lower-ring pass (far side of disk under the hole)
+      const secR2 = mix(innerR.mul(1.15), outerR.mul(0.48), float(0.4));
+      const secLow = accretionDiskColor(
+        secR2,
+        a0.add(float(1.2)),
+        uniforms.time,
+        rayDir,
+      );
+      const lowW = lowerBias
+        .mul(secondaryBand)
+        .mul(float(0.5))
+        .mul(float(1.0).sub(alpha));
+      color.addAssign(secLow.xyz.mul(secLow.w).mul(lowW));
+      alpha.addAssign(float(1.0).sub(alpha).mul(secLow.w).mul(lowW).mul(0.8));
     });
 
     const skyOk = float(1.0).sub(softCapture);
@@ -241,8 +294,6 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       .toVar("toned");
 
     // Photon sphere / Einstein ring — thin bright rim
-    const photonR = rs.mul(1.5);
-    const distPhoton = minR.sub(photonR).abs();
     const photonAa = max(fwidth(minR).mul(2.0), rs.mul(0.022));
     const photonMask = float(1.0)
       .sub(smoothstep(float(0.0), photonAa.add(rs.mul(0.04)), distPhoton))

@@ -14,11 +14,11 @@ export const FALLBACK_CLASS =
 export const ARIA_LABEL =
   "Interactive black hole — drag to orbit, scroll to zoom";
 
-/** Profile-banner camera: near edge-on like Interstellar refs (thin equatorial band). */
+/** Profile-banner camera: Interstellar framing — big silhouette, slight tilt. */
 export const CAMERA = {
-  fov: 50,
+  fov: 46,
   near: 0.1,
   far: 1000,
-  // ~10° from edge-on — thin crossing through the silhouette
-  position: [0, -2.8, 16] as [number, number, number],
+  // Closer + mild elevation: large BH, upper dome + lower secondary readable
+  position: [0, -4.5, 11.5] as [number, number, number],
 };
