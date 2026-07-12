@@ -43,6 +43,7 @@ const SCALARS = [
   "turbulencePersistence",
   "diskEdgeSoftnessInner",
   "diskEdgeSoftnessOuter",
+  "diskScaleHeight",
   "gravitationalLensing",
   "dopplerStrength",
   "stepSize",

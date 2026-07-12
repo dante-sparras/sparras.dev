@@ -25,6 +25,8 @@ export type BlackHoleConfig = {
   diskEdgeSoftnessInner: number;
   diskEdgeSoftnessOuter: number;
   diskSaturation: number;
+  /** Vertical scale height of the disk (volumetric half-thickness base). */
+  diskScaleHeight: number;
   // Disk motion / noise
   turbulenceScale: number;
   turbulenceStretch: number;
@@ -108,6 +110,7 @@ export const defaultBlackHoleConfig = {
   diskEdgeSoftnessInner: 0.48,
   diskEdgeSoftnessOuter: 0.72,
   diskSaturation: 1.0,
+  diskScaleHeight: 0.32,
 
   turbulenceScale: 1.15,
   turbulenceStretch: 6.0,

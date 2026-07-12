@@ -20,6 +20,8 @@ import {
   pow,
   max,
   min,
+  abs,
+  exp,
   smoothstep,
   step,
   mix,
@@ -79,8 +81,8 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const innerR = uniforms.diskInnerRadius;
     const outerR = uniforms.diskOuterRadius;
 
-    // Adaptive steps: fine near hole for clean photon ring / thin disk crossings
-    Loop(112, () => {
+    // Adaptive steps: fine near hole + inside the volumetric disk slab
+    Loop(120, () => {
       If(
         escaped
           .greaterThan(0.5)
@@ -105,10 +107,36 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         Break();
       });
 
+      // Cylindrical radius for disk slab
+      const cylR = sqrt(rayPos.x.mul(rayPos.x).add(rayPos.z.mul(rayPos.z)));
+      const normR = clamp(
+        cylR.sub(innerR).div(max(outerR.sub(innerR), float(1.0e-3))),
+        float(0.0),
+        float(1.0),
+      );
+      // Mild flare: thinner near ISCO, thicker outer rim
+      const scaleH = uniforms.diskScaleHeight.mul(
+        mix(float(0.55), float(1.55), pow(normR, float(0.65))),
+      );
+      const absY = abs(rayPos.y);
+      // Soft radial gate (0–1 floats — no boolean .toFloat())
+      const radialGate = smoothstep(
+        innerR.mul(0.94),
+        innerR.mul(1.0),
+        cylR,
+      ).mul(smoothstep(outerR.mul(1.06), outerR.mul(1.0), cylR));
+      const nearDisk = radialGate.mul(
+        float(1.0).sub(smoothstep(float(0.0), scaleH.mul(2.8), absY)),
+      );
+
       const nearHole = float(1.0).sub(
         smoothstep(rs.mul(1.05), rs.mul(14.0), r),
       );
-      const dt = uniforms.stepSize.mul(mix(float(1.0), float(0.1), nearHole));
+      // Smaller steps near hole and inside the volume for smooth thickness
+      const dt = uniforms.stepSize
+        .mul(mix(float(1.0), float(0.1), nearHole))
+        .mul(mix(float(1.0), float(0.32), nearDisk))
+        .toVar("dt");
 
       // Guarded deflection (avoid /0 at origin)
       const toCenter = rayPos.negate().div(r);
@@ -122,30 +150,48 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       prevPos.assign(rayPos);
       rayPos.addAssign(rayDir.mul(dt));
 
-      const crossedPlane = prevPos.y.mul(rayPos.y).lessThan(0.0);
-
-      If(crossedPlane.and(alpha.lessThan(0.99)), () => {
-        const tHit = clamp(
-          prevPos.y.negate().div(rayPos.y.sub(prevPos.y)),
+      // ── Volumetric disk: Gaussian vertical density × Beer–Lambert ──────────
+      // Sample mid-step for less banding; color from full disk model (Doppler etc.)
+      If(alpha.lessThan(0.99), () => {
+        const mid = mix(prevPos, rayPos, float(0.5));
+        const mR = sqrt(mid.x.mul(mid.x).add(mid.z.mul(mid.z)));
+        const mNorm = clamp(
+          mR.sub(innerR).div(max(outerR.sub(innerR), float(1.0e-3))),
           float(0.0),
           float(1.0),
         );
-        const hitPos = mix(prevPos, rayPos, tHit);
-        const hitR = sqrt(hitPos.x.mul(hitPos.x).add(hitPos.z.mul(hitPos.z)));
-        const inDisk = hitR.greaterThan(innerR).and(hitR.lessThan(outerR));
+        const mH = uniforms.diskScaleHeight.mul(
+          mix(float(0.55), float(1.55), pow(mNorm, float(0.65))),
+        );
+        const mAbsY = abs(mid.y);
+        // Gaussian vertical profile (puffed torus-like slab)
+        const yOverH = mAbsY.div(max(mH, float(1.0e-4)));
+        const vert = exp(yOverH.mul(yOverH).negate());
+        const inVol = mR
+          .greaterThan(innerR)
+          .and(mR.lessThan(outerR))
+          .and(vert.greaterThan(0.012));
 
-        If(inDisk, () => {
-          const hitAngle = atan(hitPos.z, hitPos.x);
+        If(inVol, () => {
+          const hitAngle = atan(mid.z, mid.x);
           const diskResult = accretionDiskColor(
-            hitR,
+            mR,
             hitAngle,
             uniforms.time,
             rayDir,
           );
 
+          // Beer–Lambert: optical depth ∝ density × structure opacity × path
+          // ~2.6 tunes integrated optical depth close to the old thin-disk look
+          // while reading as volume when viewed edge-on.
+          const dens = vert.mul(diskResult.w).mul(float(2.65));
+          const optical = dens.mul(dt);
+          const stepA = float(1.0).sub(exp(optical.negate())).min(float(1.0));
+
           const remainingAlpha = float(1.0).sub(alpha);
-          color.addAssign(diskResult.xyz.mul(diskResult.w).mul(remainingAlpha));
-          alpha.addAssign(remainingAlpha.mul(diskResult.w));
+          // Emission: disk color already includes brightness; weight by step alpha
+          color.addAssign(diskResult.xyz.mul(stepA).mul(remainingAlpha));
+          alpha.addAssign(remainingAlpha.mul(stepA));
         });
       });
     });
