@@ -233,9 +233,12 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     // Einstein-ring fill light (visible even with thin disk alpha)
     const ringCol = vec3(1.0, 0.96, 0.9);
-    const ring = photonMask.mul(float(0.42)).mul(skyOk.add(diskA.mul(0.35)));
+    const ring = photonMask.mul(float(0.5)).mul(skyOk.add(diskA.mul(0.4)));
     rgb.addAssign(ringCol.mul(ring));
-    outAlpha.assign(max(outAlpha, photonMask.mul(0.55)));
+    // Thin outer caustic
+    const caustic = photonMask.mul(photonMask).mul(float(0.18));
+    rgb.addAssign(ringCol.mul(caustic));
+    outAlpha.assign(max(outAlpha, photonMask.mul(0.6)));
 
     If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
       const n = nebCol.mul(skyW);

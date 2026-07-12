@@ -8,6 +8,7 @@
  * - Screen-space fwidth on angular coords widens kernels when the look dir
  *   changes sharply across pixels / frames (photon-sphere chaos).
  * - Softer Gaussians so stars dissolve instead of popping when they jump cells.
+ * - Stable per-star twinkle (hash phase × time) — no random noise flicker.
  */
 import type { BlackHoleUniforms } from "../mesh";
 import {
@@ -24,6 +25,7 @@ import {
   exp,
   step,
   mix,
+  sin,
   fwidth,
 } from "three/tsl";
 import { hash21, hash22 } from "./noise";
@@ -37,15 +39,12 @@ export const createStarField = (uniforms: BlackHoleUniforms) =>
     const scaledCoord = vec2(theta, phi).mul(gridScale);
     const baseCell = floor(scaledCoord);
 
-    // When rayDir varies fast (lensed sky near the hole), enlarge and soften
-    // so stars don't strobe between hash cells.
     const angW = max(fwidth(theta), fwidth(phi)).mul(gridScale);
     const aaBoost = clamp(
       float(1.0).add(angW.mul(10.0)),
       float(1.0),
       float(5.0),
     );
-    // Softer kernel when AA is high (lower exp sharpness)
     const coreSharp = mix(
       float(2.4),
       float(1.1),
@@ -59,7 +58,6 @@ export const createStarField = (uniforms: BlackHoleUniforms) =>
 
     const acc = vec3(0.0, 0.0, 0.0).toVar("starAcc");
 
-    // Unrolled 3×3 so stars near cell edges stay continuous across frames
     for (const ox of [-1, 0, 1]) {
       for (const oy of [-1, 0, 1]) {
         const cell = baseCell.add(vec2(ox, oy));
@@ -82,6 +80,15 @@ export const createStarField = (uniforms: BlackHoleUniforms) =>
         const starGlow = exp(d.mul(d).negate().mul(glowSharp)).mul(0.28);
         const starIntensity = starCore.add(starGlow).mul(starProb);
 
+        // Stable twinkle: phase from cell hash, slow sine — not random sparkle
+        const phase = hash21(cell.add(7.0)).mul(6.2831853);
+        const rate = hash21(cell.add(13.0)).mul(1.8).add(0.55);
+        const twinkle = sin(uniforms.time.mul(rate).add(phase))
+          .mul(0.5)
+          .add(0.5);
+        // Bias bright most of the time; gentle dip
+        const twinkleGain = mix(float(0.78), float(1.14), twinkle.mul(twinkle));
+
         const colorTemp = hash21(cell.add(200.0));
         const starColor = mix(
           vec3(0.92, 0.94, 1.0),
@@ -92,7 +99,10 @@ export const createStarField = (uniforms: BlackHoleUniforms) =>
           .mul(uniforms.starTint.w);
 
         acc.addAssign(
-          starColor.mul(starIntensity).mul(uniforms.starBrightness),
+          starColor
+            .mul(starIntensity)
+            .mul(uniforms.starBrightness)
+            .mul(twinkleGain),
         );
       }
     }

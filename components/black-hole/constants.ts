@@ -16,8 +16,8 @@ export const ARIA_LABEL =
 
 /** Profile-banner camera: slightly below the disk, looking at origin. */
 export const CAMERA = {
-  fov: 60,
+  fov: 55,
   near: 0.1,
   far: 1000,
-  position: [0, -5, 20] as [number, number, number],
+  position: [0, -4.2, 18] as [number, number, number],
 };

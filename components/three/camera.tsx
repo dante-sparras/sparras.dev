@@ -69,7 +69,7 @@ export function IdleOrbit({
   minDistance = 5,
   maxDistance = 50,
   rotateSpeed = -0.5,
-  autoRotateSpeed = -0.2,
+  autoRotateSpeed = -0.14,
   target = ORIGIN,
 }: IdleOrbitProps) {
   const reduceMotion = usePrefersReducedMotion();

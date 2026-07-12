@@ -15,6 +15,8 @@ import {
   sign,
   sin,
   cos,
+  abs,
+  max,
   dot,
   mix,
   smoothstep,
@@ -57,6 +59,15 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
     );
     diskColor.mulAssign(warmInner);
 
+    // Gravitational redshift (approx): dim + cool as r → rs (hit on equator ⇒ r ≈ hitR)
+    const rs = uniforms.blackHoleMass.mul(2.0);
+    const rSafe = max(hitR, rs.mul(1.05));
+    const gRedshift = sqrt(max(float(1.0).sub(rs.div(rSafe)), float(0.12)));
+    diskColor.mulAssign(mix(float(0.62), float(1.0), gRedshift));
+    diskColor.assign(
+      mix(diskColor.mul(vec3(1.06, 0.78, 0.58)), diskColor, gRedshift),
+    );
+
     // Doppler beaming: D = 1/(1 - β·cos(θ)), brightness ∝ D³
     const rotationSign = sign(uniforms.diskRotationSpeed);
     const velocityDir = vec3(
@@ -73,7 +84,17 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
       float(2.2).mul(uniforms.dopplerStrength),
     );
     // Narrower range → less harsh bright/dark split around the disk
-    diskColor.mulAssign(clamp(dopplerBoost, float(0.55), float(1.85)));
+    const dopplerClamped = clamp(dopplerBoost, float(0.55), float(1.85));
+    diskColor.mulAssign(dopplerClamped);
+    // Subtle chroma: approaching side cooler, receding warmer
+    const dSide = clamp(
+      dopplerClamped.sub(float(1.0)).mul(0.55).add(float(0.5)),
+      float(0.0),
+      float(1.0),
+    );
+    diskColor.mulAssign(
+      mix(vec3(1.08, 0.9, 0.82), vec3(0.9, 0.95, 1.08), dSide),
+    );
 
     // Edge falloff
     const edgeFalloff = smoothstep(
@@ -86,6 +107,13 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
         float(1.0).sub(uniforms.diskEdgeSoftnessOuter),
         normR,
       ),
+    );
+
+    // Viewing-angle limb: slightly denser when edge-on (banner camera is below)
+    const limb = mix(
+      float(0.88),
+      float(1.12),
+      float(1.0).sub(abs(rayDir.y).mul(0.9).min(float(1.0))),
     );
 
     // Turbulent ring pattern with cyclic time to prevent winding artifacts
@@ -141,7 +169,7 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
       smoothstep(float(0.0), float(0.65), normR),
     );
     const finalOpacity = clamp(
-      ringOpacity.mul(edgeFalloff).mul(innerFill),
+      ringOpacity.mul(edgeFalloff).mul(innerFill).mul(limb),
       float(0.0),
       float(1.0),
     );
