@@ -10,7 +10,6 @@ import type { BlackHoleUniforms } from "../mesh";
 import {
   vec2,
   vec3,
-  vec4,
   float,
   Fn,
   length,
@@ -236,6 +235,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     Discard(outAlpha.lessThan(0.004));
 
     // Premultiplied RGB for WebGPU canvas (alphaMode: 'premultiplied').
-    return vec4(finalColor.mul(outAlpha), outAlpha);
+    // Use toVec4(a) — vec4(vec3, float) is fine, but keep one pattern site-wide.
+    return finalColor.mul(outAlpha).toVec4(outAlpha);
   })();
 }

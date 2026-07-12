@@ -96,7 +96,7 @@ export function Bloom({
 
     void (async () => {
       try {
-        const { pass, max, float, vec4 } = await import("three/tsl");
+        const { pass, max, float } = await import("three/tsl");
         const { bloom } = await import("three/addons/tsl/display/BloomNode.js");
         if (cancelled) return;
 
@@ -128,17 +128,18 @@ export function Bloom({
         );
 
         // Premultiplied composite for WebGPU canvas alphaMode.
-        // void: scene a≈0, bloom≈0 → (0,0,0,0) transparent
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const bloomLuma = max(node.r, max(node.g, node.b)) as any;
+        // Bloom node is vec4 — never pass it into vec4(...) as a whole or TSL
+        // throws "Length of parameters exceeds maximum length of function 'vec4()'".
+        const bloomRgb = node.rgb;
+        const sceneRgb = sceneColor.rgb;
+        const bloomLuma = max(bloomRgb.r, max(bloomRgb.g, bloomRgb.b));
         const bloomA = bloomLuma
           .sub(float(0.04))
           .max(float(0.0))
           .mul(float(1.2));
         const outA = max(sceneColor.a, bloomA).min(float(1.0));
-        const outRgb = sceneColor.rgb.add(node);
-        // Premultiply for canvas; zero rgb when a is ~0 so we never flash black.
-        post.outputNode = vec4(outRgb.mul(outA), outA);
+        const outRgb = sceneRgb.add(bloomRgb).mul(outA);
+        post.outputNode = outRgb.toVec4(outA);
         post.needsUpdate = true;
 
         // Compose quad must blend (default NodeMaterial is opaque).
