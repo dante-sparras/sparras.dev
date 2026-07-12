@@ -32,17 +32,36 @@ describe("orbitDistanceLimits / skyDomeRadius", () => {
 
 describe("cameraPositionFromObserver", () => {
   test("face-on inclination ~0 sits near +Y", () => {
-    const [x, y, z] = cameraPositionFromObserver(0.5, 28);
+    const [x, y, z] = cameraPositionFromObserver(0, 28);
     expect(y).toBeGreaterThan(Math.abs(x));
     expect(y).toBeGreaterThan(Math.abs(z) * 0.5);
     const r = Math.hypot(x, y, z);
     expect(r).toBeCloseTo(28, 3);
   });
-  test("edge-on inclination ~90 lowers y", () => {
+
+  test("edge-on inclination ~90 lowers |y|", () => {
     const face = cameraPositionFromObserver(5, 28);
-    const edge = cameraPositionFromObserver(89, 28);
+    const edge = cameraPositionFromObserver(90, 28);
     expect(Math.abs(edge[1])).toBeLessThan(Math.abs(face[1]));
+    expect(Math.abs(edge[1])).toBeLessThan(1e-6);
   });
+
+  test("i=135 places camera below the orbital plane (y < 0)", () => {
+    const [x, y, z] = cameraPositionFromObserver(135, 28);
+    expect(y).toBeLessThan(0);
+    // 45° past edge-on: |y| = D cos(135°) magnitude
+    expect(Math.abs(y)).toBeCloseTo(28 * Math.SQRT1_2, 4);
+    // Slight azimuth bias on x makes |r| a hair above D
+    expect(Math.hypot(x, y, z)).toBeGreaterThanOrEqual(28 - 1e-6);
+    expect(Math.hypot(x, y, z)).toBeLessThan(28 * 1.02);
+  });
+
+  test("i=180 is face-on from −Y", () => {
+    const [, y, z] = cameraPositionFromObserver(180, 28);
+    expect(y).toBeCloseTo(-28, 5);
+    expect(Math.abs(z)).toBeLessThan(1e-6);
+  });
+
   test("distance floored at 8", () => {
     const [x, y, z] = cameraPositionFromObserver(45, 1);
     expect(Math.hypot(x, y, z)).toBeGreaterThanOrEqual(8 - 1e-6);
@@ -105,6 +124,13 @@ describe("buildBlackHoleConfig", () => {
     expect(c.spinParameter).toBeCloseTo(p.a, 8);
   });
 
+  test("inclination 135 is preserved (not clamped to 90)", () => {
+    const c = buildBlackHoleConfig({ overrides: { inclination: 135 } });
+    expect(c.inclination).toBe(135);
+    const [, y] = cameraPositionFromObserver(c.inclination, c.cameraDistance);
+    expect(y).toBeLessThan(0);
+  });
+
   test("respects raw cameraDistance (not forced by separation)", () => {
     const near = buildBlackHoleConfig({
       overrides: { separation: 40, cameraDistance: 18 },
@@ -149,7 +175,8 @@ describe("buildBlackHoleConfig", () => {
     expect(c.primaryMass).toBeGreaterThanOrEqual(0.08);
     expect(c.massRatio).toBeLessThanOrEqual(4);
     expect(Math.abs(c.spin)).toBeLessThanOrEqual(0.998);
-    expect(c.inclination).toBeLessThanOrEqual(89.5);
+    expect(c.inclination).toBeLessThanOrEqual(180);
+    expect(c.inclination).toBeGreaterThanOrEqual(0);
     expect(c.diskAspectRatio).toBeLessThanOrEqual(0.25);
     expect(c.temperatureIndex).toBeGreaterThanOrEqual(0.5);
     expect(c.accretionRate).toBeGreaterThanOrEqual(0.1);

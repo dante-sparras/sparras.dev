@@ -32,10 +32,17 @@ export {
   photonSphereRadius,
 } from "./kerr";
 
-/** Inclination degrees from orbital normal — avoids pole singularities. */
-function clampInclinationDegrees(inclination: number): number {
+/**
+ * Clamp observer inclination in **degrees** from the orbital / disk normal.
+ * Full hemisphere range:
+ * - `0`   — face-on looking down +Y
+ * - `90`  — edge-on (orbital plane)
+ * - `180` — face-on looking up from −Y
+ * Values like `135` sit 45° past edge-on (southern / “under” view).
+ */
+export function clampInclinationDegrees(inclination: number): number {
   if (!Number.isFinite(inclination)) return 62;
-  return Math.min(89.5, Math.max(0.5, inclination));
+  return Math.min(180, Math.max(0, inclination));
 }
 
 /** Vertical FOV used by the host canvas and shader ray basis. */
@@ -105,8 +112,11 @@ export type BlackHoleOverrides = Partial<{
 
   /**
    * Observer inclination **i** in **degrees** from the orbital / disk normal.
+   * Full range **0–180**:
    * - `0` = face-on (looking down +Y)
    * - `90` = edge-on
+   * - `135` = 45° past edge-on (slight underside / southern view)
+   * - `180` = face-on from below (−Y)
    * @defaultValue 62
    */
   inclination: number;
@@ -268,8 +278,8 @@ export const defaultPhysics = {
   massRatio: 1.5,
   separation: 20,
   spin: 0.5,
-  inclination: 90,
-  cameraDistance: 25,
+  inclination: 135,
+  cameraDistance: 30,
   diskOuterRadiusM: 15,
   diskAspectRatio: 0.05,
   peakTemperature: 50,
@@ -304,10 +314,14 @@ function mergePhysics(
 /**
  * World-space camera position looking at the origin.
  *
- * Disk / orbital plane is **XZ**. Inclination `0` places the camera on +Y
- * (face-on). A small azimuthal offset avoids a perfectly edge-symmetric view.
+ * Disk / orbital plane is **XZ**. Inclination degrees from +Y:
+ * - `0` → +Y (face-on)
+ * - `90` → edge-on
+ * - `180` → −Y (face-on from below)
  *
- * @param inclination - Degrees from the orbital normal
+ * A small azimuthal offset avoids a perfectly edge-symmetric view.
+ *
+ * @param inclination - Degrees from the orbital normal (0–180)
  * @param cameraDistance - Distance from the barycenter
  */
 export function cameraPositionFromObserver(
@@ -319,9 +333,11 @@ export function cameraPositionFromObserver(
   const distance = Math.max(8, cameraDistance);
   // Slight azimuthal offset — not a free art knob; keeps edge-on view asymmetric
   const azimuthBias = 0.12;
-  const x = distance * Math.sin(inclinationRadians) * azimuthBias;
-  const y = distance * Math.cos(inclinationRadians);
-  const z = distance * Math.sin(inclinationRadians);
+  const sinI = Math.sin(inclinationRadians);
+  const cosI = Math.cos(inclinationRadians);
+  const x = distance * sinI * azimuthBias;
+  const y = distance * cosI;
+  const z = distance * sinI;
   return [x, y, z];
 }
 

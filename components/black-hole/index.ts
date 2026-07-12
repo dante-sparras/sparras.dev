@@ -22,11 +22,10 @@ export {
   defaultRender,
   buildBlackHoleConfig,
   cameraPositionFromObserver,
+  clampInclinationDegrees,
   CAMERA_FOV_DEG,
   orbitDistanceLimits,
   skyDomeRadius,
-  kerrScales,
-  keplerOmega,
 } from "./config";
 export {
   diskTemperatureK,
