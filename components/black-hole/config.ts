@@ -98,33 +98,34 @@ export type BuildBlackHoleConfigOptions = {
 const VOID = "#050505";
 
 export const defaultBlackHoleConfig = {
-  blackHoleMass: 0.4,
-  gravitationalLensing: 3.45,
-  dopplerStrength: 0.78,
+  blackHoleMass: 0.42,
+  gravitationalLensing: 3.8,
+  dopplerStrength: 0.72,
 
-  diskInnerRadius: 3.6,
-  diskOuterRadius: 15.5,
-  diskBrightness: 5.6,
-  diskTemperature: 58,
-  temperatureFalloff: 0.55,
-  diskEdgeSoftnessInner: 0.35,
-  diskEdgeSoftnessOuter: 0.85,
-  diskSaturation: 0.85,
-  diskScaleHeight: 0.48,
+  diskInnerRadius: 3.4,
+  diskOuterRadius: 16.0,
+  // Lower brightness — was blowing out to a white bar
+  diskBrightness: 3.1,
+  diskTemperature: 48,
+  temperatureFalloff: 0.58,
+  diskEdgeSoftnessInner: 0.32,
+  diskEdgeSoftnessOuter: 0.9,
+  diskSaturation: 1.0,
+  // Thick enough to read as volume / dome when tilted
+  diskScaleHeight: 0.72,
 
-  // Strong azimuthal stretch → Interstellar-style streamlines
-  turbulenceScale: 1.85,
-  turbulenceStretch: 16.0,
-  turbulenceSharpness: 1.65,
-  diskRotationSpeed: -9.5,
-  turbulenceCycleTime: 6,
-  turbulenceLacunarity: 2.25,
-  turbulencePersistence: 0.48,
+  turbulenceScale: 2.1,
+  turbulenceStretch: 18.0,
+  turbulenceSharpness: 1.85,
+  diskRotationSpeed: -9.2,
+  turbulenceCycleTime: 7,
+  turbulenceLacunarity: 2.3,
+  turbulencePersistence: 0.45,
 
   starsEnabled: true,
-  starDensity: 0.04,
-  starSize: 1.25,
-  starBrightness: 0.12,
+  starDensity: 0.035,
+  starSize: 1.2,
+  starBrightness: 0.11,
 
   nebulaEnabled: false,
   nebula1Scale: 2,
@@ -136,15 +137,14 @@ export const defaultBlackHoleConfig = {
   bloomRadius: 0.32,
   bloomThreshold: 0.36,
 
-  stepSize: 0.65,
+  stepSize: 0.6,
   diskInkMode: 0,
 
   starBackgroundColor: VOID,
   nebula1Color: "#000000",
   nebula2Color: "#121212",
   starTint: "#b0b4c0",
-  // Warm cream tint (matches reference peach/white disk)
-  diskTint: "#ffe8dc",
+  diskTint: "#ffd4b8",
 } as const satisfies BlackHoleConfig;
 
 // ── Theme colors ────────────────────────────────────────────────────────────
@@ -171,7 +171,8 @@ function colorsForTheme(mode: ResolvedTheme, tokens: CssTokens): ThemeColors {
       nebula1Color: muted,
       nebula2Color: border,
       starTint: foreground,
-      diskTint: foreground,
+      // Ink mode uses dark structure; keep warm-neutral disk stamp
+      diskTint: muted,
     };
   }
 
@@ -180,7 +181,8 @@ function colorsForTheme(mode: ResolvedTheme, tokens: CssTokens): ThemeColors {
     nebula1Color: background,
     nebula2Color: secondary,
     starTint: border,
-    diskTint: foreground,
+    // Keep peach artistic tint — pure foreground (#fafafa) washed the disk white
+    diskTint: defaultBlackHoleConfig.diskTint,
   };
 }
 
