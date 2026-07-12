@@ -228,31 +228,25 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       });
     });
 
-    // Grade in straight color, then re-premultiply
+    // Grade in straight color, then re-premultiply — hard knee kills white plate
     const diskA = alpha;
     const safeA = max(diskA, float(1.0e-4));
     const straight = color.div(safeA).toVar("straight");
-    const graded = pow(max(straight, vec3(0.0)), vec3(1.0 / 2.2)).toVar(
-      "graded",
-    );
-    const toned = mix(
-      graded,
-      graded.div(graded.add(vec3(0.75))),
-      float(0.28),
-    ).toVar("toned");
+    // Mild gamma; keep warm midtones
+    const graded = pow(max(straight, vec3(0.0)), vec3(0.9)).toVar("graded");
+    const toned = graded
+      .div(graded.add(vec3(1.1)))
+      .mul(1.25)
+      .toVar("toned");
 
-    // Photon sphere / Einstein ring — thin bright rim like the reference
+    // Photon sphere / Einstein ring — thin bright rim
     const photonR = rs.mul(1.5);
     const distPhoton = minR.sub(photonR).abs();
-    const photonAa = max(fwidth(minR).mul(2.2), rs.mul(0.028));
+    const photonAa = max(fwidth(minR).mul(2.0), rs.mul(0.022));
     const photonMask = float(1.0)
-      .sub(smoothstep(float(0.0), photonAa.add(rs.mul(0.05)), distPhoton))
+      .sub(smoothstep(float(0.0), photonAa.add(rs.mul(0.04)), distPhoton))
       .toVar("photonMask");
-    // Hot disk boost on critical curve
-    toned.assign(mix(toned, toned.mul(1.35), photonMask));
-    toned.assign(
-      mix(toned, toned.div(toned.add(vec3(0.7))).mul(1.1), photonMask.mul(0.4)),
-    );
+    toned.assign(mix(toned, toned.mul(1.2), photonMask.mul(0.7)));
 
     const diskPm = toned.mul(diskA).toVar("diskPm");
     const remaining = float(1.0).sub(diskA);
@@ -262,22 +256,19 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const rgb = diskPm.toVar("rgb");
     const outAlpha = diskA.toVar("outAlpha");
 
-    // Cheap in-shader glow (no post bloom): edge bleed from disk energy
+    // Soft edge glow only (no plate fill that turned the disk into a white bar)
     const diskEnergy = max(diskPm.x, max(diskPm.y, diskPm.z));
-    const edgeGlow = fwidth(diskEnergy).mul(3.2).min(float(0.55));
-    rgb.addAssign(diskPm.mul(edgeGlow.mul(1.6)));
-    // Soft plate under bright disk (read as heat haze, not a second ring)
-    rgb.addAssign(diskPm.mul(float(0.12)));
-    outAlpha.assign(max(outAlpha, edgeGlow.mul(0.35)));
+    const edgeGlow = fwidth(diskEnergy).mul(1.8).min(float(0.28));
+    rgb.addAssign(diskPm.mul(edgeGlow.mul(0.9)));
+    outAlpha.assign(max(outAlpha, edgeGlow.mul(0.25)));
 
-    // Einstein-ring fill — crisp white-hot rim
-    const ringCol = vec3(1.05, 0.98, 0.94);
-    const ring = photonMask.mul(float(0.72)).mul(skyOk.add(diskA.mul(0.5)));
+    // Einstein-ring fill — warm white, not pure blown-out
+    const ringCol = vec3(1.0, 0.94, 0.88);
+    const ring = photonMask.mul(float(0.55)).mul(skyOk.add(diskA.mul(0.4)));
     rgb.addAssign(ringCol.mul(ring));
-    // Thin outer caustic (second bright filament of the critical curve)
-    const caustic = photonMask.mul(photonMask).mul(float(0.28));
+    const caustic = photonMask.mul(photonMask).mul(float(0.2));
     rgb.addAssign(ringCol.mul(caustic));
-    outAlpha.assign(max(outAlpha, photonMask.mul(0.75)));
+    outAlpha.assign(max(outAlpha, photonMask.mul(0.65)));
 
     If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
       const n = nebCol.mul(skyW);
