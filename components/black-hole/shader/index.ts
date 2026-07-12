@@ -116,8 +116,9 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       );
       // Thin at the hole (void stays mostly black); thicker outer wings for the
       // Interstellar “dome” / side structure when lensed or slightly tilted.
+      // Outer flare keeps the long horizontal arms readable.
       const scaleH = uniforms.diskScaleHeight.mul(
-        mix(float(0.22), float(1.85), pow(normR, float(0.72))),
+        mix(float(0.22), float(2.15), pow(normR, float(0.65))),
       );
       const absY = abs(rayPos.y);
       // Soft radial gate (0–1 floats — no boolean .toFloat())
@@ -162,7 +163,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
           float(1.0),
         );
         const mH = uniforms.diskScaleHeight.mul(
-          mix(float(0.22), float(1.85), pow(mNorm, float(0.72))),
+          mix(float(0.22), float(2.15), pow(mNorm, float(0.65))),
         );
         const mAbsY = abs(mid.y);
         // Sharp near the hole, soft enough outer for volume wings

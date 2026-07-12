@@ -102,14 +102,14 @@ export const defaultBlackHoleConfig = {
   gravitationalLensing: 4.8,
   dopplerStrength: 0.75,
 
-  // Compact disk relative to a larger silhouette (fills banner like the refs)
+  // Compact near the hole for silhouette; wide outer wings horizontally
   diskInnerRadius: 2.9,
-  diskOuterRadius: 11.5,
+  diskOuterRadius: 18.5,
   diskBrightness: 3.8,
   diskTemperature: 50,
   temperatureFalloff: 0.55,
   diskEdgeSoftnessInner: 0.28,
-  diskEdgeSoftnessOuter: 0.82,
+  diskEdgeSoftnessOuter: 0.95,
   diskSaturation: 1.0,
   // Thin through the void, thicker outer wings (not a fat fog, not a hairline)
   diskScaleHeight: 0.34,
