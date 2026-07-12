@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * RSC-safe hero banner (WebGPU black hole).
  * Next 16 only allows `dynamic(..., { ssr: false })` in Client Components.
