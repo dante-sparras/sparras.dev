@@ -40,9 +40,11 @@ export const createStarField = (uniforms: BlackHoleUniforms) =>
     // When rayDir varies fast (lensed sky near the hole), enlarge and soften
     // so stars don't strobe between hash cells.
     const angW = max(fwidth(theta), fwidth(phi)).mul(gridScale);
-    const aaBoost = float(1.0)
-      .add(angW.mul(10.0))
-      .clamp(float(1.0), float(5.0));
+    const aaBoost = clamp(
+      float(1.0).add(angW.mul(10.0)),
+      float(1.0),
+      float(5.0),
+    );
     // Softer kernel when AA is high (lower exp sharpness)
     const coreSharp = mix(
       float(2.4),
