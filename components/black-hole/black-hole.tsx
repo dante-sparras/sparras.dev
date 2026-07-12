@@ -1,12 +1,22 @@
 "use client";
 
 /**
- * React Three Fiber host for the binary black-hole banner.
+ * React Three Fiber host for the binary black-hole scene.
+ *
+ * Layout-agnostic: fills the parent box (`h-full w-full`). The parent
+ * supplies size (height/width, flex grow, aspect-ratio, etc.).
  *
  * @example
  * ```tsx
- * <BlackHole spin={0.8} inclination={135} />
- * <BlackHole primaryMass={0.5} secondaryMass={0.75} />
+ * // Parent decides the frame
+ * <div className="h-64 w-full">
+ *   <BlackHole spin={0.8} />
+ * </div>
+ *
+ * // Full-bleed panel
+ * <div className="absolute inset-0">
+ *   <BlackHole primaryMass={0.5} secondaryMass={0.75} />
+ * </div>
  * ```
  */
 
@@ -41,9 +51,8 @@ import {
   syncCamera,
 } from "./uniforms";
 
-/** Flex-safe wrapper so the absolute canvas has a real height. */
-export const SHELL_CLASS =
-  "relative min-h-[7.5rem] h-full w-full flex-1 bg-background sm:min-h-[9rem] md:min-h-[11rem]";
+/** Root fills parent; canvas is absolute to that box. */
+const ROOT_CLASS = "relative h-full w-full min-h-0";
 
 const FALLBACK_CLASS =
   "absolute inset-0 bg-[repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_1px_10px)]";
@@ -93,14 +102,12 @@ function Scene({
     [uniforms],
   );
 
-  // Transparent canvas clear
   useLayoutEffect(() => {
     scene.background = null;
     gl.setClearColor(0x000000, 0);
     gl.setClearAlpha(0);
   }, [gl, scene]);
 
-  // Observer pose when inclination / D change
   useLayoutEffect(() => {
     const [x, y, z] = cameraPositionFromObserver(
       config.inclination,
@@ -186,6 +193,7 @@ function Scene({
 
 /** Host chrome + optional raw physics knobs (flat). */
 export type BlackHoleProps = PhysicsParams & {
+  /** Extra classes on the root (still fills parent unless overridden). */
   className?: string;
   /** Drag-orbit / scroll-zoom. @defaultValue true */
   interactive?: boolean;
@@ -195,8 +203,10 @@ export type BlackHoleProps = PhysicsParams & {
 };
 
 /**
- * Client-only black-hole surface.
- * In RSC trees use `HeroBanner` from `@/components/hero-section`.
+ * Client-only black-hole surface. Fills its parent element.
+ *
+ * For the home hero layout use `HeroBanner` in `@/components/hero-section`
+ * (that wrapper owns banner size / flex).
  */
 export function BlackHole({
   className,
@@ -207,10 +217,10 @@ export function BlackHole({
 }: BlackHoleProps) {
   const [failed, setFailed] = useState(false);
   const [inView, setInView] = useState(true);
-  const shellRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const el = shellRef.current;
+    const el = rootRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
       ([entry]) => setInView(entry?.isIntersecting ?? true),
@@ -242,14 +252,14 @@ export function BlackHole({
 
   return (
     <div
-      ref={shellRef}
-      className={cn(SHELL_CLASS, className)}
+      ref={rootRef}
+      className={cn(ROOT_CLASS, className)}
       aria-label={ariaLabel}
       style={PIXEL_STYLE}
       data-webgpu-failed={failed ? "true" : undefined}
     >
       <WebGPUCanvas
-        className="absolute inset-0 h-full w-full"
+        className="absolute inset-0 size-full"
         camera={camera}
         dpr={dpr}
         fallback={Hatch}

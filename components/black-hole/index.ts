@@ -1,15 +1,18 @@
 /**
  * Public API — binary black-hole simulation (client components only).
  *
- * From a Server Component use `HeroBanner` in `@/components/hero-section`.
+ * Layout: parent sizes the box; `<BlackHole />` fills it (`h-full w-full`).
+ *
+ * From a Server Component for the **home hero**, use `HeroBanner`
+ * in `@/components/hero-section` (banner flex / min-height live there).
  *
  * ```ts
- * <BlackHole spin={0.9} inclination={135} />
+ * <div className="h-64 w-full"><BlackHole spin={0.9} /></div>
  * buildBlackHoleConfig({ separation: 16 })
  * ```
  */
 
-export { BlackHole, type BlackHoleProps, SHELL_CLASS } from "./black-hole";
+export { BlackHole, type BlackHoleProps } from "./black-hole";
 export {
   buildBlackHoleConfig,
   defaultPhysics,
