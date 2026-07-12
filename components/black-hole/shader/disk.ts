@@ -2,15 +2,21 @@
 // Three.js TSL Fn() callbacks are not accurately typed (NodeBuilder iterable errors).
 
 /**
- * Accretion disk (physics-first):
- *   T(r) = T_peak (r_in/r)^α
- *   g = √(1 − rs/r)  (static equatorial redshift)
- *   β = √(M/r)       (Keplerian, geometric units)
- *   D = 1/(1 − β cos θ), I ∝ D^{2.2 s}
- *   Structure = Keplerian-sheared FBM only (no painted log-spirals)
+ * Accretion disk — always-cloudy plasma packs.
+ *
+ * Why pure Kepler co-rotation fails long-term:
+ *   φ − ω(r)·t with ω ∝ r^{-3/2} winds structure into smooth concentric rings.
+ *
+ * Fix:
+ *   1. Large cloud packs orbit with solid-body rotation (blob shapes stable forever)
+ *   2. Medium/fine use cyclic Kepler shear (crossfade) — differential flow, no wind-up
+ *   3. Variable-size/density Worley cells for chaos that never washes out
+ *   4. Multi-hue cloud tints + dimmed inner rim (less blinding ISCO glow)
  */
+
 import type { BlackHoleUniforms } from "../mesh";
 import {
+  vec2,
   vec3,
   vec4,
   float,
@@ -21,14 +27,31 @@ import {
   sign,
   sin,
   cos,
-  abs,
   max,
+  abs,
   dot,
   mix,
   smoothstep,
 } from "three/tsl";
-import { fbm } from "./noise";
+import { cellularClouds2D, fbm, noise3D } from "./noise";
 import { blackbodyColor } from "./blackbody";
+
+/** Solid-body rotating UV — cloud shapes stay blob-like forever. */
+const solidUV = Fn(([hitR, hitAngle, time, omega0, sR, sPhi]) => {
+  const r = max(hitR, float(0.35));
+  const phi = hitAngle.sub(time.mul(omega0));
+  return vec2(r.mul(sR), phi.mul(sPhi));
+});
+
+/**
+ * Cyclic Kepler UV — shearTime is within one cycle only (bounded winding).
+ */
+const keplerUV = Fn(([hitR, hitAngle, shearTime, speed, sR, sPhi]) => {
+  const r = max(hitR, float(0.35));
+  const omega = speed.div(pow(r, float(1.5)));
+  const phi = hitAngle.sub(shearTime.mul(omega));
+  return vec2(r.mul(sR), phi.mul(sPhi));
+});
 
 export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
   Fn(([hitR, hitAngle, time, rayDir]) => {
@@ -36,47 +59,38 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
     const rs = M.mul(2.0);
     const innerR = uniforms.diskInnerRadius;
     const outerR = uniforms.diskOuterRadius;
-    const normR = clamp(
-      hitR.sub(innerR).div(max(outerR.sub(innerR), float(1.0e-3))),
-      float(0.0),
-      float(1.0),
-    );
+    const span = max(outerR.sub(innerR), float(1.0e-3));
+    const normR = clamp(hitR.sub(innerR).div(span), float(0.0), float(1.0));
 
-    // Blackbody temperature
-    const peakTempK = uniforms.diskTemperature.mul(1000.0);
-    const tempK = peakTempK.mul(
+    // ── Temperature / color ────────────────────────────────────────────────
+    const peakK = uniforms.diskTemperature.mul(1000.0);
+    const tempK = peakK.mul(
       pow(innerR.div(max(hitR, float(1.0e-3))), uniforms.temperatureFalloff),
     );
     const diskColor = blackbodyColor(tempK).toVar("diskColor");
 
-    // Saturation → luminance blend (site monochrome option)
     const lum = dot(diskColor, vec3(0.2126, 0.7152, 0.0722));
     diskColor.assign(
       mix(vec3(lum, lum, lum), diskColor, uniforms.diskSaturation),
     );
 
-    // Gravitational redshift
-    const rSafe = max(hitR, rs.mul(1.02));
-    const g = sqrt(max(float(1.0).sub(rs.div(rSafe)), float(0.05)));
+    const rSafe = max(hitR, rs.mul(1.05));
+    const g = sqrt(max(float(1.0).sub(rs.div(rSafe)), float(0.08)));
     diskColor.mulAssign(g);
-    // Cool shift with redshift (frequency drop)
-    diskColor.assign(mix(diskColor.mul(vec3(1.15, 0.55, 0.35)), diskColor, g));
+    diskColor.assign(mix(diskColor.mul(vec3(1.22, 0.55, 0.32)), diskColor, g));
 
-    // Keplerian Doppler beaming
-    const rotationSign = sign(uniforms.diskRotationSpeed);
+    const rotSign = sign(uniforms.diskRotationSpeed);
     const vHat = vec3(
-      sin(hitAngle).negate().mul(rotationSign),
+      sin(hitAngle).negate().mul(rotSign),
       float(0.0),
-      cos(hitAngle).mul(rotationSign),
+      cos(hitAngle).mul(rotSign),
     );
-    // Cap β below c; ISCO ~ 6M so floor r at ~3M
     const beta = sqrt(M.div(max(hitR, M.mul(3.0)))).min(float(0.5));
     const cosTh = clamp(dot(vHat, rayDir), float(-1.0), float(1.0));
     const D = float(1.0).div(max(float(1.0).sub(beta.mul(cosTh)), float(0.12)));
-    const boost = pow(D, float(2.5).mul(uniforms.dopplerStrength));
-    diskColor.mulAssign(clamp(boost, float(0.35), float(2.5)));
+    const boost = pow(D, float(3.0).mul(uniforms.dopplerStrength));
+    diskColor.mulAssign(clamp(boost, float(0.2), float(4.5)));
 
-    // Radial edges
     const edge = smoothstep(
       float(0.0),
       uniforms.diskEdgeSoftnessInner,
@@ -89,66 +103,254 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
       ),
     );
 
-    // Keplerian shear of FBM (physical-ish turbulence advection)
-    const cycle = max(uniforms.turbulenceCycleTime, float(0.5));
+    // ── Motion: solid-body + cyclic shear (no wind-up) ──────────────────────
+    const speed = uniforms.diskRotationSpeed;
+    const sc = uniforms.turbulenceScale;
+    const rRef = mix(innerR, outerR, float(0.35));
+    const omega0 = speed.div(pow(max(rRef, float(0.5)), float(1.5)));
+
+    const cycle = max(uniforms.turbulenceCycleTime, float(2.0));
     const t0 = time.mod(cycle);
+    const t1 = t0.add(cycle);
     const blend = t0.div(cycle);
-    const w = float(1.5);
-    const phase0 = t0
-      .mul(uniforms.diskRotationSpeed)
-      .div(pow(max(hitR, float(0.5)), w));
-    const phase1 = t0
-      .add(cycle)
-      .mul(uniforms.diskRotationSpeed)
-      .div(pow(max(hitR, float(0.5)), w));
-    const a0 = hitAngle.add(phase0);
-    const a1 = hitAngle.add(phase1);
-    const stretch = max(uniforms.turbulenceStretch, float(0.2));
-    const p0 = vec3(
-      hitR.mul(uniforms.turbulenceScale),
-      cos(a0).div(stretch),
-      sin(a0).div(stretch),
-    );
-    const p1 = vec3(
-      hitR.mul(uniforms.turbulenceScale),
-      cos(a1).div(stretch),
-      sin(a1).div(stretch),
-    );
-    const turb = mix(
-      fbm(p1, uniforms.turbulenceLacunarity, uniforms.turbulencePersistence),
-      fbm(p0, uniforms.turbulenceLacunarity, uniforms.turbulencePersistence),
-      blend,
-    );
-    const turb01 = clamp(turb, float(0.0), float(1.0));
-    const struct = pow(turb01, max(uniforms.turbulenceSharpness, float(0.25)));
-    // Opacity: continuous disk with turbulent modulation (not painted spirals)
-    const opTurb = mix(float(0.35), float(1.0), struct);
 
-    // Mild limb brightening when edge-on (path length through slab handled in volume;
-    // this is residual surface factor)
+    const sR = sc.mul(0.95);
+    const sPhi = sc.mul(1.85);
+
+    // ── Large packs: solid-body (always cloudy) ────────────────────────────
+    const uvBig = solidUV(
+      hitR,
+      hitAngle,
+      time,
+      omega0,
+      sR.mul(0.48),
+      sPhi.mul(0.7),
+    );
+    const wBig = noise3D(vec3(uvBig.x, uvBig.y, time.mul(0.03))).sub(0.5);
+    const big = cellularClouds2D(
+      uvBig.add(vec2(wBig.mul(0.65), wBig.mul(0.55))),
+      float(0.28),
+      float(1.15),
+      float(0.5),
+      float(1.35),
+    );
+
+    // ── Medium: cyclic Kepler shear ────────────────────────────────────────
+    const uvM0 = keplerUV(
+      hitR,
+      hitAngle,
+      t0,
+      speed,
+      sR.mul(1.05),
+      sPhi.mul(1.15),
+    );
+    const uvM1 = keplerUV(
+      hitR,
+      hitAngle,
+      t1,
+      speed,
+      sR.mul(1.05),
+      sPhi.mul(1.15),
+    );
+    const med0 = cellularClouds2D(
+      uvM0,
+      float(0.22),
+      float(0.95),
+      float(0.4),
+      float(1.25),
+    );
+    const med1 = cellularClouds2D(
+      uvM1,
+      float(0.22),
+      float(0.95),
+      float(0.4),
+      float(1.25),
+    );
+    const med = mix(med1, med0, blend);
+
+    // ── Fine: faster cyclic shear ──────────────────────────────────────────
+    const uvF0 = keplerUV(
+      hitR,
+      hitAngle,
+      t0,
+      speed.mul(1.2),
+      sR.mul(2.0),
+      sPhi.mul(1.9),
+    );
+    const uvF1 = keplerUV(
+      hitR,
+      hitAngle,
+      t1,
+      speed.mul(1.2),
+      sR.mul(2.0),
+      sPhi.mul(1.9),
+    );
+    const fine0 = cellularClouds2D(
+      uvF0,
+      float(0.18),
+      float(0.75),
+      float(0.35),
+      float(1.15),
+    );
+    const fine1 = cellularClouds2D(
+      uvF1,
+      float(0.18),
+      float(0.75),
+      float(0.35),
+      float(1.15),
+    );
+    const fine = mix(fine1, fine0, blend);
+
+    // ── Extra chaos (solid body, offset) ───────────────────────────────────
+    const uvC = solidUV(
+      hitR,
+      hitAngle,
+      time,
+      omega0.mul(0.9),
+      sR.mul(0.7),
+      sPhi.mul(1.0),
+    ).add(vec2(5.1, 3.3));
+    const chaos = cellularClouds2D(
+      uvC,
+      float(0.24),
+      float(1.0),
+      float(0.35),
+      float(1.3),
+    );
+
+    // FBM texture in solid frame
+    const phiS = hitAngle.sub(time.mul(omega0));
+    const fbmP = vec3(
+      hitR.mul(sc.mul(1.55)),
+      cos(phiS).mul(sc.mul(1.05)),
+      sin(phiS).mul(sc.mul(1.05)),
+    ).add(vec3(time.mul(0.08), 0.0, time.mul(0.06)));
+    const turb = clamp(
+      fbm(fbmP, uniforms.turbulenceLacunarity, uniforms.turbulencePersistence),
+      float(0.0),
+      float(1.0),
+    );
+    const turbDetail = pow(
+      turb,
+      max(uniforms.turbulenceSharpness.mul(0.4), float(0.4)),
+    );
+
+    // Thickness fluctuation
+    const thickNoise = noise3D(
+      vec3(hitR.mul(sc.mul(0.8)), phiS.mul(1.2), time.mul(0.07)),
+    );
+    const thickVar = mix(float(0.75), float(1.2), thickNoise);
+
+    // Multi-scale cloudy mix
+    const clouds = clamp(
+      big
+        .mul(0.65)
+        .add(med.mul(0.58))
+        .add(fine.mul(0.5))
+        .add(chaos.mul(0.55))
+        .add(big.mul(med).mul(0.5))
+        .add(fine.mul(chaos).mul(0.35))
+        .add(big.mul(fine).mul(0.25))
+        .add(med.mul(chaos).mul(0.3)),
+      float(0.0),
+      float(1.0),
+    );
+
+    const struct = clamp(
+      clouds.mul(mix(float(0.55), float(1.28), turbDetail)).mul(thickVar),
+      float(0.0),
+      float(1.0),
+    );
+
+    // Dense filled gas + cloud peaks
+    const density = mix(float(0.58), float(1.0), pow(struct, float(0.5)))
+      .mul(edge)
+      .mul(thickVar);
+    const emitMod = mix(float(0.35), float(2.55), pow(struct, float(0.55)));
+    // Dim the blinding inner rim near ISCO
+    const innerDim = mix(
+      float(0.52),
+      float(1.0),
+      smoothstep(float(0.0), float(0.38), normR),
+    );
+
+    // ── Multi-hue cloud color variation ────────────────────────────────────
+    const hueN = noise3D(
+      vec3(
+        hitR.mul(sc.mul(0.55)),
+        phiS.mul(1.4),
+        time.mul(0.05).add(struct.mul(0.3)),
+      ),
+    );
+    const hueN2 = noise3D(
+      vec3(hitR.mul(sc.mul(1.1)), phiS.mul(2.1).add(2.5), time.mul(0.07)),
+    );
+    const cPeach = vec3(1.15, 0.78, 0.55);
+    const cCopper = vec3(1.2, 0.55, 0.28);
+    const cRust = vec3(0.95, 0.38, 0.18);
+    const cAmber = vec3(1.25, 0.9, 0.5);
+    const cCream = vec3(1.2, 1.0, 0.82);
+    const hA = mix(cRust, cCopper, clamp(hueN, float(0.0), float(1.0)));
+    const hB = mix(cPeach, cAmber, clamp(hueN2, float(0.0), float(1.0)));
+    const cloudTint = mix(
+      hA,
+      hB,
+      clamp(struct.mul(0.55).add(hueN.mul(0.45)), float(0.0), float(1.0)),
+    );
+    const coreTint = mix(cloudTint, cCream, pow(struct, float(1.3)).mul(0.4));
+
+    const coolLane = mix(
+      vec3(1.0, 1.0, 1.0),
+      vec3(1.1, 0.42, 0.2),
+      float(1.0)
+        .sub(struct)
+        .mul(smoothstep(float(0.1), float(0.95), normR)),
+    );
+    const outerRust = mix(
+      vec3(1.0, 1.0, 1.0),
+      vec3(1.05, 0.48, 0.24),
+      smoothstep(float(0.3), float(1.0), normR).mul(0.6),
+    );
+    const innerCool = mix(
+      vec3(1.0, 0.72, 0.52),
+      vec3(1.0, 1.0, 1.0),
+      smoothstep(float(0.0), float(0.42), normR),
+    );
+
     const limb = mix(
-      float(0.92),
-      float(1.08),
-      float(1.0).sub(abs(rayDir.y).mul(0.7).min(float(1.0))),
+      float(0.9),
+      float(1.14),
+      float(1.0).sub(abs(rayDir.y).mul(0.65).min(float(1.0))),
     );
-
-    const opacity = clamp(opTurb.mul(edge).mul(limb), float(0.0), float(1.0));
 
     const tint = uniforms.diskTint.xyz.mul(uniforms.diskTint.w);
     const tintLum = dot(tint, vec3(0.2126, 0.7152, 0.0722));
-    // Soften pure-white theme tints slightly
     const tintSafe = mix(
       tint,
-      mix(tint, vec3(1.0, 0.9, 0.82), float(0.5)),
-      smoothstep(float(0.9), float(0.99), tintLum),
+      mix(tint, vec3(1.0, 0.84, 0.68), float(0.5)),
+      smoothstep(float(0.88), float(0.99), tintLum),
     );
 
-    const raw = diskColor.mul(tintSafe).mul(uniforms.diskBrightness);
-    // Soft knee against blowout
-    const lit = raw.div(raw.add(vec3(1.0))).mul(1.2);
-    const emissive = mix(raw, lit, float(0.65));
-    const finalCol = mix(emissive, tintSafe, uniforms.diskInkMode);
-    const inkBoost = mix(float(1.0), float(1.3), uniforms.diskInkMode);
+    const warm = mix(
+      diskColor,
+      diskColor.mul(vec3(1.05, 0.62, 0.36)),
+      float(0.35),
+    )
+      .mul(coreTint)
+      .mul(coolLane)
+      .mul(outerRust)
+      .mul(innerCool)
+      .mul(tintSafe);
 
-    return vec4(finalCol, clamp(opacity.mul(inkBoost), float(0.0), float(1.0)));
+    const raw = warm
+      .mul(uniforms.diskBrightness)
+      .mul(emitMod)
+      .mul(limb)
+      .mul(innerDim);
+    const lit = raw.div(raw.add(vec3(0.55))).mul(1.35);
+    const emissive = mix(raw, lit, float(0.4));
+    const finalCol = mix(emissive, tintSafe, uniforms.diskInkMode);
+    const inkBoost = mix(float(1.0), float(1.2), uniforms.diskInkMode);
+
+    return vec4(finalCol, clamp(density.mul(inkBoost), float(0.0), float(1.0)));
   });

@@ -1,19 +1,33 @@
 // @ts-nocheck
 // Three.js TSL Fn() callbacks are not accurately typed (NodeBuilder iterable errors).
 
-/** Hash / value-noise / FBM helpers for the raymarch graph. */
+/**
+ * Hash / value-noise / FBM / cellular (Worley) for the black-hole disk.
+ */
 
-import { vec2, vec3, float, Fn, sin, dot, fract, floor, mix } from "three/tsl";
+import {
+  vec2,
+  vec3,
+  float,
+  Fn,
+  sin,
+  dot,
+  fract,
+  floor,
+  mix,
+  min,
+  max,
+  length,
+  clamp,
+  pow,
+} from "three/tsl";
 
-// Hash functions for pseudo-random number generation
 export const hash21 = Fn(([p]) => {
-  const n = sin(dot(p, vec2(127.1, 311.7))).mul(43758.5453);
-  return fract(n);
+  return fract(sin(dot(p, vec2(127.1, 311.7))).mul(43758.5453));
 });
 
 export const hash31 = Fn(([p]) => {
-  const n = sin(dot(p, vec3(127.1, 311.7, 74.7))).mul(43758.5453);
-  return fract(n);
+  return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))).mul(43758.5453));
 });
 
 export const hash22 = Fn(([p]) => {
@@ -22,7 +36,7 @@ export const hash22 = Fn(([p]) => {
   return vec2(px, py);
 });
 
-// 3D value noise
+/** 3D value noise with smoothstep-like interpolation. */
 export const noise3D = Fn(([p]) => {
   const i = floor(p);
   const f = fract(p);
@@ -44,7 +58,7 @@ export const noise3D = Fn(([p]) => {
   );
 });
 
-// Fractal Brownian Motion - 4 octaves of layered noise
+/** 4-octave FBM. */
 export const fbm = Fn(([p, lacunarity, persistence]) => {
   const value = float(0.0).toVar();
   const amplitude = float(0.5).toVar();
@@ -66,3 +80,58 @@ export const fbm = Fn(([p, lacunarity, persistence]) => {
 
   return value;
 });
+
+/**
+ * 2D Worley — distance to nearest random feature point.
+ */
+export const cellular2D = Fn(([p]) => {
+  const i = floor(p);
+  const f = fract(p);
+  const minD = float(8.0).toVar();
+
+  for (const ox of [-1, 0, 1]) {
+    for (const oy of [-1, 0, 1]) {
+      const cell = i.add(vec2(ox, oy));
+      const feature = hash22(cell);
+      const offset = vec2(ox, oy).add(feature).sub(f);
+      minD.assign(min(minD, length(offset)));
+    }
+  }
+  return minD;
+});
+
+/**
+ * Variable-size / variable-density cellular clouds.
+ * Each cell: random radius, amplitude, and ~20% empty → chaotic packs.
+ */
+export const cellularClouds2D = Fn(
+  ([p, sizeMin, sizeMax, densMin, densMax]) => {
+    const i = floor(p);
+    const f = fract(p);
+    const acc = float(0.0).toVar();
+
+    for (const ox of [-1, 0, 1]) {
+      for (const oy of [-1, 0, 1]) {
+        const cell = i.add(vec2(ox, oy));
+        const feature = hash22(cell);
+        const sz = mix(sizeMin, sizeMax, hash21(cell.add(17.0)));
+        const dens = mix(densMin, densMax, hash21(cell.add(31.0)));
+        // ~15% empty cells — more fill, still irregular
+        const live = clamp(
+          hash21(cell.add(53.0)).sub(0.15).mul(40.0),
+          float(0.0),
+          float(1.0),
+        );
+
+        const offset = vec2(ox, oy).add(feature).sub(f);
+        const d = length(offset).div(max(sz, float(0.12)));
+        const blob = pow(
+          clamp(float(1.0).sub(d), float(0.0), float(1.0)),
+          float(1.55),
+        );
+        acc.addAssign(blob.mul(dens).mul(live));
+      }
+    }
+    return clamp(acc, float(0.0), float(1.7));
+  },
+);

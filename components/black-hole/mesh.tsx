@@ -2,8 +2,12 @@
 
 /**
  * Inverted skydome + TSL uniform bag for the Schwarzschild raymarch.
- * Uniforms are created once per mount, then patched when config / camera / size change.
+ * Uniforms created once per mount; patched on config / camera / size change.
+ *
+ * Camera axes are taken from matrixWorld (not rebuilt with worldUp in the shader)
+ * so looking nearly along ±Y never snaps the basis.
  */
+
 import { useFrame, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three/webgpu";
@@ -13,7 +17,6 @@ import { createBlackHoleShader } from "./shader";
 
 // ── Uniform bag ─────────────────────────────────────────────────────────────
 
-/** TSL uniform node — patch `.value` each frame / on config change. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type UniformNode = { value: any };
 
@@ -21,7 +24,10 @@ export type BlackHoleUniforms = {
   time: UniformNode;
   resolution: UniformNode;
   cameraPosition: UniformNode;
-  cameraTarget: UniformNode;
+  /** World-space camera axes from matrixWorld (stable at poles). */
+  cameraForward: UniformNode;
+  cameraRight: UniformNode;
+  cameraUp: UniformNode;
   /** Vertical FOV in degrees (matches PerspectiveCamera). */
   cameraFov: UniformNode;
 } & Record<(typeof SCALARS)[number], UniformNode> &
@@ -75,7 +81,7 @@ const tmp4 = new THREE.Vector4();
 const tmpColor = new THREE.Color();
 
 /**
- * CSS hex → RGB as *display* values (no sRGB→linear decode).
+ * CSS hex → display RGB (no sRGB→linear decode).
  * Shader + WebGPUCanvas use a display-referred path.
  */
 function parseCssColor(hex: string): THREE.Color {
@@ -111,7 +117,9 @@ function createUniforms(config: BlackHoleConfig): BlackHoleUniforms {
     time: uniform(0),
     resolution: uniform(new THREE.Vector2(1, 1)),
     cameraPosition: uniform(new THREE.Vector3()),
-    cameraTarget: uniform(new THREE.Vector3()),
+    cameraForward: uniform(new THREE.Vector3(0, 0, -1)),
+    cameraRight: uniform(new THREE.Vector3(1, 0, 0)),
+    cameraUp: uniform(new THREE.Vector3(0, 1, 0)),
     cameraFov: uniform(48),
   } as unknown as BlackHoleUniforms;
 
@@ -127,19 +135,38 @@ function applyConfig(u: BlackHoleUniforms, config: BlackHoleConfig) {
   for (const k of COLOR4) u[k].value.copy(hexToVec4(config[k], tmp4));
 }
 
+/** Scratch vectors for matrixWorld column extraction (no alloc per frame). */
+type AxisScratch = {
+  right: THREE.Vector3;
+  up: THREE.Vector3;
+  forward: THREE.Vector3;
+};
+
+/**
+ * Sync camera uniforms from the real world matrix.
+ * Avoids reconstructing a lookAt basis with worldUp (singular when looking ±Y).
+ */
 function syncCamera(
   u: BlackHoleUniforms,
   camera: THREE.Camera,
-  lookDir: THREE.Vector3,
+  axes: AxisScratch,
 ) {
+  camera.updateMatrixWorld();
+  const e = camera.matrixWorld.elements;
+
+  // Three.js camera: +X right, +Y up, −Z forward (local)
+  axes.right.set(e[0], e[1], e[2]).normalize();
+  axes.up.set(e[4], e[5], e[6]).normalize();
+  axes.forward.set(-e[8], -e[9], -e[10]).normalize();
+
   u.cameraPosition.value.copy(camera.position);
-  lookDir.set(0, 0, -1).applyQuaternion(camera.quaternion);
-  u.cameraTarget.value.copy(camera.position).addScaledVector(lookDir, 10);
-  if (
-    "fov" in camera &&
-    typeof (camera as THREE.PerspectiveCamera).fov === "number"
-  ) {
-    u.cameraFov.value = (camera as THREE.PerspectiveCamera).fov;
+  u.cameraRight.value.copy(axes.right);
+  u.cameraUp.value.copy(axes.up);
+  u.cameraForward.value.copy(axes.forward);
+
+  const fov = (camera as THREE.PerspectiveCamera).fov;
+  if (typeof fov === "number" && Number.isFinite(fov)) {
+    u.cameraFov.value = fov;
   }
 }
 
@@ -151,14 +178,17 @@ const GEO: [number, number, number] = [100, 64, 64];
 
 export function BlackHoleMesh({ config }: { config: BlackHoleConfig }) {
   const { camera, size } = useThree();
-  const lookDir = useRef(new THREE.Vector3());
+  const axes = useRef<AxisScratch>({
+    right: new THREE.Vector3(1, 0, 0),
+    up: new THREE.Vector3(0, 1, 0),
+    forward: new THREE.Vector3(0, 0, -1),
+  });
 
-  // Create once — config is applied in layout effects below.
   const uniforms = useRef<BlackHoleUniforms | null>(null);
   if (!uniforms.current) uniforms.current = createUniforms(config);
   const u = uniforms.current;
 
-  const colorNode = useMemo(() => createBlackHoleShader(u), [u]);
+  const fragmentNode = useMemo(() => createBlackHoleShader(u), [u]);
 
   useLayoutEffect(() => {
     applyConfig(u, config);
@@ -170,19 +200,18 @@ export function BlackHoleMesh({ config }: { config: BlackHoleConfig }) {
 
   useFrame((_, delta) => {
     u.time.value += Math.min(delta, MAX_DT);
-    syncCamera(u, camera, lookDir.current);
+    syncCamera(u, camera, axes.current);
   });
 
   return (
     <mesh frustumCulled={false} scale={SCALE}>
       <sphereGeometry args={GEO} />
       {/*
-        fragmentNode: full RGBA. Void pixels are Discard()'d in the shader so
-        the transparent clear shows CSS `bg-background` behind the canvas.
-        WebGPU canvas is always premultiplied when alpha:true.
+        fragmentNode: full RGBA. Void pixels Discard'd so transparent clear
+        shows CSS `bg-background`. Canvas is premultiplied when alpha:true.
       */}
       <meshBasicNodeMaterial
-        fragmentNode={colorNode}
+        fragmentNode={fragmentNode}
         transparent
         premultipliedAlpha
         depthWrite={false}

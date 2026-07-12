@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * WebGPU Schwarzschild black hole (dgreenheck port) on React Three Fiber.
+ * WebGPU Schwarzschild black hole on React Three Fiber.
  *
- * Void sky is transparent — host shell `bg-background` (#050505) shows through.
- * Event horizon is forced pure black in the shader.
- *
- * No post-process bloom: the async RenderPipeline path was dulling the disk/stars
- * and lifting the horizon off #000 after the first frame. Disk punch stays in-shader.
+ * Port of dgreenheck/webgpu-black-hole (MIT), rebuilt for this site:
+ * - R3F scene graph + shared WebGPUCanvas kit
+ * - Conserved E/L null geodesics (not ad-hoc 1/r² bend)
+ * - Transparent void via Discard + CSS `bg-background` (#050505)
+ * - No post-process bloom (async pipeline dulled disk/horizon)
  *
  * @example
  * <BlackHole className="h-40 w-full" />
@@ -15,6 +15,7 @@
  *
  * From Server Components use `HeroBanner` via `@/components/hero-section`.
  */
+
 import { useThree } from "@react-three/fiber";
 import {
   useCallback,
@@ -35,17 +36,12 @@ import {
 import { ARIA_LABEL, CAMERA, FALLBACK_CLASS, SHELL_CLASS } from "./constants";
 import { BlackHoleMesh } from "./mesh";
 
-/**
- * Small public surface — most knobs stay on site defaults + theme.
- * Use `overrides` only for rare advanced tweaks.
- */
 export type BlackHoleProps = {
   className?: string;
   interactive?: boolean;
   autoRotate?: boolean;
   /** Pull colors from CSS theme tokens. Default true. */
   themeColors?: boolean;
-  /** Stable advanced knobs (brightness, stars on/off, …). */
   overrides?: BlackHoleOverrides;
   "aria-label"?: string;
 };

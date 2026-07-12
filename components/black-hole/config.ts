@@ -1,74 +1,67 @@
 /**
  * Simulation + color config (Schwarzschild raymarch, site-tuned).
  *
- * **Public surface:** only `BlackHoleOverrides` (stable knobs).
- * Full `BlackHoleConfig` is internal — used by mesh / uniforms / theme.
- * Theme tokens supply **colors only** — never non-color knobs.
+ * Structure follows dgreenheck/webgpu-black-hole knobs, with a small public
+ * `BlackHoleOverrides` surface and theme color mapping only.
  *
- * Geometric units G = c = 1: Schwarzschild radius rs = 2M,
- * photon sphere = 1.5 rs, ISCO = 3 rs (6M).
+ * Geometric units G = c = 1: rs = 2M, photon sphere = 3M, ISCO = 6M.
  */
+
 import type { ResolvedTheme } from "@/components/providers";
 import type { CssTokens } from "@/hooks";
 
-// ── Internal full config ────────────────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────────────────────────
 
 /** Full sim bag (internal). Prefer `BlackHoleOverrides` at call sites. */
 export type BlackHoleConfig = {
-  // Gravity (M in geometric units; rs = 2M)
   blackHoleMass: number;
-  /** Multiplier on affine step (1 = geometric units). Affects capture sharpness. */
+  /** Scales affine step (1 = geometric units). */
   gravitationalLensing: number;
-  /** 0 = off, 1 = full special-relativistic beaming strength. */
   dopplerStrength: number;
-  // Disk shape (cylindrical radii in same units as M)
+
   diskInnerRadius: number;
   diskOuterRadius: number;
   diskBrightness: number;
-  /** Peak temperature in 1000 K units (50 → 50_000 K). */
+  /** Peak T in 1000 K (50 → 50_000 K). */
   diskTemperature: number;
-  /** T(r) ∝ (r_in / r)^α — thin-disk α ≈ 0.75. */
+  /** T(r) ∝ (r_in/r)^α — thin disk α ≈ 0.75. */
   temperatureFalloff: number;
   diskEdgeSoftnessInner: number;
   diskEdgeSoftnessOuter: number;
   diskSaturation: number;
-  /** Vertical Gaussian scale height at mid-disk (world units). */
+  /** Gaussian scale height at midplane (world units). */
   diskScaleHeight: number;
-  // Disk motion / noise
+
   turbulenceScale: number;
-  /** Azimuthal stretch of FBM (>1 = long streamlines). */
   turbulenceStretch: number;
   turbulenceSharpness: number;
   diskRotationSpeed: number;
   turbulenceCycleTime: number;
   turbulenceLacunarity: number;
   turbulencePersistence: number;
-  // Stars
+
   starsEnabled: boolean;
   starDensity: number;
   starSize: number;
   starBrightness: number;
-  // Nebula
+
   nebulaEnabled: boolean;
   nebula1Scale: number;
   nebula1Density: number;
   nebula2Scale: number;
   nebula2Density: number;
-  // March
+
   stepSize: number;
-  /** 0 = emissive, 1 = ink stamp (light theme). */
+  /** 0 = emissive, 1 = ink (light theme). */
   diskInkMode: number;
-  // Colors (hex; theme may override)
+
   nebula1Color: string;
   nebula2Color: string;
   starTint: string;
   diskTint: string;
 };
 
-/**
- * Stable advanced knobs safe for callers to tweak.
- * Everything else stays on site defaults + theme.
- */
+/** Stable knobs callers may override. */
 export type BlackHoleOverrides = Partial<
   Pick<
     BlackHoleConfig,
@@ -89,49 +82,48 @@ export type BlackHoleOverrides = Partial<
 
 export type BuildBlackHoleConfigOptions = {
   overrides?: BlackHoleOverrides;
-  /** Map CSS design tokens → sim colors (requires `mode` + `tokens`). */
   themeColors?: boolean;
   mode?: ResolvedTheme;
-  /** From `useCssTokens()` / `readCssTokens()` — no DOM reads here. */
   tokens?: CssTokens | null;
 };
 
 // ── Defaults ────────────────────────────────────────────────────────────────
 
-/** Site void — dark `--background` in app/globals.css. */
 const VOID = "#050505";
 
 /**
- * Physical-ish banner defaults (M = 0.5 → rs = 1):
- * photon sphere 1.5, ISCO 3, disk from ~ISCO out to ~16.
+ * Defaults lean on dgreenheck’s demo knobs, retuned for the profile banner:
+ * steep T falloff → peach outer arms (not white plate), FOV framing, no bloom.
  */
 export const defaultBlackHoleConfig = {
-  blackHoleMass: 0.5,
-  gravitationalLensing: 1.0,
-  dopplerStrength: 1.0,
+  blackHoleMass: 0.45,
+  // Tutorial bend scale (his demo uses ~2.4 with stepSize 1)
+  gravitationalLensing: 2.2,
+  dopplerStrength: 1.2,
 
-  diskInnerRadius: 3.2,
-  diskOuterRadius: 16.0,
-  diskBrightness: 3.4,
-  diskTemperature: 45,
-  temperatureFalloff: 0.75,
-  diskEdgeSoftnessInner: 0.25,
-  diskEdgeSoftnessOuter: 0.9,
-  diskSaturation: 0.95,
-  diskScaleHeight: 0.22,
+  diskInnerRadius: 3.4,
+  diskOuterRadius: 17.0,
+  diskBrightness: 7.0,
+  diskTemperature: 38,
+  temperatureFalloff: 3.6,
+  diskEdgeSoftnessInner: 0.12,
+  diskEdgeSoftnessOuter: 0.75,
+  diskSaturation: 1.12,
+  diskScaleHeight: 0.26,
 
-  turbulenceScale: 1.6,
-  turbulenceStretch: 12.0,
-  turbulenceSharpness: 1.35,
-  diskRotationSpeed: -8.0,
-  turbulenceCycleTime: 7,
-  turbulenceLacunarity: 2.15,
+  // Always-cloudy: denser fill + more chaotic packs
+  turbulenceScale: 1.75,
+  turbulenceStretch: 2.2,
+  turbulenceSharpness: 2.1,
+  diskRotationSpeed: -12.0,
+  turbulenceCycleTime: 5.0,
+  turbulenceLacunarity: 2.5,
   turbulencePersistence: 0.52,
 
   starsEnabled: true,
-  starDensity: 0.04,
-  starSize: 1.2,
-  starBrightness: 0.11,
+  starDensity: 0.12,
+  starSize: 1.35,
+  starBrightness: 0.2,
 
   nebulaEnabled: false,
   nebula1Scale: 2,
@@ -139,16 +131,16 @@ export const defaultBlackHoleConfig = {
   nebula2Scale: 5.5,
   nebula2Density: 0.06,
 
-  stepSize: 0.42,
+  stepSize: 0.5,
   diskInkMode: 0,
 
   nebula1Color: "#1a1020",
   nebula2Color: "#120a18",
   starTint: "#b0b4c0",
-  diskTint: "#ffd4b8",
+  diskTint: "#ffc4a0",
 } as const satisfies BlackHoleConfig;
 
-// ── Theme colors ────────────────────────────────────────────────────────────
+// ── Theme ───────────────────────────────────────────────────────────────────
 
 type ThemeColors = Pick<
   BlackHoleConfig,
@@ -175,15 +167,11 @@ function colorsForTheme(mode: ResolvedTheme, tokens: CssTokens): ThemeColors {
     nebula1Color: background,
     nebula2Color: secondary,
     starTint: border,
-    // Keep warm artistic disk tint — pure foreground washed the disk white
+    // Keep warm peach — pure foreground washes the disk white
     diskTint: defaultBlackHoleConfig.diskTint,
   };
 }
 
-/**
- * Defaults + optional public overrides + optional theme colors.
- * Themed colors need `mode` + full CSS `tokens` (read outside this module).
- */
 export function buildBlackHoleConfig(
   options: BuildBlackHoleConfigOptions = {},
 ): BlackHoleConfig {
