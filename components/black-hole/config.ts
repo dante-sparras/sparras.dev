@@ -119,7 +119,7 @@ export const defaultBlackHoleConfig = {
 
   starsEnabled: true,
   starDensity: 0.1,
-  starSize: 1.75,
+  starSize: 3,
   starBrightness: 0.1,
 
   nebulaEnabled: false,

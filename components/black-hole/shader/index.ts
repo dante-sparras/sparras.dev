@@ -58,12 +58,14 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const camUp = cross(camRight, camForward);
 
     const fov = float(1.0);
-    const rayDir = normalize(
+    const rayDir0 = normalize(
       camForward
         .mul(fov)
         .add(camRight.mul(screenPos.x))
         .add(camUp.mul(screenPos.y)),
-    ).toVar("rayDir");
+    ).toVar("rayDir0");
+    // March mutates rayDir; keep rayDir0 for stable star lookups under lensing.
+    const rayDir = rayDir0.toVar("rayDir");
 
     // Ray state
     const rayPos = camPos.toVar("rayPos");
@@ -173,7 +175,19 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     If(escaped.greaterThan(0.5).and(alpha.lessThan(0.99)), () => {
       If(uniforms.starsEnabled.greaterThan(0.5), () => {
-        starsCol.assign(starField(rayDir));
+        // Lensed rayDir flickers near the photon sphere (chaotic map).
+        // Blend toward the unbent primary ray so hash cells don't strobe,
+        // while still keeping most of the lensing deflection.
+        const align = clamp(dot(rayDir0, rayDir), float(-1.0), float(1.0));
+        const bend = float(1.0).sub(align);
+        const stabilize = smoothstep(float(0.03), float(0.4), bend).mul(
+          float(0.7),
+        );
+        const starDir = normalize(mix(rayDir, rayDir0, stabilize));
+        // Dual sample + average further reduces temporal pop
+        const sA = starField(starDir);
+        const sB = starField(rayDir);
+        starsCol.assign(mix(sB, sA, stabilize.mul(0.85).add(0.15)));
       });
       If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
         nebCol.assign(nebulaField(rayDir));
@@ -213,7 +227,10 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     // Re-premultiply disk; hole/stars only use remaining transmittance.
     const diskPm = toned.mul(diskA).toVar("diskPm");
     const remaining = float(1.0).sub(diskA);
-    const skyW = remaining.mul(skyOk);
+    // Soften sky gate near the silhouette so stars fade instead of strobing
+    // on/off as softCapture jitters under camera motion.
+    const skyFade = pow(max(skyOk, float(0.0)), float(1.35));
+    const skyW = remaining.mul(skyFade);
 
     const rgb = diskPm.toVar("rgb");
     const outAlpha = diskA.toVar("outAlpha");
