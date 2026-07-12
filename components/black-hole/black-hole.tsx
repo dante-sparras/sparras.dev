@@ -196,7 +196,8 @@ function TransparentClear() {
 
 /**
  * Apply observer knobs to the live R3F camera when inclination / D change.
- * Canvas `camera={{ position }}` only seeds mount; OrbitControls owns pose after.
+ * Canvas `camera={{ position }}` only seeds mount; OrbitControls owns pose after,
+ * so we must re-apply position and refresh controls when D changes.
  */
 function ObserverCamera({
   inclination,
@@ -205,7 +206,7 @@ function ObserverCamera({
   inclination: number;
   cameraDistance: number;
 }) {
-  const { camera } = useThree();
+  const { camera, controls } = useThree();
 
   useLayoutEffect(() => {
     const [x, y, z] = cameraPositionFromObserver(inclination, cameraDistance);
@@ -215,7 +216,21 @@ function ObserverCamera({
     if ("updateProjectionMatrix" in camera) {
       (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
     }
-  }, [camera, inclination, cameraDistance]);
+    // OrbitControls caches spherical radius — force sync to new D
+    if (
+      controls &&
+      typeof controls === "object" &&
+      "target" in controls &&
+      "update" in controls
+    ) {
+      const orbit = controls as {
+        target: THREE.Vector3;
+        update: () => void;
+      };
+      orbit.target.set(0, 0, 0);
+      orbit.update();
+    }
+  }, [camera, controls, inclination, cameraDistance]);
 
   return null;
 }

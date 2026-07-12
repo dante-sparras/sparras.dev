@@ -113,8 +113,8 @@ export type BlackHoleOverrides = Partial<{
 
   /**
    * Observer distance **D** from the system barycenter (geometric units).
-   * If omitted, uses the site default and may increase slightly when
-   * `separation` is large so both holes stay in frame.
+   * Respected as a raw knob (clamped to a small minimum). Not auto-scaled
+   * proportionally with separation — change D here to zoom the system.
    * @defaultValue 28
    */
   cameraDistance: number;
@@ -265,16 +265,16 @@ export type BuildBlackHoleConfigOptions = {
  */
 export const defaultPhysics = {
   primaryMass: 0.5,
-  massRatio: 1,
-  separation: 12,
-  spin: 0.35,
-  inclination: 62,
-  cameraDistance: 28,
-  diskOuterRadiusM: 12,
-  diskAspectRatio: 0.06,
-  peakTemperature: 48,
-  temperatureIndex: 0.75,
-  accretionRate: 8.5,
+  massRatio: 1.5,
+  separation: 20,
+  spin: 0.5,
+  inclination: 90,
+  cameraDistance: 25,
+  diskOuterRadiusM: 15,
+  diskAspectRatio: 0.05,
+  peakTemperature: 50,
+  temperatureIndex: 1,
+  accretionRate: 5,
 } as const satisfies Required<BlackHoleOverrides>;
 
 /**
@@ -283,9 +283,9 @@ export const defaultPhysics = {
  */
 export const defaultRender = {
   /** Base raymarch step (smaller → sharper near horizons, costlier). */
-  stepSize: 0.55,
+  stepSize: 0.5,
   /** Pixel cell size (larger → chunkier pixel art, cheaper). */
-  pixelSize: 3,
+  pixelSize: 2,
   /** Ordered dither amount after quantize. */
   ditherStrength: 0.3,
   /** Quantization ladder for the pixel grade. */
@@ -391,7 +391,6 @@ export function buildBlackHoleConfig(
   options: BuildBlackHoleConfigOptions = {},
 ): BlackHoleConfig {
   const { overrides = {}, themeColors = false, mode } = options;
-  const cameraDistanceExplicit = overrides.cameraDistance !== undefined;
   const physics = mergePhysics(defaultPhysics, overrides);
 
   const primaryMass = Math.max(0.08, physics.primaryMass);
@@ -413,11 +412,9 @@ export function buildBlackHoleConfig(
   );
   let accretionRate = Math.max(0.1, physics.accretionRate);
 
-  let cameraDistance = cameraDistanceExplicit
-    ? physics.cameraDistance
-    : defaultPhysics.cameraDistance;
-  // Pull back only if the binary would leave the FOV — keeps separation visible
-  cameraDistance = Math.max(cameraDistance, separation * 1.55 + 4, 12);
+  // Raw cameraDistance: respect user/default value (only floor for stability).
+  // Never force D ∝ separation — that made cameraDistance look broken.
+  const cameraDistance = Math.max(8, physics.cameraDistance);
 
   const [primary, secondary] = [
     resolveHole(primaryMass, spin, diskAspectRatio, diskOuterRadiusM),

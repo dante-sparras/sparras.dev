@@ -2,13 +2,17 @@
 
 /**
  * GPU uniform bag helpers for the black-hole mesh.
- * Pure host plumbing (no React) — imported only from client modules.
+ * Host adapter (no React components) — imported only from client modules.
  */
 
 import * as THREE from "three/webgpu";
 import { uniform } from "three/tsl";
 import { CAMERA_FOV_DEG, type BlackHoleConfig } from "./config";
-import { CONFIG_SCALAR_KEYS, type BlackHoleUniforms } from "./shader";
+import {
+  CONFIG_SCALAR_KEYS,
+  type BlackHoleUniforms,
+  type UniformNode,
+} from "./shader";
 
 /** Scratch space for camera basis vectors (avoid alloc each frame). */
 export type CameraAxes = {
@@ -25,29 +29,37 @@ export function createCameraAxes(): CameraAxes {
   };
 }
 
+/** Narrow TSL `uniform()` result to our bag entry shape (structural). */
+function asUniform<T>(node: { value: T }): UniformNode<T> {
+  return node;
+}
+
 /** Create the uniform bag once; scalar fields start from `config`. */
 export function createUniforms(config: BlackHoleConfig): BlackHoleUniforms {
-  const uniforms = {
-    time: uniform(0),
-    resolution: uniform(new THREE.Vector2(1, 1)),
-    cameraPosition: uniform(new THREE.Vector3()),
-    cameraForward: uniform(new THREE.Vector3(0, 0, -1)),
-    cameraRight: uniform(new THREE.Vector3(1, 0, 0)),
-    cameraUp: uniform(new THREE.Vector3(0, 1, 0)),
-    cameraFov: uniform(CAMERA_FOV_DEG),
-  } as unknown as BlackHoleUniforms;
-
+  const scalars = {} as {
+    [K in (typeof CONFIG_SCALAR_KEYS)[number]]: UniformNode<number>;
+  };
   for (const key of CONFIG_SCALAR_KEYS) {
-    uniforms[key] = uniform(config[key]) as BlackHoleUniforms[typeof key];
+    scalars[key] = asUniform(uniform(config[key]));
   }
-  return uniforms;
+
+  return {
+    time: asUniform(uniform(0)),
+    resolution: asUniform(uniform(new THREE.Vector2(1, 1))),
+    cameraPosition: asUniform(uniform(new THREE.Vector3())),
+    cameraForward: asUniform(uniform(new THREE.Vector3(0, 0, -1))),
+    cameraRight: asUniform(uniform(new THREE.Vector3(1, 0, 0))),
+    cameraUp: asUniform(uniform(new THREE.Vector3(0, 1, 0))),
+    cameraFov: asUniform(uniform(CAMERA_FOV_DEG)),
+    ...scalars,
+  };
 }
 
 /** Push every physics/render scalar from config into live uniforms. */
 export function applyConfig(
   uniforms: BlackHoleUniforms,
   config: BlackHoleConfig,
-) {
+): void {
   for (const key of CONFIG_SCALAR_KEYS) {
     uniforms[key].value = config[key];
   }
@@ -61,7 +73,7 @@ export function syncCamera(
   uniforms: BlackHoleUniforms,
   camera: THREE.Camera,
   axes: CameraAxes,
-) {
+): void {
   camera.updateMatrixWorld();
   const e = camera.matrixWorld.elements;
 
@@ -74,8 +86,10 @@ export function syncCamera(
   uniforms.cameraUp.value.copy(axes.up);
   uniforms.cameraForward.value.copy(axes.forward);
 
-  const fov = (camera as THREE.PerspectiveCamera).fov;
-  if (typeof fov === "number" && Number.isFinite(fov)) {
-    uniforms.cameraFov.value = fov;
+  if (camera instanceof THREE.PerspectiveCamera) {
+    const { fov } = camera;
+    if (Number.isFinite(fov)) {
+      uniforms.cameraFov.value = fov;
+    }
   }
 }

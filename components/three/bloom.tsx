@@ -3,11 +3,12 @@
 /**
  * TSL bloom via RenderPipeline — optional glow only.
  *
- * Scene color is already display-referred for a premultiplied WebGPU canvas
- * (disk = lit×coverage). Bloom must only ADD glow — never re-scale scene.rgb
- * by alpha.
- *
+ * Scene color is already display-referred for a premultiplied WebGPU canvas.
+ * Bloom must only ADD glow — never re-scale scene.rgb by alpha.
  * If setup fails, bloom is skipped; the scene still renders normally.
+ *
+ * Three.js post-processing types are incomplete for WebGPU; we use narrow
+ * structural types at the TSL boundary (never `any`).
  */
 import { useThree } from "@react-three/fiber";
 import { useLayoutEffect, useRef } from "react";
@@ -25,11 +26,30 @@ type Pipeline = {
   outputColorTransform?: boolean;
   needsUpdate?: boolean;
 };
-type BloomNode = {
+
+type BloomUniforms = {
   threshold: { value: number };
   strength: { value: number };
   radius: { value: number };
 };
+
+/** Minimal chainable TSL node surface used by this file. */
+type TslNode = {
+  r: TslNode;
+  g: TslNode;
+  b: TslNode;
+  rgb: TslNode;
+  a: TslNode;
+  add: (n: TslNode) => TslNode;
+  sub: (n: TslNode) => TslNode;
+  max: (n: TslNode) => TslNode;
+  mul: (n: TslNode) => TslNode;
+  min: (n: TslNode) => TslNode;
+  toVec4: (a: TslNode) => unknown;
+};
+
+type BloomNode = BloomUniforms & { rgb: TslNode };
+
 type RenderFn = (...args: never[]) => void;
 type RendererLike = {
   render: RenderFn;
@@ -37,8 +57,45 @@ type RendererLike = {
   setClearAlpha: (alpha: number) => void;
 };
 
+type RenderPipelineCtor = new (gl: unknown) => Pipeline;
+
+type ThreeWithPost = typeof THREE & {
+  RenderPipeline?: RenderPipelineCtor;
+  PostProcessing?: RenderPipelineCtor;
+};
+
+type ScenePassLike = {
+  transparent?: boolean;
+  opaque?: boolean;
+  renderTarget?: { texture?: { colorSpace: string } };
+  getTextureNode: () => TslNode;
+};
+
+type QuadMeshLike = {
+  material?: THREE.Material & {
+    transparent?: boolean;
+    premultipliedAlpha?: boolean;
+    toneMapped?: boolean;
+    blending?: number;
+    needsUpdate?: boolean;
+    depthWrite?: boolean;
+    depthTest?: boolean;
+  };
+};
+
+type TslApi = {
+  pass: (scene: unknown, camera: unknown) => ScenePassLike;
+  max: (a: TslNode, b: TslNode) => TslNode;
+  float: (n: number) => TslNode;
+};
+
+function getRenderPipelineCtor(): RenderPipelineCtor | null {
+  const t = THREE as ThreeWithPost;
+  return t.RenderPipeline ?? t.PostProcessing ?? null;
+}
+
 function applyBloomParams(
-  node: BloomNode,
+  node: BloomUniforms,
   strength: number,
   radius: number,
   threshold: number,
@@ -77,6 +134,23 @@ function installRenderHook(
   };
 }
 
+function readQuadMesh(post: Pipeline): QuadMeshLike | null {
+  // three.js private compose quad — transparent PM setup only
+  const bag = post as Pipeline & { _quadMesh?: QuadMeshLike };
+  // oxlint-disable-next-line eslint/no-underscore-dangle -- three.js private API
+  return bag._quadMesh ?? null;
+}
+
+function isRendererLike(gl: unknown): gl is RendererLike {
+  return (
+    typeof gl === "object" &&
+    gl !== null &&
+    "render" in gl &&
+    "setClearColor" in gl &&
+    "setClearAlpha" in gl
+  );
+}
+
 export function Bloom({
   strength = 0.6,
   radius = 0.3,
@@ -94,37 +168,33 @@ export function Bloom({
 
     void (async () => {
       try {
-        const { pass, max, float } = await import("three/tsl");
-        const { bloom } = await import("three/addons/tsl/display/BloomNode.js");
+        const tsl = (await import("three/tsl")) as unknown as TslApi;
+        const bloomMod =
+          (await import("three/addons/tsl/display/BloomNode.js")) as unknown as {
+            bloom: (color: TslNode) => BloomNode;
+          };
         if (cancelled) return;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const Ctor =
-          (THREE as any).RenderPipeline ?? (THREE as any).PostProcessing;
+        const Ctor = getRenderPipelineCtor();
         if (!Ctor) return;
 
         scene.background = null;
         gl.setClearColor(0x000000, 0);
         gl.setClearAlpha(0);
 
-        const post = new Ctor(gl) as Pipeline;
-        // No extra tone-map / color-space pass — matches direct canvas path.
+        const post = new Ctor(gl);
         post.outputColorTransform = false;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const scenePass: any = pass(scene, camera);
+        const scenePass = tsl.pass(scene, camera);
         scenePass.transparent = true;
         scenePass.opaque = true;
 
-        // Display-referred values in the RT — do not treat as sRGB textures.
         if (scenePass.renderTarget?.texture) {
           scenePass.renderTarget.texture.colorSpace = THREE.NoColorSpace;
         }
 
         const sceneColor = scenePass.getTextureNode();
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const node: any = bloom(sceneColor);
+        const node = bloomMod.bloom(sceneColor);
         applyBloomParams(
           node,
           initial.current.strength,
@@ -132,22 +202,18 @@ export function Bloom({
           initial.current.threshold,
         );
 
-        // scene.rgb is already the final buffer color (premultiplied disk).
-        // Bloom is additive only — do not multiply by alpha.
         const bloomRgb = node.rgb;
-        const bloomLuma = max(bloomRgb.r, max(bloomRgb.g, bloomRgb.b));
+        const bloomLuma = tsl.max(bloomRgb.r, tsl.max(bloomRgb.g, bloomRgb.b));
         const bloomA = bloomLuma
-          .sub(float(0.02))
-          .max(float(0.0))
-          .mul(float(1.1))
-          .min(float(1.0));
-        const outA = max(sceneColor.a, bloomA);
+          .sub(tsl.float(0.02))
+          .max(tsl.float(0.0))
+          .mul(tsl.float(1.1))
+          .min(tsl.float(1.0));
+        const outA = tsl.max(sceneColor.a, bloomA);
         post.outputNode = sceneColor.rgb.add(bloomRgb).toVec4(outA);
         post.needsUpdate = true;
 
-        // Compose quad must blend so a=0 void stays transparent.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle -- three.js private API
-        const quad = (post as any)._quadMesh;
+        const quad = readQuadMesh(post);
         if (quad?.material) {
           const mat = quad.material;
           mat.transparent = true;
@@ -163,11 +229,9 @@ export function Bloom({
 
         postRef.current = post;
         bloomRef.current = node;
-        uninstall = installRenderHook(
-          gl as unknown as RendererLike,
-          postRef,
-          restoreRef,
-        );
+        if (isRendererLike(gl)) {
+          uninstall = installRenderHook(gl, postRef, restoreRef);
+        }
       } catch (err) {
         console.warn("[Bloom] skipped (scene still renders):", err);
       }

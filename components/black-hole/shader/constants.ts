@@ -27,7 +27,8 @@ export const MARCH = {
   nearPlaneStepMul: 0.55,
   stepRLimit: 0.3,
   stepMinMul: 0.28,
-  softCapturePhotonMul: 2,
+  /** @deprecated use GRADE.softCapturePhotonMul — kept for march dwell only */
+  softCapturePhotonMul: 1.15,
 } as const;
 
 export const DISK = {
@@ -66,15 +67,21 @@ export const GRADE = {
   chromaMix: 1,
   greenCapOfRed: 0.72,
   blueCapOfRed: 0.25,
-  silAaHorizonFrac: 0.06,
-  silAaScreenPx: 1.5,
+  /** Soft silhouette width as fraction of horizon (keep tight — avoids fat black halos). */
+  silAaHorizonFrac: 0.04,
+  silAaScreenPx: 1.0,
+  /** Silhouette outer edge blend: 0 = horizon only, 1 = full photon sphere. */
+  silPhotonMix: 0.35,
   brightCoverLo: 0.02,
-  brightCoverHi: 0.3,
+  brightCoverHi: 0.22,
   mattePeakLo: 0.05,
-  mattePeakHi: 0.35,
-  matteAlphaLo: 0.15,
-  matteAlphaHi: 0.85,
-  matteStrength: 0.85,
+  mattePeakHi: 0.3,
+  matteAlphaLo: 0.05,
+  matteAlphaHi: 0.45,
+  /** Second matte pass — keep low so disk gas isn't painted black. */
+  matteStrength: 0.35,
+  /** Soft-capture radius in units of each hole's own photon sphere (not max of both). */
+  softCapturePhotonMul: 1.15,
   discardAlpha: 0.002,
   discardPeak: 0.002,
 } as const;

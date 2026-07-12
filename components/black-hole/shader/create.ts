@@ -261,11 +261,11 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         alpha.addAssign(rem.mul(s.w));
       });
     });
-
     If(captured.lessThan(0.5).and(escaped.lessThan(0.5)), () => {
-      const nearEither = min(minR1, minR2);
-      const captureR = max(photon1, photon2).mul(MARCH.softCapturePhotonMul);
-      If(nearEither.lessThan(captureR), () => {
+      // Per-hole soft capture — never use max(photon) which fattened the smaller hole
+      const cap1 = photon1.mul(GRADE.softCapturePhotonMul);
+      const cap2 = photon2.mul(GRADE.softCapturePhotonMul);
+      If(minR1.lessThan(cap1).or(minR2.lessThan(cap2)), () => {
         captured.assign(1);
       });
       If(captured.lessThan(0.5), () => {
@@ -273,7 +273,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       });
     });
 
-    // ── 4. Soft silhouettes ───────────────────────────────────────────────
+    // ── 4. Soft silhouettes (tight to each hole's horizon→partial photon) ──
     const camDist = max(length(camPos), float(1));
     const pxWorld = camDist
       .mul(tanHalf)
@@ -281,14 +281,18 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       .mul(GRADE.silAaScreenPx);
     const aa1 = max(horizon1.mul(GRADE.silAaHorizonFrac), pxWorld);
     const aa2 = max(horizon2.mul(GRADE.silAaHorizonFrac), pxWorld);
+    // Outer edge between horizon and photon — NOT full photon (avoids black donuts)
+    const silOut1 = mix(horizon1, photon1, float(GRADE.silPhotonMix));
+    const silOut2 = mix(horizon2, photon2, float(GRADE.silPhotonMix));
     const sil1 = float(1).sub(
-      smoothstep(horizon1.sub(aa1), photon1.add(aa1.mul(0.4)), minR1),
+      smoothstep(horizon1.sub(aa1), silOut1.add(aa1.mul(0.25)), minR1),
     );
     const sil2 = float(1).sub(
-      smoothstep(horizon2.sub(aa2), photon2.add(aa2.mul(0.4)), minR2),
+      smoothstep(horizon2.sub(aa2), silOut2.add(aa2.mul(0.25)), minR2),
     );
     const silhouette = max(sil1, sil2).toVar("silhouette");
-    silhouette.assign(max(silhouette, captured.mul(0.95)));
+    // Soft capture only fills the core — don't force 0.95 over the whole photon region
+    silhouette.assign(max(silhouette, captured.mul(0.75)));
 
     // ── 5. Tonemap + fire chroma lock ─────────────────────────────────────
     const straight = color.div(max(alpha, float(1e-4))).toVar("straight");
@@ -315,12 +319,14 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     const rgb = toned.mul(alpha).toVar("rgb");
     const peak = max(toned.x, max(toned.y, toned.z));
+    // Prefer keeping disk RGB wherever the disk is already bright
     const brightCover = alpha.mul(
       smoothstep(float(GRADE.brightCoverLo), float(GRADE.brightCoverHi), peak),
     );
     rgb.assign(
       mix(rgb, vec3(0, 0, 0), silhouette.mul(float(1).sub(brightCover))),
     );
+    // Secondary matte only where disk is nearly empty (don't blacken gas)
     const matte = silhouette
       .mul(
         float(1).sub(
@@ -328,7 +334,13 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         ),
       )
       .mul(
-        smoothstep(float(GRADE.matteAlphaLo), float(GRADE.matteAlphaHi), alpha),
+        float(1).sub(
+          smoothstep(
+            float(GRADE.matteAlphaLo),
+            float(GRADE.matteAlphaHi),
+            alpha,
+          ),
+        ),
       );
     rgb.assign(mix(rgb, vec3(0, 0, 0), matte.mul(GRADE.matteStrength)));
 

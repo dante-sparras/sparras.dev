@@ -13,9 +13,8 @@
  * Color policy (CSS hex WYSIWYG with the black-hole shader):
  * - NoToneMapping
  * - LinearSRGB output — the sim is display-referred (manual γ on disk).
- * - Theme hex must be parsed with LinearSRGBColorSpace (see mesh).
- *   Default Color.set('#050505') sRGB-decodes to ~0.0015 → near-black on screen.
  */
+
 import { Canvas, extend, type CanvasProps } from "@react-three/fiber";
 import type { ThreeToJSXElements } from "@react-three/fiber/dist/declarations/src/three-types";
 import {
@@ -27,19 +26,22 @@ import {
   useState,
 } from "react";
 import * as THREE from "three/webgpu";
+import type { WebGPURendererParameters } from "three/webgpu";
 import { cn } from "@/lib/utils";
 
 // ── Catalog: three/webgpu constructors as JSX ───────────────────────────────
 
 declare module "@react-three/fiber" {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  // Three.js module augmentation — empty interface merge is intentional.
+  // oxlint-disable-next-line typescript/no-empty-object-type
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
 }
 
 let catalogReady = false;
 function ensureCatalog() {
   if (catalogReady) return;
-  extend(THREE as never);
+  // R3F extend expects a constructor map; three/webgpu namespace is compatible at runtime.
+  extend(THREE as unknown as Parameters<typeof extend>[0]);
   catalogReady = true;
 }
 ensureCatalog();
@@ -95,28 +97,51 @@ const CANVAS_STYLE = {
   backgroundColor: "transparent",
 } as const;
 
-type GlInitProps = {
+export type GlInitProps = {
   antialias?: boolean;
-  powerPreference?: string;
-  [key: string]: unknown;
+  powerPreference?: WebGPURendererParameters["powerPreference"];
+  canvas?: HTMLCanvasElement | OffscreenCanvas;
+  depth?: boolean;
+  stencil?: boolean;
+  alpha?: boolean;
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function pickCanvas(
+  props: unknown,
+): HTMLCanvasElement | OffscreenCanvas | undefined {
+  if (!isRecord(props)) return undefined;
+  const canvas = props.canvas;
+  if (canvas instanceof HTMLCanvasElement) return canvas;
+  if (
+    typeof OffscreenCanvas !== "undefined" &&
+    canvas instanceof OffscreenCanvas
+  ) {
+    return canvas;
+  }
+  return undefined;
+}
 
 async function createWebGPURenderer(
   props: unknown,
   overrides: GlInitProps = {},
-) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- R3F passes a props bag typed for WebGL
-  const bag = { ...(props as object), ...overrides } as Record<string, unknown>;
-  // WebGPUBackend: alpha:true → canvas alphaMode 'premultiplied' (not configurable).
-  const renderer = new THREE.WebGPURenderer({
-    ...bag,
-    alpha: true,
-    antialias: bag.antialias ?? true,
-    powerPreference: bag.powerPreference ?? "high-performance",
-  } as any);
+): Promise<THREE.WebGPURenderer> {
+  const canvas = overrides.canvas ?? pickCanvas(props);
+  const parameters: WebGPURendererParameters = {
+    ...(canvas ? { canvas } : {}),
+    alpha: overrides.alpha ?? true,
+    antialias: overrides.antialias ?? true,
+    powerPreference: overrides.powerPreference ?? "high-performance",
+    depth: overrides.depth,
+    stencil: overrides.stencil,
+  };
+
+  const renderer = new THREE.WebGPURenderer(parameters);
   await renderer.init();
   renderer.toneMapping = THREE.NoToneMapping;
-  // Linear output — shader does its own display γ; void is discarded (CSS bg).
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.setClearColor(0x000000, 0);
   renderer.setClearAlpha(0);
@@ -162,7 +187,6 @@ export function WebGPUCanvas({
     onFailedRef.current?.();
   }, []);
 
-  /** Stable factory — R3F only needs it once; failures go through `fail`. */
   const gl = useCallback(
     async (props: Record<string, unknown>) => {
       try {
@@ -189,7 +213,7 @@ export function WebGPUCanvas({
           dpr={dpr}
           camera={camera}
           frameloop={frameloop}
-          gl={gl as never}
+          gl={gl}
           style={CANVAS_STYLE}
           {...rest}
         >

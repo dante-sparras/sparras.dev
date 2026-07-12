@@ -105,22 +105,23 @@ describe("buildBlackHoleConfig", () => {
     expect(c.spinParameter).toBeCloseTo(p.a, 8);
   });
 
-  test("large separation raises camera for FOV fit without proportional lock", () => {
-    const c = buildBlackHoleConfig({
-      overrides: { separation: 40, cameraDistance: 28 },
+  test("respects raw cameraDistance (not forced by separation)", () => {
+    const near = buildBlackHoleConfig({
+      overrides: { separation: 40, cameraDistance: 18 },
     });
-    expect(c.cameraDistance).toBeGreaterThanOrEqual(40 * 1.55 + 4);
-    const def = buildBlackHoleConfig();
-    expect(c.separation / c.cameraDistance).toBeGreaterThan(
-      (def.separation / def.cameraDistance) * 0.5,
-    );
+    const far = buildBlackHoleConfig({
+      overrides: { separation: 40, cameraDistance: 60 },
+    });
+    expect(near.cameraDistance).toBe(18);
+    expect(far.cameraDistance).toBe(60);
+    expect(far.cameraDistance).toBeGreaterThan(near.cameraDistance);
   });
 
-  test("explicit cameraDistance still FOV-floored by separation", () => {
+  test("cameraDistance floored only at absolute minimum 8", () => {
     const c = buildBlackHoleConfig({
-      overrides: { separation: 30, cameraDistance: 10 },
+      overrides: { cameraDistance: 2, separation: 30 },
     });
-    expect(c.cameraDistance).toBeGreaterThanOrEqual(30 * 1.55 + 4);
+    expect(c.cameraDistance).toBe(8);
   });
 
   test("mass ratio yields different per-hole scale heights", () => {
