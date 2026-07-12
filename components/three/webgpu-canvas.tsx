@@ -10,7 +10,11 @@
  *     return r;
  *   }}
  *
- * Site defaults: NoToneMapping + sRGB output so CSS hex (e.g. #050505) matches the page.
+ * Color policy (CSS hex WYSIWYG with the black-hole shader):
+ * - NoToneMapping
+ * - LinearSRGB output — the sim is display-referred (manual γ on disk).
+ * - Theme hex must be parsed with LinearSRGBColorSpace (see mesh).
+ *   Default Color.set('#050505') sRGB-decodes to ~0.0015 → near-black on screen.
  */
 import { Canvas, extend, type CanvasProps } from "@react-three/fiber";
 import type { ThreeToJSXElements } from "@react-three/fiber/dist/declarations/src/three-types";
@@ -94,9 +98,8 @@ async function createWebGPURenderer(props: unknown) {
   const renderer = new THREE.WebGPURenderer(props as any);
   await renderer.init();
   renderer.toneMapping = THREE.NoToneMapping;
-  // sRGB encode on write — matches CSS / hex colors from the design system.
-  // LinearSRGB output made voids look near-black (sRGB decode without re-encode).
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // Identity output — pairs with LinearSRGB hex parse in black-hole mesh.
+  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   return renderer;
 }
 

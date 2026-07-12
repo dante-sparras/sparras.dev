@@ -10,6 +10,7 @@
  * From Server Components use `HeroBanner` via `@/components/hero-section`.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import * as THREE from "three/webgpu";
 import {
   Bloom,
   CameraLookAt,
@@ -51,15 +52,16 @@ type SceneProps = {
 };
 
 function Scene({ config, interactive, autoRotate }: SceneProps) {
-  // Stable identity for R3F attach (oxlint react-perf).
-  const bg = useMemo(
-    () => [config.starBackgroundColor] as [string],
-    [config.starBackgroundColor],
-  );
+  // Display-referred clear color (same path as mesh uniforms — not sRGB-decoded).
+  const bgArgs = useMemo(() => {
+    const c = new THREE.Color();
+    c.setStyle(config.starBackgroundColor, THREE.LinearSRGBColorSpace);
+    return [c] as [THREE.Color];
+  }, [config.starBackgroundColor]);
 
   return (
     <>
-      <color attach="background" args={bg} />
+      <color attach="background" args={bgArgs} />
       <CameraLookAt />
       <BlackHoleMesh config={config} />
       <IdleOrbit interactive={interactive} autoRotate={autoRotate} />

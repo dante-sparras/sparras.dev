@@ -77,16 +77,36 @@ const tmp3 = new THREE.Vector3();
 const tmp4 = new THREE.Vector4();
 const tmpColor = new THREE.Color();
 
-/** Parse CSS hex (`#rrggbb`). Three treats input as sRGB → linear working space. */
+/**
+ * CSS hex → RGB as *display* values (no sRGB→linear decode).
+ *
+ * The black-hole shader + WebGPUCanvas use a display-referred path
+ * (manual γ on disk, LinearSRGB framebuffer). Default THREE.Color.set(hex)
+ * would store ~0.0015 for #050505 and the canvas would read as near-black.
+ */
+function parseCssColor(hex: string): THREE.Color {
+  const raw = hex.trim();
+  // Prefer explicit channels so unknown CSS never leaves a stale Color.
+  if (/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(raw) || /^rgba?\(/i.test(raw)) {
+    tmpColor.setStyle(
+      raw.length === 9 && raw.startsWith("#") ? raw.slice(0, 7) : raw,
+      THREE.LinearSRGBColorSpace,
+    );
+  } else {
+    tmpColor.setRGB(5 / 255, 5 / 255, 5 / 255, THREE.LinearSRGBColorSpace);
+  }
+  return tmpColor;
+}
+
 function hexToVec3(hex: string, out = new THREE.Vector3()) {
-  tmpColor.set(hex);
-  return out.set(tmpColor.r, tmpColor.g, tmpColor.b);
+  const c = parseCssColor(hex);
+  return out.set(c.r, c.g, c.b);
 }
 
 function hexToVec4(hex: string, out = new THREE.Vector4()) {
   const h = hex.trim().replace(/^#/, "");
-  if (h.length === 8) {
-    tmpColor.set(`#${h.slice(0, 6)}`);
+  if (h.length === 8 && /^[0-9a-fA-F]+$/.test(h)) {
+    parseCssColor(`#${h.slice(0, 6)}`);
     return out.set(
       tmpColor.r,
       tmpColor.g,
@@ -94,7 +114,7 @@ function hexToVec4(hex: string, out = new THREE.Vector4()) {
       parseInt(h.slice(6, 8), 16) / 255,
     );
   }
-  tmpColor.set(hex.startsWith("#") ? hex : `#${h}`);
+  parseCssColor(hex.startsWith("#") ? hex : hex.trim());
   return out.set(tmpColor.r, tmpColor.g, tmpColor.b, 1);
 }
 
