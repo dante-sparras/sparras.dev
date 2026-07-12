@@ -102,7 +102,8 @@ export const cellular2D = Fn(([p]) => {
 
 /**
  * Variable-size / variable-density cellular clouds.
- * Each cell: random radius, amplitude, and ~20% empty → chaotic packs.
+ * Each cell: random radius, amplitude, and ~18–22% empty → chaotic packs.
+ * Harder blob falloff so cores read against the dens floor (not a sheet).
  */
 export const cellularClouds2D = Fn(
   ([p, sizeMin, sizeMax, densMin, densMax]) => {
@@ -116,22 +117,23 @@ export const cellularClouds2D = Fn(
         const feature = hash22(cell);
         const sz = mix(sizeMin, sizeMax, hash21(cell.add(17.0)));
         const dens = mix(densMin, densMax, hash21(cell.add(31.0)));
-        // ~15% empty cells — more fill, still irregular
+        // ~20% empty cells — irregular gaps between packs
         const live = clamp(
-          hash21(cell.add(53.0)).sub(0.15).mul(40.0),
+          hash21(cell.add(53.0)).sub(0.2).mul(35.0),
           float(0.0),
           float(1.0),
         );
 
         const offset = vec2(ox, oy).add(feature).sub(f);
         const d = length(offset).div(max(sz, float(0.12)));
+        // Steeper falloff → harder cloud cores (less soft sheet)
         const blob = pow(
           clamp(float(1.0).sub(d), float(0.0), float(1.0)),
-          float(1.55),
+          float(1.85),
         );
         acc.addAssign(blob.mul(dens).mul(live));
       }
     }
-    return clamp(acc, float(0.0), float(1.7));
+    return clamp(acc, float(0.0), float(1.75));
   },
 );

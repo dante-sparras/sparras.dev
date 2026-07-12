@@ -96,47 +96,51 @@ const VOID = "#050505";
  * steep T falloff → peach outer arms (not white plate), FOV framing, no bloom.
  */
 export const defaultBlackHoleConfig = {
-  blackHoleMass: 0.45,
+  blackHoleMass: 0.75,
   // Tutorial bend scale (his demo uses ~2.4 with stepSize 1)
-  gravitationalLensing: 2.2,
-  dopplerStrength: 1.2,
+  gravitationalLensing: 2,
+  // Stronger beaming: approach brighter/hotter, recede dim/rust (realism)
+  // Capped in shader so approach stays peach, not white plate
+  dopplerStrength: 1,
 
-  diskInnerRadius: 3.4,
-  diskOuterRadius: 17.0,
-  diskBrightness: 7.0,
-  diskTemperature: 38,
-  temperatureFalloff: 3.6,
-  diskEdgeSoftnessInner: 0.12,
-  diskEdgeSoftnessOuter: 0.75,
-  diskSaturation: 1.12,
-  diskScaleHeight: 0.26,
+  diskInnerRadius: 5,
+  diskOuterRadius: 17.5,
+  diskBrightness: 5,
+  // Cooler peak + steeper falloff → less white plate near ring
+  diskTemperature: 50,
+  temperatureFalloff: 5,
+  diskEdgeSoftnessInner: 0.0,
+  diskEdgeSoftnessOuter: 1,
+  diskSaturation: 1.1,
+  diskScaleHeight: 0.25,
 
-  // Always-cloudy: denser fill + more chaotic packs
-  turbulenceScale: 1.75,
-  turbulenceStretch: 2.2,
-  turbulenceSharpness: 2.1,
-  diskRotationSpeed: -12.0,
+  // Always-cloudy: multi-scale packs, sharper structure
+  turbulenceScale: 10.0,
+  turbulenceStretch: 5,
+  turbulenceSharpness: 5,
+  diskRotationSpeed: -15.0,
   turbulenceCycleTime: 5.0,
   turbulenceLacunarity: 2.5,
-  turbulencePersistence: 0.52,
+  turbulencePersistence: 0.5,
 
   starsEnabled: true,
-  starDensity: 0.12,
-  starSize: 1.35,
-  starBrightness: 0.2,
+  starDensity: 0.15,
+  starSize: 1.28,
+  starBrightness: 0.24,
 
+  // Whisper of dust — depth without fighting void / disk
   nebulaEnabled: false,
-  nebula1Scale: 2,
-  nebula1Density: 0.3,
-  nebula2Scale: 5.5,
-  nebula2Density: 0.06,
+  nebula1Scale: 2.2,
+  nebula1Density: 0.12,
+  nebula2Scale: 5.8,
+  nebula2Density: 0.035,
 
   stepSize: 0.5,
   diskInkMode: 0,
 
   nebula1Color: "#1a1020",
   nebula2Color: "#120a18",
-  starTint: "#b0b4c0",
+  starTint: "#b8bcc8",
   diskTint: "#ffc4a0",
 } as const satisfies BlackHoleConfig;
 
@@ -167,7 +171,7 @@ function colorsForTheme(mode: ResolvedTheme, tokens: CssTokens): ThemeColors {
     nebula1Color: background,
     nebula2Color: secondary,
     starTint: border,
-    // Keep warm peach — pure foreground washes the disk white
+    // Keep warm peach — pure foreground washes the disk into a white plate
     diskTint: defaultBlackHoleConfig.diskTint,
   };
 }

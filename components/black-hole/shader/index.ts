@@ -18,6 +18,11 @@
  * - Camera axes from matrixWorld (stable when looking ±Y — no pole snap)
  * - Premultiplied RGBA + Discard void → CSS bg-background
  * - No post bloom; soft-knee grade in shader
+ *
+ * Silhouette bugs fixed:
+ * - Emission-weighted opacity (dim gas doesn't paint matte over the void)
+ * - Thinner dens near hole so photon-ring wrap isn't occluded by primary slab
+ * - Bright-cover composite (elevated-view “disk shadow” on lower lobe)
  */
 
 import type { BlackHoleUniforms } from "../mesh";
@@ -69,7 +74,6 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const tanHalf = tan(uniforms.cameraFov.mul(0.5).mul(PI.div(180.0)));
 
     const camPos = uniforms.cameraPosition;
-    // Already orthonormal from Three.js camera; normalize for safety
     const camForward = normalize(uniforms.cameraForward);
     const camRight = normalize(uniforms.cameraRight);
     const camUp = normalize(uniforms.cameraUp);
@@ -89,19 +93,16 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const captured = float(0.0).toVar("captured");
     const minR = length(camPos).toVar("minR");
     const crossings = float(0.0).toVar("crossings");
-    // Photon-orbit dwell — kills concentric multi-wind “eye” rings
     const dwell = float(0.0).toVar("dwell");
     const photonR = rs.mul(1.5);
 
     const innerR = uniforms.diskInnerRadius;
     const outerR = uniforms.diskOuterRadius;
+    const diskSpan = max(outerR.sub(innerR), float(1.0e-3));
     const stepSz = max(uniforms.stepSize, float(0.05));
-    // Escape past the skydome / far field (camera maxDistance ≤ 50, dome r=100)
     const escapeR = float(120.0);
 
     // ── March ──────────────────────────────────────────────────────────────
-    // Adaptive dStep: large strides far from the hole so zoomed-out cameras
-    // still reach the disk (fixed 0.55×72 ≈ 40 units cut off at ~r=50).
     Loop(128, () => {
       If(
         escaped
@@ -116,42 +117,39 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       const r = length(rayPos);
       minR.assign(min(minR, r));
 
-      // Horizon capture
       If(r.lessThan(rs.mul(1.01)), () => {
         captured.assign(1.0);
         Break();
       });
 
-      // Far field
       If(r.greaterThan(escapeR), () => {
         escaped.assign(1.0);
         Break();
       });
 
-      // Unstable photon orbit: real geodesics diverge — capture after short dwell
       const nearPhoton = float(1.0).sub(
         smoothstep(photonR.mul(0.9), photonR.mul(2.4), r),
       );
       dwell.addAssign(nearPhoton);
-      If(dwell.greaterThan(10.0), () => {
+      // Kill multi-orbit concentric “eye” rings
+      If(dwell.greaterThan(6.0), () => {
         captured.assign(1.0);
         Break();
       });
 
-      // Adaptive step: grow with r when far, shrink near photon sphere + midplane
-      // Cap so we never leap over the horizon (max ~0.25 r)
       const nearPlane = float(1.0).sub(
         smoothstep(float(0.0), float(1.2), abs(rayPos.y)),
       );
+      const contactZone = nearPhoton.mul(nearPlane);
       const farBoost = smoothstep(float(6.0), float(35.0), r);
       const dBase = mix(stepSz, max(stepSz, r.mul(0.12)), farBoost);
       const dStep = dBase
-        .mul(mix(float(1.0), float(0.4), nearPhoton))
-        .mul(mix(float(1.0), float(0.55), nearPlane))
+        .mul(mix(float(1.0), float(0.42), nearPhoton))
+        .mul(mix(float(1.0), float(0.52), nearPlane))
+        .mul(mix(float(1.0), float(0.48), contactZone))
         .min(r.mul(0.28))
-        .max(stepSz.mul(0.35));
+        .max(stepSz.mul(0.3));
 
-      // Gravitational bend: a ∝ rs/r² toward center
       const toCenter = rayPos.negate().div(max(r, float(1.0e-4)));
       const bend = rs
         .div(r.mul(r))
@@ -163,48 +161,79 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       prevPos.assign(rayPos);
       rayPos.addAssign(rayDir.mul(dStep));
 
-      // Mid-step sample for smoother volume
       const mid = mix(prevPos, rayPos, float(0.5));
       const mR = sqrt(mid.x.mul(mid.x).add(mid.z.mul(mid.z)));
       const inDiskR = mR.greaterThanEqual(innerR).and(mR.lessThanEqual(outerR));
 
-      // Track midplane crossings for secondary-image dimming only
       const crossed = prevPos.y.mul(rayPos.y).lessThan(float(0.0));
       If(crossed.and(inDiskR).and(crossings.lessThan(2.5)), () => {
         crossings.addAssign(float(1.0));
       });
 
       // ── Volumetric gas slab (flared Gaussian) ────────────────────────────
-      // Sample every step inside the disk volume so it reads as flowing gas,
-      // not a paper-thin plane. Secondary orbits dim; dwell already kills eyes.
       const h0 = max(uniforms.diskScaleHeight, float(0.08));
-      // Flare: outer arms thicker (Interstellar hazy slab)
-      const hDisk = h0.mul(
-        pow(max(mR.div(max(innerR, float(0.5))), float(0.6)), float(0.85)),
-      );
+      const hDisk = h0
+        .mul(pow(max(mR.div(max(innerR, float(0.5))), float(0.6)), float(0.85)))
+        .mul(
+          mix(
+            float(0.78),
+            float(1.0),
+            smoothstep(innerR, innerR.add(diskSpan.mul(0.35)), mR),
+          ),
+        );
       const vert = exp(
         abs(mid.y)
           .div(hDisk)
           .mul(abs(mid.y).div(hDisk))
-          .mul(float(1.6))
+          .mul(float(1.55))
           .negate(),
+      );
+      const vertGate = smoothstep(float(0.006), float(0.07), vert);
+
+      // Near-hole: keep transmittance so bright wrap isn't occluded by a thick
+      // dim primary slab (elevated views → dark “shadow” on lower silhouette).
+      const nearHoleThin = float(1.0).sub(
+        smoothstep(innerR.mul(0.9), outerR.mul(0.55), mR),
       );
 
       If(
         inDiskR
-          .and(vert.greaterThan(0.03))
-          .and(alpha.lessThan(0.97))
+          .and(vertGate.greaterThan(0.02))
+          .and(alpha.lessThan(0.985))
           .and(crossings.lessThan(2.5)),
         () => {
           const hitAngle = atan(mid.z, mid.x);
-          const disk = accretionDiskColor(mR, hitAngle, uniforms.time, rayDir);
+          const disk = accretionDiskColor(
+            mR,
+            hitAngle,
+            mid.y,
+            uniforms.time,
+            rayDir,
+          );
           const order = mix(
             float(1.0),
-            float(0.7),
+            float(0.72),
             step(float(1.5), crossings),
           );
-          const dens = vert.mul(disk.w).mul(float(1.1)).mul(dStep).mul(order);
-          const stepA = dens.min(float(0.4));
+
+          // Emission-weighted opacity: dim gas must not paint opaque matte
+          const diskLuma = max(disk.x, max(disk.y, disk.z));
+          const emitOcc = mix(
+            float(0.12),
+            float(1.0),
+            smoothstep(float(0.015), float(0.45), diskLuma),
+          );
+
+          const thinNear = mix(float(1.0), float(0.42), nearHoleThin);
+          const dens = vert
+            .mul(vertGate)
+            .mul(disk.w)
+            .mul(float(0.78))
+            .mul(dStep)
+            .mul(order)
+            .mul(thinNear)
+            .mul(emitOcc);
+          const stepA = dens.min(float(0.26));
           const rem = float(1.0).sub(alpha);
           color.addAssign(disk.xyz.mul(stepA).mul(rem));
           alpha.addAssign(rem.mul(stepA));
@@ -216,16 +245,13 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       escaped.assign(1.0);
     });
 
-    // Soft shadow from closest approach (restored — pre rim-AA experiments)
-    const aaW = max(fwidth(minR).mul(1.5), rs.mul(0.012));
+    // Soft shadow from continuous minR SDF — never hard-snap on capture
+    const aaW = max(fwidth(minR).mul(2.0), rs.mul(0.015));
     const shadow = float(1.0)
-      .sub(smoothstep(rs.sub(aaW), photonR.add(aaW), minR))
+      .sub(smoothstep(rs.sub(aaW), photonR.add(aaW.mul(0.55)), minR))
       .toVar("shadow");
-    If(captured.greaterThan(0.5), () => {
-      shadow.assign(1.0);
-    });
+    shadow.assign(max(shadow, captured.mul(0.9)));
 
-    // Background for escaped rays
     const skyT = float(1.0).sub(shadow).mul(float(1.0).sub(alpha));
     const bg = vec3(0.0, 0.0, 0.0).toVar("bg");
     If(escaped.greaterThan(0.5).and(skyT.greaterThan(0.001)), () => {
@@ -237,27 +263,38 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       });
     });
 
-    // Grade
     const safeA = max(alpha, float(1.0e-4));
     const straight = color.div(safeA);
     const toned = max(straight, vec3(0.0))
       .div(max(straight, vec3(0.0)).add(vec3(0.55)))
-      .mul(1.35);
+      .mul(1.4);
 
     const diskPm = toned.mul(alpha);
     const sky = bg.mul(skyT).mul(float(5.0));
     const rgb = diskPm.add(sky).toVar("rgb");
+
+    // Only *bright* disk covers pure black — dim high-α gas would leave a
+    // dark band across the silhouette while blocking the photon-ring wrap.
+    const tonedLuma = max(toned.x, max(toned.y, toned.z));
+    const brightCover = alpha.mul(
+      smoothstep(float(0.02), float(0.28), tonedLuma),
+    );
+
     const skyLuma = max(sky.x, max(sky.y, sky.z));
     const outA = max(
       alpha,
       max(shadow, smoothstep(float(0.0), float(0.03), skyLuma)),
     ).toVar("outA");
 
-    // Soft composite: black only where shadow and disk don't cover
-    // (disk secondary wrap stays visible over the silhouette)
     rgb.assign(
-      mix(rgb, vec3(0.0, 0.0, 0.0), shadow.mul(float(1.0).sub(alpha))),
+      mix(rgb, vec3(0.0, 0.0, 0.0), shadow.mul(float(1.0).sub(brightCover))),
     );
+    // Kill residual grey matte over the void
+    const matteKill = shadow
+      .mul(float(1.0).sub(smoothstep(float(0.05), float(0.35), tonedLuma)))
+      .mul(smoothstep(float(0.15), float(0.85), alpha));
+    rgb.assign(mix(rgb, vec3(0.0, 0.0, 0.0), matteKill.mul(0.85)));
+
     rgb.assign(clamp(rgb, float(0.0), float(1.05)));
     outA.assign(clamp(outA, float(0.0), float(1.0)));
 
