@@ -2,16 +2,19 @@
 // Three.js TSL Fn() callbacks are not accurately typed (NodeBuilder iterable errors).
 
 /**
- * Schwarzschild null-ray march (TSL).
+ * Schwarzschild null-ray march (minimal hacks).
  *
  * Geometry (G = c = 1):
- *   rs = 2M
- *   photon sphere = 1.5 rs
- *   ISCO = 3 rs
+ *   rs = 2M · photon sphere = 1.5 rs · ISCO = 3 rs
  *
- * Light deflection uses the leading GR term ∇⊥ ~ (3/2) rs / r² toward the mass
- * (scaled by gravitationalLensing). Capture at the horizon r ≤ rs with soft AA.
- * Volumetric thin disk + Beer–Lambert; secondary wrap from photon-sphere annulus.
+ * Integrator: adaptive step + light deflection
+ *   Δk ∝ (3/2) rs r̂ / r²  (leading GR null term, × gravitationalLensing)
+ *
+ * Disk: volumetric Gaussian slab, Beer–Lambert. Secondary / Einstein structure
+ * comes only from rays that bend and re-enter the slab (multi-crossing) — no
+ * fake photon-sphere disk stamp, no painted ring, no screen-space lobes.
+ *
+ * Composite: march PM color + alpha; pure black if captured; lensed sky if free.
  */
 import type { BlackHoleUniforms } from "../mesh";
 import {
@@ -57,33 +60,30 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const rs = M.mul(2.0);
     const photonR = rs.mul(1.5);
 
-    // ── Camera rays matching PerspectiveCamera vertical FOV ────────────────
+    // ── Pinhole rays = PerspectiveCamera vertical FOV ───────────────────────
     const ndc = screenUV.sub(0.5).mul(2.0);
     const aspect = uniforms.resolution.x.div(
       max(uniforms.resolution.y, float(1.0)),
     );
-    // tan(fovY/2) in radians
     const tanHalf = tan(uniforms.cameraFov.mul(0.5).mul(PI.div(180.0)));
 
     const camPos = uniforms.cameraPosition;
-    const camTarget = uniforms.cameraTarget;
-    const camForward = normalize(camTarget.sub(camPos));
+    const camForward = normalize(uniforms.cameraTarget.sub(camPos));
     const worldUp = vec3(0.0, 1.0, 0.0);
-    // Fallback when looking nearly along world-up
     const upDot = abs(dot(camForward, worldUp));
     const safeUp = mix(worldUp, vec3(0.0, 0.0, 1.0), step(float(0.95), upDot));
     const camRight = normalize(cross(camForward, safeUp));
     const camUp = cross(camRight, camForward);
 
-    const rayDir0 = normalize(
+    const rayDir = normalize(
       camForward
         .add(camRight.mul(ndc.x.mul(aspect).mul(tanHalf)))
         .add(camUp.mul(ndc.y.mul(tanHalf))),
-    ).toVar("rayDir0");
-    const rayDir = rayDir0.toVar("rayDir");
+    ).toVar("rayDir");
 
     const rayPos = camPos.toVar("rayPos");
     const prevPos = camPos.toVar("prevPos");
+    // Premultiplied emission accumulator + opacity
     const color = vec3(0.0, 0.0, 0.0).toVar("color");
     const alpha = float(0.0).toVar("alpha");
     const escaped = float(0.0).toVar("escaped");
@@ -93,13 +93,14 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const innerR = uniforms.diskInnerRadius;
     const outerR = uniforms.diskOuterRadius;
 
-    // ── March ──────────────────────────────────────────────────────────────
-    Loop(128, () => {
+    // ── Null geodesic march ────────────────────────────────────────────────
+    // Enough steps for photon-sphere wraps → natural multi-order disk images.
+    Loop(192, () => {
       If(
         escaped
           .greaterThan(0.5)
           .or(captured.greaterThan(0.5))
-          .or(alpha.greaterThan(0.99)),
+          .or(alpha.greaterThan(0.995)),
         () => {
           Break();
         },
@@ -108,267 +109,153 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       const r = max(length(rayPos), float(1.0e-4));
       minR.assign(min(minR, r));
 
-      // Horizon capture (true event horizon at rs)
-      If(r.lessThan(rs.mul(0.995)), () => {
+      // Event horizon
+      If(r.lessThanEqual(rs), () => {
         captured.assign(1.0);
         Break();
       });
 
-      If(r.greaterThan(120.0), () => {
+      // Escaped to infinity
+      If(r.greaterThan(150.0), () => {
         escaped.assign(1.0);
         Break();
       });
 
+      // Adaptive λ-step: resolve photon sphere + thin disk
       const cylR = sqrt(rayPos.x.mul(rayPos.x).add(rayPos.z.mul(rayPos.z)));
-      const normR = clamp(
+      const mNorm = clamp(
         cylR.sub(innerR).div(max(outerR.sub(innerR), float(1.0e-3))),
         float(0.0),
         float(1.0),
       );
-      // Thin near hole, mild outer flare (scale height ∝ r^0.6 visually)
       const scaleH = uniforms.diskScaleHeight.mul(
-        mix(float(0.35), float(1.7), pow(normR, float(0.6))),
+        mix(float(0.4), float(1.6), pow(mNorm, float(0.6))),
       );
-      const absY = abs(rayPos.y);
-      const radialGate = smoothstep(innerR.mul(0.96), innerR, cylR).mul(
-        smoothstep(outerR.mul(1.04), outerR, cylR),
+      const nearDisk = float(1.0).sub(
+        smoothstep(float(0.0), scaleH.mul(2.8), abs(rayPos.y)),
       );
-      const nearDisk = radialGate.mul(
-        float(1.0).sub(smoothstep(float(0.0), scaleH.mul(3.0), absY)),
+      // Stronger refinement near photon sphere (critical curve)
+      const nearPhoton = float(1.0).sub(
+        smoothstep(photonR.mul(0.7), photonR.mul(3.5), r),
       );
-
-      // Adaptive step: fine near photon sphere + disk slab
-      const nearHole = float(1.0).sub(smoothstep(rs.mul(1.0), rs.mul(12.0), r));
+      const nearHorizon = float(1.0).sub(
+        smoothstep(rs.mul(1.0), rs.mul(8.0), r),
+      );
+      const refine = max(nearPhoton, nearHorizon.mul(0.85));
       const dt = uniforms.stepSize
-        .mul(mix(float(1.0), float(0.08), nearHole))
-        .mul(mix(float(1.0), float(0.28), nearDisk))
+        .mul(mix(float(1.0), float(0.06), refine))
+        .mul(mix(float(1.0), float(0.3), nearDisk))
         .toVar("dt");
 
-      // GR light deflection: leading term (3/2) rs / r² toward mass
-      // (Schwarzschild null geodesic weak/strong hybrid used in many demos)
-      const toCenter = rayPos.negate().div(r);
+      // Deflection: (3/2) rs / r² toward the mass (null GR leading term)
+      const rHat = rayPos.div(r);
       const bend = rs
         .mul(1.5)
         .div(r.mul(r))
         .mul(dt)
         .mul(uniforms.gravitationalLensing);
-      rayDir.addAssign(toCenter.mul(bend));
-      rayDir.assign(normalize(rayDir));
+      // k ← k − bend * r̂  (pulls null direction toward mass)
+      rayDir.assign(normalize(rayDir.sub(rHat.mul(bend))));
 
       prevPos.assign(rayPos);
       rayPos.addAssign(rayDir.mul(dt));
 
-      // Volumetric disk — Gaussian vertical density, Beer–Lambert
-      If(alpha.lessThan(0.99), () => {
+      // ── Disk volume (Beer–Lambert). Multiple crossings = higher-order images.
+      If(alpha.lessThan(0.995), () => {
         const mid = mix(prevPos, rayPos, float(0.5));
         const mR = sqrt(mid.x.mul(mid.x).add(mid.z.mul(mid.z)));
-        const mNorm = clamp(
+        const nR = clamp(
           mR.sub(innerR).div(max(outerR.sub(innerR), float(1.0e-3))),
           float(0.0),
           float(1.0),
         );
-        const mH = uniforms.diskScaleHeight.mul(
-          mix(float(0.35), float(1.7), pow(mNorm, float(0.6))),
+        const h = uniforms.diskScaleHeight.mul(
+          mix(float(0.4), float(1.6), pow(nR, float(0.6))),
         );
-        const yOverH = abs(mid.y).div(max(mH, float(1.0e-4)));
-        const sharp = mix(float(2.4), float(1.3), mNorm);
-        const vert = exp(yOverH.mul(yOverH).mul(sharp).negate());
-        const inVol = mR
-          .greaterThan(innerR)
-          .and(mR.lessThan(outerR))
-          .and(vert.greaterThan(0.012));
+        const yH = abs(mid.y).div(max(h, float(1.0e-4)));
+        // sech²-like vertical structure via Gaussian
+        const vert = exp(yH.mul(yH).mul(float(1.8)).negate());
+        const inDisk = mR
+          .greaterThanEqual(innerR)
+          .and(mR.lessThanEqual(outerR))
+          .and(vert.greaterThan(0.01));
 
-        If(inVol, () => {
+        If(inDisk, () => {
           const hitAngle = atan(mid.z, mid.x);
-          const diskResult = accretionDiskColor(
-            mR,
-            hitAngle,
-            uniforms.time,
-            rayDir,
+          const disk = accretionDiskColor(mR, hitAngle, uniforms.time, rayDir);
+          // Σ-like radial weight: denser inward (∝ r^−0.5 mild)
+          const sigma = pow(
+            max(innerR.div(max(mR, innerR)), float(0.15)),
+            float(0.5),
           );
-          // Optical depth ∝ density × opacity × path
-          const dens = vert.mul(diskResult.w).mul(float(2.8));
-          const optical = dens.mul(dt);
-          const stepA = float(1.0).sub(exp(optical.negate())).min(float(1.0));
-          const remainingAlpha = float(1.0).sub(alpha);
-          color.addAssign(diskResult.xyz.mul(stepA).mul(remainingAlpha));
-          alpha.addAssign(remainingAlpha.mul(stepA));
+          // Optical depth this segment
+          const dens = vert.mul(disk.w).mul(sigma).mul(float(3.2));
+          const tau = dens.mul(dt);
+          const stepA = float(1.0).sub(exp(tau.negate())).min(float(1.0));
+          const rem = float(1.0).sub(alpha);
+          // Emission * transmittance (front-to-back PM)
+          color.addAssign(disk.xyz.mul(stepA).mul(rem));
+          alpha.addAssign(rem.mul(stepA));
         });
       });
     });
 
-    // ── Shadow / photon ring (physical radii) ──────────────────────────────
-    const aaW = max(fwidth(minR).mul(2.0), rs.mul(0.018));
-    // Soft shadow from just inside horizon → slightly outside photon sphere
-    const softCapture = float(1.0)
-      .sub(smoothstep(rs.sub(aaW), photonR.mul(1.05).add(aaW), minR))
-      .toVar("softCapture");
+    // ── Shadow mask from closest approach (AA only — no painted fill) ─────
+    const aaW = max(fwidth(minR).mul(1.8), rs.mul(0.015));
+    // Soft edge of the BH shadow: between horizon and photon sphere
+    const shadow = float(1.0)
+      .sub(smoothstep(rs.sub(aaW), photonR.add(aaW), minR))
+      .toVar("shadow");
     If(captured.greaterThan(0.5), () => {
-      softCapture.assign(1.0);
-    });
-    // Deep core: only true capture / deep shadow — pure black
-    const hardBlack = smoothstep(float(0.7), float(0.96), softCapture).toVar(
-      "hardBlack",
-    );
-
-    // Photon-sphere annulus (critical curve) — secondary / Einstein ring seat
-    const distPhoton = minR.sub(photonR).abs();
-    const ringAnnulus = float(1.0)
-      .sub(smoothstep(float(0.0), rs.mul(0.35), distPhoton))
-      .toVar("ringAnnulus");
-    const softFringe = softCapture.mul(float(1.0).sub(hardBlack));
-
-    // Secondary wrap: physical annulus + soft fringe, no screen-space lobe bias
-    // (screen bias bent the void when the camera tilted)
-    const secondaryBand = float(1.0)
-      .sub(hardBlack)
-      .mul(max(ringAnnulus, softFringe.mul(0.75)))
-      .toVar("secondaryBand");
-
-    const secEmit = vec3(0.0, 0.0, 0.0).toVar("secEmit");
-    const secAlpha = float(0.0).toVar("secAlpha");
-
-    If(secondaryBand.greaterThan(0.03).and(alpha.lessThan(0.98)), () => {
-      // Map impact → disk radius for higher-order image
-      const secR = mix(
-        innerR.mul(1.02),
-        outerR.mul(0.65),
-        clamp(minR.sub(rs).div(rs.mul(1.8)), float(0.0), float(1.0)),
-      );
-      const a0 = atan(rayDir.z, rayDir.x);
-      const a1 = a0.add(PI);
-      const secA = accretionDiskColor(secR, a0, uniforms.time, rayDir);
-      const secB = accretionDiskColor(secR, a1, uniforms.time, rayDir);
-      const secMix = mix(secA, secB, float(0.5));
-      const w = secondaryBand.mul(float(1.0).sub(alpha)).mul(float(0.9));
-      secEmit.addAssign(secMix.xyz.mul(secMix.w).mul(w).mul(1.4));
-      secAlpha.addAssign(secMix.w.mul(w).mul(float(0.45)));
-
-      // Second azimuth for far-side fill
-      const sec2 = accretionDiskColor(
-        mix(innerR.mul(1.05), outerR.mul(0.5), float(0.35)),
-        a0.add(float(1.1)),
-        uniforms.time,
-        rayDir,
-      );
-      const w2 = secondaryBand.mul(float(0.45)).mul(float(1.0).sub(alpha));
-      secEmit.addAssign(sec2.xyz.mul(sec2.w).mul(w2));
-      secAlpha.addAssign(sec2.w.mul(w2).mul(float(0.35)));
+      shadow.assign(1.0);
     });
 
-    {
-      const rem = float(1.0).sub(alpha);
-      color.addAssign(secEmit.mul(rem));
-      alpha.addAssign(rem.mul(secAlpha).min(float(0.7)));
-    }
-
-    const skyOk = float(1.0).sub(softCapture);
-
+    // Free sky only if not captured
     If(captured.lessThan(0.5), () => {
       escaped.assign(1.0);
     });
+    const skyT = float(1.0).sub(shadow).mul(float(1.0).sub(alpha));
 
-    // ── Sky ────────────────────────────────────────────────────────────────
-    const starsCol = vec3(0.0, 0.0, 0.0).toVar("starsCol");
-    const nebCol = vec3(0.0, 0.0, 0.0).toVar("nebCol");
-
-    If(escaped.greaterThan(0.5).and(alpha.lessThan(0.99)), () => {
+    // ── Lensed background ──────────────────────────────────────────────────
+    const bg = vec3(0.0, 0.0, 0.0).toVar("bg");
+    If(escaped.greaterThan(0.5).and(skyT.greaterThan(0.001)), () => {
+      // Direction at escape is the lensed celestial direction (physical)
       If(uniforms.starsEnabled.greaterThan(0.5), () => {
-        // Stabilize star dir under strong lensing (anti-flicker)
-        const align = clamp(dot(rayDir0, rayDir), float(-1.0), float(1.0));
-        const bendAmt = float(1.0).sub(align);
-        const stabilize = smoothstep(float(0.03), float(0.4), bendAmt).mul(
-          float(0.7),
-        );
-        const starDir = normalize(mix(rayDir, rayDir0, stabilize));
-        starsCol.assign(
-          mix(
-            starField(rayDir),
-            starField(starDir),
-            stabilize.mul(0.85).add(0.15),
-          ),
-        );
+        bg.addAssign(starField(rayDir));
       });
       If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
-        nebCol.assign(nebulaField(rayDir));
+        bg.addAssign(nebulaField(rayDir));
       });
     });
 
-    // ── Grade + composite ──────────────────────────────────────────────────
-    const diskA = alpha;
-    const safeA = max(diskA, float(1.0e-4));
+    // ── Composite ──────────────────────────────────────────────────────────
+    // color is already front-to-back PM disk emission
+    const safeA = max(alpha, float(1.0e-4));
     const straight = color.div(safeA);
-    const graded = pow(max(straight, vec3(0.0)), vec3(0.9));
-    const toned = graded
-      .div(graded.add(vec3(1.05)))
-      .mul(1.22)
-      .toVar("toned");
+    // Soft-knee display map (HDR → display)
+    const toned = max(straight, vec3(0.0))
+      .div(max(straight, vec3(0.0)).add(vec3(0.85)))
+      .mul(1.12);
 
-    // Brighten critical curve (photon ring)
-    const photonAa = max(fwidth(minR).mul(2.0), rs.mul(0.02));
-    const photonMask = float(1.0)
-      .sub(smoothstep(float(0.0), photonAa.add(rs.mul(0.035)), distPhoton))
-      .toVar("photonMask");
-    toned.assign(mix(toned, toned.mul(1.18), photonMask.mul(0.65)));
+    const diskPm = toned.mul(alpha);
+    // Sky through remaining transmittance, killed by shadow
+    const sky = bg.mul(skyT).mul(float(4.5));
 
-    const diskPm = toned.mul(diskA).toVar("diskPm");
-    const remaining = float(1.0).sub(diskA);
-    const skyFade = pow(max(skyOk, float(0.0)), float(1.5));
-    const skyW = remaining.mul(skyFade);
+    const rgb = diskPm.add(sky).toVar("rgb");
+    // Opacity: disk + opaque black hole shadow (disk in front stays lit)
+    const outA = max(alpha, shadow).toVar("outA");
 
-    const rgb = diskPm.toVar("rgb");
-    const outAlpha = diskA.toVar("outAlpha");
+    // Empty sky → transparent (CSS background)
+    // Shadow with no disk → pure black (premul 0, a = shadow)
+    const holeOnly = shadow.mul(float(1.0).sub(alpha));
+    rgb.assign(mix(rgb, vec3(0.0, 0.0, 0.0), holeOnly));
 
-    const diskEnergy = max(diskPm.x, max(diskPm.y, diskPm.z));
-    const edgeGlow = fwidth(diskEnergy)
-      .mul(1.6)
-      .min(float(0.25))
-      .mul(float(1.0).sub(hardBlack));
-    rgb.addAssign(diskPm.mul(edgeGlow.mul(0.85)));
-    outAlpha.assign(max(outAlpha, edgeGlow.mul(0.2)));
-
-    // Einstein ring (warm, outside void)
-    const ringCol = vec3(1.0, 0.94, 0.88);
-    rgb.addAssign(
-      ringCol.mul(photonMask.mul(0.5).mul(skyOk.add(diskA.mul(0.3)))),
-    );
-    rgb.addAssign(ringCol.mul(photonMask.mul(photonMask).mul(0.16).mul(skyOk)));
-    outAlpha.assign(max(outAlpha, photonMask.mul(skyOk).mul(0.6)));
-
-    If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
-      const n = nebCol.mul(skyW);
-      rgb.addAssign(n);
-      outAlpha.assign(
-        max(outAlpha, max(n.x, max(n.y, n.z)).mul(2.0).min(float(1.0))),
-      );
-    });
-
-    If(uniforms.starsEnabled.greaterThan(0.5), () => {
-      const s = pow(max(starsCol, vec3(0.0)), vec3(0.9))
-        .mul(5.5)
-        .mul(skyW);
-      rgb.addAssign(s);
-      const sLuma = max(s.x, max(s.y, s.z));
-      outAlpha.assign(
-        max(outAlpha, max(sLuma.mul(8.0), step(float(1.0e-5), sLuma).mul(0.2))),
-      );
-    });
-
-    // Pure black only in deep core, behind disk (disk stays in front)
-    const holeBehind = hardBlack.mul(float(1.0).sub(diskA));
-    rgb.assign(mix(rgb, vec3(0.0, 0.0, 0.0), holeBehind));
-    const wrapLuma = max(rgb.x, max(rgb.y, rgb.z));
-    const softHoleA = softCapture.mul(
-      float(1.0).sub(smoothstep(float(0.02), float(0.12), wrapLuma)),
-    );
-    outAlpha.assign(max(outAlpha, max(hardBlack, softHoleA)));
-
-    rgb.assign(clamp(rgb, float(0.0), float(1.05)));
-    outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
+    rgb.assign(clamp(rgb, float(0.0), float(1.08)));
+    outA.assign(clamp(outA, float(0.0), float(1.0)));
 
     const luma = max(rgb.x, max(rgb.y, rgb.z));
-    Discard(outAlpha.lessThan(0.002).and(luma.lessThan(0.002)));
+    Discard(outA.lessThan(0.002).and(luma.lessThan(0.002)));
 
-    return rgb.toVec4(outAlpha);
+    return rgb.toVec4(outA);
   })();
 }
