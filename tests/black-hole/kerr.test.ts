@@ -1,28 +1,68 @@
 /**
- * Pure physics / config tests (no WebGPU).
- * Run: bun test tests
+ * Kerr / Schwarzschild length-scale tests.
+ * Run: bun test tests/black-hole
  */
 import { describe, expect, test } from "bun:test";
 import {
-  buildBlackHoleConfig,
-  defaultPhysics,
-  orbitDistanceLimits,
-  skyDomeRadius,
-} from "../../components/black-hole/config";
-import {
   clampSpin,
+  iscoRadius,
   keplerOmega,
   kerrScales,
+  photonSphereRadius,
 } from "../../components/black-hole/kerr";
 
 describe("clampSpin", () => {
   test("passes through interior values", () => {
     expect(clampSpin(0.35)).toBe(0.35);
+    expect(clampSpin(-0.5)).toBe(-0.5);
   });
   test("clamps to open interval and rejects non-finite", () => {
     expect(clampSpin(2)).toBe(0.998);
     expect(clampSpin(-2)).toBe(-0.998);
     expect(clampSpin(Number.NaN)).toBe(0);
+    expect(clampSpin(Number.POSITIVE_INFINITY)).toBe(0);
+  });
+});
+
+describe("photonSphereRadius", () => {
+  test("Schwarzschild χ=0 → 3M (both branches)", () => {
+    expect(photonSphereRadius(1, 0, true)).toBeCloseTo(3, 5);
+    expect(photonSphereRadius(1, 0, false)).toBeCloseTo(3, 5);
+    expect(photonSphereRadius(2, 0, true)).toBeCloseTo(6, 5);
+  });
+  test("prograde shrinks toward M as χ→1; retrograde grows toward 4M", () => {
+    const pro = photonSphereRadius(1, 0.998, true);
+    const ret = photonSphereRadius(1, 0.998, false);
+    expect(pro).toBeLessThan(3);
+    expect(pro).toBeGreaterThan(1);
+    expect(ret).toBeGreaterThan(3);
+    expect(ret).toBeLessThan(4.01);
+  });
+  test("spin sign ignored; branch from prograde flag", () => {
+    expect(photonSphereRadius(1, 0.5, true)).toBeCloseTo(
+      photonSphereRadius(1, -0.5, true),
+      10,
+    );
+  });
+});
+
+describe("iscoRadius", () => {
+  test("Schwarzschild χ=0 → 6M both branches", () => {
+    expect(iscoRadius(1, 0, true)).toBeCloseTo(6, 6);
+    expect(iscoRadius(1, 0, false)).toBeCloseTo(6, 6);
+    expect(iscoRadius(3, 0, true)).toBeCloseTo(18, 5);
+  });
+  test("prograde ISCO < retrograde for high spin", () => {
+    const pro = iscoRadius(1, 0.9, true);
+    const ret = iscoRadius(1, 0.9, false);
+    expect(pro).toBeLessThan(ret);
+    expect(pro).toBeLessThan(6);
+    expect(ret).toBeGreaterThan(6);
+  });
+  test("near-extremal prograde ISCO approaches ~M", () => {
+    const pro = iscoRadius(1, 0.998, true);
+    expect(pro).toBeLessThan(1.5);
+    expect(pro).toBeGreaterThan(1);
   });
 });
 
@@ -32,8 +72,20 @@ describe("kerrScales", () => {
     expect(s.eventHorizon).toBeCloseTo(2, 6);
     expect(s.photonSphere).toBeCloseTo(3, 5);
     expect(s.iscoPrograde).toBeCloseTo(6, 5);
+    expect(s.iscoRetrograde).toBeCloseTo(6, 5);
     expect(s.schwarzschildRadius).toBe(2);
     expect(s.eventHorizonInner).toBeCloseTo(0, 6);
+    expect(s.a).toBe(0);
+    expect(s.spin).toBe(0);
+  });
+
+  test("horizons r₊ = M(1+√(1-χ²)), r₋ = M(1-√(1-χ²))", () => {
+    const chi = 0.6;
+    const s = kerrScales(1, chi);
+    const disc = Math.sqrt(1 - chi * chi);
+    expect(s.eventHorizon).toBeCloseTo(1 + disc, 8);
+    expect(s.eventHorizonInner).toBeCloseTo(1 - disc, 8);
+    expect(s.a).toBeCloseTo(chi, 8);
   });
 
   test("high spin shrinks prograde ISCO and outer horizon toward M", () => {
@@ -43,12 +95,20 @@ describe("kerrScales", () => {
     expect(s.iscoPrograde).toBeLessThan(2);
     expect(s.iscoPrograde).toBeGreaterThan(1);
     expect(s.photonSphere).toBeLessThan(s.iscoPrograde + 0.5);
+    expect(s.iscoRetrograde).toBeGreaterThan(s.iscoPrograde);
   });
 
   test("scales linearly with mass", () => {
     const a = kerrScales(2, 0);
     expect(a.eventHorizon).toBeCloseTo(4, 6);
     expect(a.iscoPrograde).toBeCloseTo(12, 5);
+    expect(a.photonSphere).toBeCloseTo(6, 5);
+  });
+
+  test("tiny mass floored", () => {
+    const s = kerrScales(0, 0);
+    expect(s.mass).toBeGreaterThan(0);
+    expect(s.eventHorizon).toBeGreaterThan(0);
   });
 });
 
@@ -57,64 +117,14 @@ describe("keplerOmega", () => {
     const omega = keplerOmega(6, 1, 0);
     expect(omega).toBeCloseTo(1 / Math.pow(6, 1.5), 8);
   });
-});
-
-describe("orbitDistanceLimits / skyDomeRadius", () => {
-  test("sky shell stays outside max zoom", () => {
-    for (const d of [12, 28, 50, 100]) {
-      const { max } = orbitDistanceLimits(d);
-      expect(skyDomeRadius(max)).toBeGreaterThanOrEqual(max);
-      expect(skyDomeRadius(max)).toBeGreaterThanOrEqual(80);
-    }
+  test("prograde a>0 decreases Ω at fixed r (Bardeen formula)", () => {
+    // Ω = 1 / (r^{3/2}/√M + a) — positive a enlarges denominator
+    const o0 = keplerOmega(6, 1, 0);
+    const oS = keplerOmega(6, 1, 0.5);
+    expect(oS).toBeLessThan(o0);
+    expect(oS).toBeCloseTo(1 / (Math.pow(6, 1.5) + 0.5), 8);
   });
-});
-
-describe("buildBlackHoleConfig", () => {
-  test("defaults produce finite dual-hole scales", () => {
-    const c = buildBlackHoleConfig();
-    expect(c.primaryMass).toBe(defaultPhysics.primaryMass);
-    expect(c.secondaryMass).toBeCloseTo(
-      defaultPhysics.primaryMass * defaultPhysics.massRatio,
-      8,
-    );
-    expect(c.eventHorizonPrimary).toBeGreaterThan(0);
-    expect(c.eventHorizonSecondary).toBeGreaterThan(0);
-    expect(c.diskScaleHeightPrimary).toBeGreaterThan(0);
-    expect(c.diskScaleHeightSecondary).toBeGreaterThan(0);
-    expect(c.orbitalFrequency).toBeGreaterThan(0);
-    expect(Number.isFinite(c.spin)).toBe(true);
-  });
-
-  test("large separation raises camera for FOV fit without proportional lock", () => {
-    const c = buildBlackHoleConfig({
-      overrides: { separation: 40, cameraDistance: 28 },
-    });
-    expect(c.cameraDistance).toBeGreaterThanOrEqual(40 * 1.55 + 4);
-    const def = buildBlackHoleConfig();
-    expect(c.separation / c.cameraDistance).toBeGreaterThan(
-      (def.separation / def.cameraDistance) * 0.5,
-    );
-  });
-
-  test("mass ratio yields different per-hole scale heights", () => {
-    const c = buildBlackHoleConfig({
-      overrides: { massRatio: 0.3 },
-    });
-    expect(c.diskScaleHeightSecondary).toBeLessThan(c.diskScaleHeightPrimary);
-    expect(c.iscoSecondary).toBeLessThan(c.iscoPrimary);
-  });
-
-  test("light theme dims accretion when themeColors enabled", () => {
-    const dark = buildBlackHoleConfig({
-      themeColors: true,
-      mode: "dark",
-      overrides: { accretionRate: 10 },
-    });
-    const light = buildBlackHoleConfig({
-      themeColors: true,
-      mode: "light",
-      overrides: { accretionRate: 10 },
-    });
-    expect(light.accretionRate).toBeCloseTo(dark.accretionRate * 0.55, 8);
+  test("larger radius → smaller Ω", () => {
+    expect(keplerOmega(10, 1, 0)).toBeLessThan(keplerOmega(6, 1, 0));
   });
 });

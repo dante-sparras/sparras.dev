@@ -34,3 +34,8 @@ export {
   intensityDopplerWeight,
 } from "./disk-physics";
 export { temperatureToDiskColor } from "./blackbody";
+export {
+  binaryOrbitalOmega,
+  binaryArmLengths,
+  binaryHolePositions,
+} from "./binary";

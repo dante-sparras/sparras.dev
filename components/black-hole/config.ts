@@ -20,6 +20,7 @@
  */
 
 import type { ResolvedTheme } from "@/components/providers";
+import { binaryOrbitalOmega } from "./binary";
 import { clampSpin, kerrScales } from "./kerr";
 
 export type { KerrScales } from "./kerr";
@@ -424,7 +425,7 @@ export function buildBlackHoleConfig(
   ];
 
   /** Circular two-body mean motion Ω = √(M / d³) (Newtonian CM; not keplerOmega). */
-  const orbitalFrequency = Math.sqrt(totalMass / separation ** 3);
+  const orbitalFrequency = binaryOrbitalOmega(totalMass, separation);
 
   // Light theme: dim emissivity so fire doesn't blow out on pale page bg
   if (themeColors && mode === "light") {
