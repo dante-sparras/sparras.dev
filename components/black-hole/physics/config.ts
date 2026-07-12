@@ -2,8 +2,10 @@
  * Binary black-hole configuration.
  *
  * ## Units
- * Geometric units throughout: **G = c = 1**. A mass **M** also sets the length
- * and time scale (r_s = 2M for Schwarzschild).
+ * Geometric units throughout: **G = c = 1**. Masses are **not** solar masses.
+ * A mass **M** also sets the length and time scale (Schwarzschild radius
+ * r_s = 2M). So `primaryMass: 0.5` means “half a geometric mass unit,” not 0.5 M☉.
+ * Lengths (separation, cameraDistance, horizons) share that same unit system.
  *
  * ## Layers
  * 1. {@link PhysicsParams} / {@link defaultPhysics} — **raw** knobs only
@@ -12,12 +14,11 @@
  *
  * ## Configure (partial only — flat knobs)
  * ```ts
- * buildBlackHoleConfig({ spin: 0.8, inclination: 135 })
- * <BlackHole spin={0.8} inclination={135} />
+ * buildBlackHoleConfig({ primaryMass: 0.5, secondaryMass: 0.75 })
+ * <BlackHole primaryMass={0.5} secondaryMass={0.75} spin={0.8} />
  * ```
  *
  * Public knobs are raw only. Derived scales are never user inputs.
- * One visual look (no light/dark presentation branch).
  *
  * @module components/black-hole/physics/config
  */
@@ -51,7 +52,7 @@ export {
  */
 export const RAW_PHYSICS_KEYS = [
   "primaryMass",
-  "massRatio",
+  "secondaryMass",
   "separation",
   "spin",
   "inclination",
@@ -72,20 +73,20 @@ export type RawPhysicsKey = (typeof RAW_PHYSICS_KEYS)[number];
  */
 export type PhysicsParams = Partial<{
   /**
-   * Primary mass **M₁** (geometric units).
-   * - Lower → smaller primary · Higher → larger primary / stronger lensing
-   * - Clamped ≥ {@link PHYSICS_LIMITS.primaryMassMin}
+   * Primary mass **M₁** in **geometric units** (G = c = 1) — **not** solar masses.
+   * Sets the primary’s length scale (r₊ ≈ M…2M). Larger → bigger hole + stronger lensing.
+   * - Clamped ≥ {@link PHYSICS_LIMITS.massMin}
    * @defaultValue 0.5
    */
   primaryMass: number;
 
   /**
-   * Mass ratio **q = M₂ / M₁**.
-   * - ≪1 light secondary · 1 equal · ≫1 heavy secondary
-   * - Clamped [{@link PHYSICS_LIMITS.massRatioMin}, {@link PHYSICS_LIMITS.massRatioMax}]
-   * @defaultValue 1.5
+   * Secondary mass **M₂** in **geometric units** (G = c = 1) — **not** solar masses.
+   * Independent of M₁ (unlike the old mass ratio). Larger → bigger secondary.
+   * - Clamped ≥ {@link PHYSICS_LIMITS.massMin}
+   * @defaultValue 0.75
    */
-  massRatio: number;
+  secondaryMass: number;
 
   /**
    * Center-to-center separation **d**.
@@ -188,6 +189,7 @@ export type BlackHoleConfig = {
   primaryMass: number;
   secondaryMass: number;
   totalMass: number;
+  /** Derived convenience: q = M₂ / M₁ (not a public knob). */
   massRatio: number;
   separation: number;
   /** Ω = √(M_tot / d³) */
@@ -225,10 +227,13 @@ export type BlackHoleConfig = {
 /**
  * Site physics defaults for the hero banner.
  * Edit here for production look, or pass partials at call sites.
+ *
+ * Masses are geometric (G=c=1), not solar masses. Defaults match the old
+ * M₁=0.5, q=1.5 → M₂=0.75 look.
  */
 export const defaultPhysics = {
   primaryMass: 0.5,
-  massRatio: 1.5,
+  secondaryMass: 0.75,
   separation: 20,
   spin: 0.5,
   inclination: 98,
@@ -300,10 +305,10 @@ export function buildBlackHoleConfig(
   const p = resolvePhysics(partial);
   const L = PHYSICS_LIMITS;
 
-  const primaryMass = clamp(p.primaryMass, L.primaryMassMin);
-  const massRatio = clamp(p.massRatio, L.massRatioMin, L.massRatioMax);
-  const secondaryMass = primaryMass * massRatio;
+  const primaryMass = clamp(p.primaryMass, L.massMin);
+  const secondaryMass = clamp(p.secondaryMass, L.massMin);
   const totalMass = primaryMass + secondaryMass;
+  const massRatio = secondaryMass / primaryMass;
   const separation = clamp(p.separation, L.separationMin);
   const spin = clampSpin(p.spin);
   const inclination = clampInclinationDegrees(p.inclination);

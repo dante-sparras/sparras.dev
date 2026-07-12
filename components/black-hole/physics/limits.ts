@@ -7,11 +7,11 @@
 
 /** Clamps for raw public knobs and derived safety floors. */
 export const PHYSICS_LIMITS = {
-  /** Minimum primary mass M₁. */
-  primaryMassMin: 0.08,
-  /** Mass ratio q = M₂/M₁. */
-  massRatioMin: 0.15,
-  massRatioMax: 4,
+  /**
+   * Minimum mass for either hole (geometric units, not M☉).
+   * Same floor for M₁ and M₂.
+   */
+  massMin: 0.08,
   /** Center-to-center separation d. */
   separationMin: 2.5,
   /** Observer distance D. */

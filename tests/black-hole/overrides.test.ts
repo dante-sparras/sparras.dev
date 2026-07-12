@@ -14,7 +14,7 @@ import {
 
 const PROBE: Record<RawPhysicsKey, number> = {
   primaryMass: 0.42,
-  massRatio: 0.8,
+  secondaryMass: 0.33,
   separation: 17,
   spin: 0.72,
   inclination: 142,
@@ -71,11 +71,18 @@ describe("resolvePhysics", () => {
 });
 
 describe("buildBlackHoleConfig — flat knobs", () => {
-  test("flat knobs", () => {
-    const c = buildBlackHoleConfig({ spin: 0.88, inclination: 135 });
+  test("flat knobs including both masses", () => {
+    const c = buildBlackHoleConfig({
+      primaryMass: 0.4,
+      secondaryMass: 0.9,
+      spin: 0.88,
+      inclination: 135,
+    });
+    expect(c.primaryMass).toBeCloseTo(0.4, 5);
+    expect(c.secondaryMass).toBeCloseTo(0.9, 5);
+    expect(c.massRatio).toBeCloseTo(0.9 / 0.4, 5);
     expect(c.spin).toBeCloseTo(0.88, 5);
     expect(c.inclination).toBe(135);
-    expect(c.primaryMass).toBe(defaultPhysics.primaryMass);
   });
 });
 
@@ -99,10 +106,12 @@ describe("buildBlackHoleConfig — low vs high semantics (smoke)", () => {
     expect(hi.eventHorizonPrimary).toBeGreaterThan(lo.eventHorizonPrimary);
   });
 
-  test("higher massRatio → larger secondary", () => {
-    const lo = buildBlackHoleConfig({ massRatio: 0.3 });
-    const hi = buildBlackHoleConfig({ massRatio: 2.5 });
+  test("higher secondaryMass → larger secondary (independent of M₁)", () => {
+    const lo = buildBlackHoleConfig({ secondaryMass: 0.2 });
+    const hi = buildBlackHoleConfig({ secondaryMass: 1.1 });
     expect(hi.secondaryMass).toBeGreaterThan(lo.secondaryMass);
+    expect(hi.eventHorizonSecondary).toBeGreaterThan(lo.eventHorizonSecondary);
+    expect(hi.primaryMass).toBe(defaultPhysics.primaryMass);
   });
 
   test("higher separation → slower orbital frequency", () => {

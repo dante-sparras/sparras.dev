@@ -92,8 +92,9 @@ describe("buildBlackHoleConfig", () => {
   test("defaults produce finite dual-hole scales", () => {
     const c = buildBlackHoleConfig();
     expect(c.primaryMass).toBe(defaultPhysics.primaryMass);
-    expect(c.secondaryMass).toBeCloseTo(
-      defaultPhysics.primaryMass * defaultPhysics.massRatio,
+    expect(c.secondaryMass).toBe(defaultPhysics.secondaryMass);
+    expect(c.massRatio).toBeCloseTo(
+      defaultPhysics.secondaryMass / defaultPhysics.primaryMass,
       8,
     );
     expect(c.eventHorizonPrimary).toBeGreaterThan(0);
@@ -105,10 +106,11 @@ describe("buildBlackHoleConfig", () => {
   test("secondary mass and Ω match pure binary helpers", () => {
     const c = buildBlackHoleConfig({
       primaryMass: 0.6,
-      massRatio: 0.5,
+      secondaryMass: 0.3,
       separation: 14,
     });
-    expect(c.secondaryMass).toBeCloseTo(0.6 * 0.5, 8);
+    expect(c.secondaryMass).toBeCloseTo(0.3, 8);
+    expect(c.massRatio).toBeCloseTo(0.5, 8);
     expect(c.orbitalFrequency).toBeCloseTo(
       binaryOrbitalOmega(c.totalMass, c.separation),
       8,
@@ -120,7 +122,7 @@ describe("buildBlackHoleConfig", () => {
   test("derived Kerr scales match kerrScales(M, χ)", () => {
     const c = buildBlackHoleConfig({
       primaryMass: 0.7,
-      massRatio: 1.2,
+      secondaryMass: 0.84,
       spin: 0.5,
     });
     const p = kerrScales(c.primaryMass, c.spin);
@@ -156,15 +158,18 @@ describe("buildBlackHoleConfig", () => {
     expect(c.cameraDistance).toBe(PHYSICS_LIMITS.cameraDistanceMin);
   });
 
-  test("mass ratio yields different per-hole scale heights", () => {
-    const c = buildBlackHoleConfig({ massRatio: 0.3 });
+  test("mass ratio from independent masses yields different per-hole scale heights", () => {
+    const c = buildBlackHoleConfig({
+      primaryMass: 1.0,
+      secondaryMass: 0.3,
+    });
     expect(c.diskScaleHeightSecondary).toBeLessThan(c.diskScaleHeightPrimary);
   });
 
   test("clamps extreme raw knobs", () => {
     const c = buildBlackHoleConfig({
       primaryMass: -1,
-      massRatio: 100,
+      secondaryMass: -5,
       spin: 5,
       inclination: 200,
       diskAspectRatio: 9,
@@ -173,8 +178,8 @@ describe("buildBlackHoleConfig", () => {
       separation: 0.1,
       diskOuterRadiusM: 0.5,
     });
-    expect(c.primaryMass).toBeGreaterThanOrEqual(PHYSICS_LIMITS.primaryMassMin);
-    expect(c.massRatio).toBeLessThanOrEqual(PHYSICS_LIMITS.massRatioMax);
+    expect(c.primaryMass).toBeGreaterThanOrEqual(PHYSICS_LIMITS.massMin);
+    expect(c.secondaryMass).toBeGreaterThanOrEqual(PHYSICS_LIMITS.massMin);
     expect(Math.abs(c.spin)).toBeLessThanOrEqual(0.998);
     expect(c.inclination).toBe(PHYSICS_LIMITS.inclinationMax);
     expect(c.diskAspectRatio).toBeLessThanOrEqual(PHYSICS_LIMITS.diskAspectMax);
@@ -198,7 +203,7 @@ describe("buildBlackHoleConfig", () => {
   });
 
   test("every CONFIG_SCALAR_KEY exists as finite number on config", () => {
-    const c = buildBlackHoleConfig({ massRatio: 0.4, spin: 0.7 });
+    const c = buildBlackHoleConfig({ secondaryMass: 0.4, spin: 0.7 });
     for (const key of CONFIG_SCALAR_KEYS) {
       const v = c[key];
       expect(typeof v).toBe("number");
