@@ -17,7 +17,7 @@ import type { CssTokens } from "@/hooks";
 export type BlackHoleConfig = {
   // Gravity (M in geometric units; rs = 2M)
   blackHoleMass: number;
-  /** Multiplier on the GR light-deflection term (~1.5 rs / r²). */
+  /** Multiplier on affine step (1 = geometric units). Affects capture sharpness. */
   gravitationalLensing: number;
   /** 0 = off, 1 = full special-relativistic beaming strength. */
   dopplerStrength: number;
@@ -107,7 +107,7 @@ const VOID = "#050505";
  */
 export const defaultBlackHoleConfig = {
   blackHoleMass: 0.5,
-  gravitationalLensing: 1.35,
+  gravitationalLensing: 1.0,
   dopplerStrength: 1.0,
 
   diskInnerRadius: 3.2,
@@ -139,7 +139,7 @@ export const defaultBlackHoleConfig = {
   nebula2Scale: 5.5,
   nebula2Density: 0.06,
 
-  stepSize: 0.48,
+  stepSize: 0.42,
   diskInkMode: 0,
 
   nebula1Color: "#1a1020",
