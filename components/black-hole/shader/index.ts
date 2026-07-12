@@ -14,6 +14,7 @@ import {
   length,
   normalize,
   cross,
+  dot,
   atan,
   sqrt,
   pow,
