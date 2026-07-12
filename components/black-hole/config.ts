@@ -10,11 +10,26 @@
  * 2. {@link BlackHoleConfig} — resolved masses, Kerr scales, Kepler Ω, render
  * 3. {@link defaultRender} — pixel-art only (not public overrides)
  *
+ * ## Easy configuration (partial only)
+ * Pass **only the knobs you care about** — everything else keeps site defaults:
+ *
+ * ```ts
+ * // Flat (preferred)
+ * buildBlackHoleConfig({ spin: 0.8, inclination: 135 })
+ *
+ * // Nested bag (also fine)
+ * buildBlackHoleConfig({ physics: { spin: 0.8 } })
+ * buildBlackHoleConfig({ overrides: { spin: 0.8 } }) // alias of physics
+ *
+ * // React
+ * <BlackHole spin={0.8} inclination={135} />
+ * <BlackHole physics={{ spin: 0.8 }} />
+ * <HeroBanner separation={16} accretionRate={3} />
+ * ```
+ *
  * **Public knobs are raw only** (M, q, d, χ, i, D, H/R, T_peak, α, Ṁ).
  * Derived quantities (r₊, ISCO, photon sphere, a, Ω, absolute H, …) are
  * computed by {@link buildBlackHoleConfig} and are never user overrides.
- *
- * Kerr helpers live in `./kerr` and are re-exported here.
  *
  * @module components/black-hole/config
  */
@@ -71,25 +86,59 @@ export function skyDomeRadius(orbitMaxDistance: number): number {
 // ── Public physics surface ──────────────────────────────────────────────────
 
 /**
+ * Canonical list of raw physics knobs (order = docs / tests / pick helpers).
+ * @see {@link BlackHoleOverrides}
+ */
+export const RAW_PHYSICS_KEYS = [
+  "primaryMass",
+  "massRatio",
+  "separation",
+  "spin",
+  "inclination",
+  "cameraDistance",
+  "diskOuterRadiusM",
+  "diskAspectRatio",
+  "peakTemperature",
+  "temperatureIndex",
+  "accretionRate",
+] as const;
+
+/** One raw public physics key. */
+export type RawPhysicsKey = (typeof RAW_PHYSICS_KEYS)[number];
+
+/**
  * User-editable **raw** physics and observer parameters.
  *
  * Every field is optional; omitted keys fall back to {@link defaultPhysics}.
+ * Prefer partial objects — you never need to pass a full config.
+ *
  * Do **not** put derived scales (r₊, ISCO, Ω, absolute H, …) or pixel-art
  * fudge factors here — those come from {@link buildBlackHoleConfig} /
  * {@link defaultRender}.
  */
 export type BlackHoleOverrides = Partial<{
   /**
-   * Primary black-hole mass **M₁** (geometric units).
-   * Sets the length scale of the primary and its mini-disk.
+   * Primary black-hole mass **M₁** (geometric units, G = c = 1).
+   *
+   * Sets the length scale of hole 1 (horizon, ISCO, mini-disk size).
+   *
+   * - **Lower** → smaller primary silhouette & disk; secondary relatively larger if `massRatio` fixed
+   * - **Higher** → bigger primary, stronger lensing around hole 1, larger mini-disk
+   * - **Typical** ~0.2–2 · **Clamped** ≥ 0.08
+   *
    * @defaultValue 0.5
    */
   primaryMass: number;
 
   /**
    * Mass ratio **q = M₂ / M₁** (raw). Secondary mass is derived as M₁·q.
-   * Clamped to about `[0.15, 4]` when building the config.
-   * @defaultValue 1
+   *
+   * - **Lower (≪ 1)** → much lighter secondary (tiny companion)
+   * - **1** → equal-mass binary
+   * - **Higher (≫ 1)** → secondary dominates (primary is the light companion)
+   * - **Clamped** ≈ [0.15, 4]
+   *
+   * @defaultValue 1.5
    */
   massRatio: number;
 
@@ -97,78 +146,159 @@ export type BlackHoleOverrides = Partial<{
    * Center-to-center orbital separation **d** (geometric units).
    *
    * Derived: r₁ = d·M₂/M_tot, r₂ = d·M₁/M_tot, Ω = √(M_tot/d³).
-   * Camera only pulls back if both holes would leave the FOV.
-   * @defaultValue 12
+   * Does **not** auto-change `cameraDistance` (zoom is independent).
+   *
+   * - **Lower** → tighter binary, faster orbit, disks closer / more blended
+   * - **Higher** → wider pair, slower orbit, easier to read as two systems
+   * - **Clamped** ≥ 2.5
+   *
+   * @defaultValue 20
    */
   separation: number;
 
   /**
    * Dimensionless spin **χ = a / M**, applied to **both** holes (`|χ| < 1`).
-   * Derives r₊, photon sphere, ISCO on the CPU; GPU uses χ in local Kerr
-   * null deflection and disk orbital velocity (Doppler).
-   * @defaultValue 0.35
+   *
+   * CPU: r₊, photon sphere, ISCO. GPU: local Kerr null deflection + disk Ω (Doppler).
+   *
+   * - **Near 0** → Schwarzschild-like (ISCO ≈ 6M, r₊ = 2M)
+   * - **Higher |χ|** → smaller prograde ISCO / r₊ (thinner hot inner disk), more frame-drag bend
+   * - **Clamped** to about (−0.998, 0.998)
+   *
+   * @defaultValue 0.5
    */
   spin: number;
 
   /**
    * Observer inclination **i** in **degrees** from the orbital / disk normal.
-   * Full range **0–180**:
-   * - `0` = face-on (looking down +Y)
-   * - `90` = edge-on
-   * - `135` = 45° past edge-on (slight underside / southern view)
-   * - `180` = face-on from below (−Y)
-   * @defaultValue 62
+   * Full range **0–180** (not limited to 0–90).
+   *
+   * - **0** → face-on from above (+Y): see full disk face
+   * - **~45–70** → classic “cinema” tilt looking down onto the system
+   * - **90** → edge-on: thin line + strong Doppler left/right
+   * - **135** → 45° past edge-on (slight underside / southern view)
+   * - **180** → face-on from below (−Y)
+   *
+   * @defaultValue 98
    */
   inclination: number;
 
   /**
    * Observer distance **D** from the system barycenter (geometric units).
-   * Respected as a raw knob (clamped to a small minimum). Not auto-scaled
-   * proportionally with separation — change D here to zoom the system.
-   * @defaultValue 28
+   *
+   * Pure zoom knob — **not** forced to scale with separation.
+   *
+   * - **Lower** → closer / larger on screen (risk of cropping wide binaries)
+   * - **Higher** → smaller system, more surrounding space
+   * - **Clamped** ≥ 8
+   *
+   * @defaultValue 30
    */
   cameraDistance: number;
 
   /**
    * Mini-disk outer radius in units of **each hole’s own mass**:
-   * `r_out = diskOuterRadiusM × Mᵢ` (raw). Inner edge = prograde ISCO (derived).
-   * @defaultValue 12
+   * `r_out = diskOuterRadiusM × Mᵢ`. Inner edge = prograde ISCO (derived).
+   *
+   * - **Lower** → compact rings tight around each hole
+   * - **Higher** → larger glowing plates / more extended mini-disks
+   * - **Clamped** ≥ 3
+   *
+   * @defaultValue 15
    */
   diskOuterRadiusM: number;
 
   /**
-   * Disk aspect ratio **H / R** (raw). Absolute scale height is derived.
-   * @defaultValue 0.06
+   * Disk aspect ratio **H / R** (raw). Absolute scale height is derived per hole.
+   *
+   * - **Lower** → razor-thin disks (sharp edge-on line)
+   * - **Higher** → puffy disks (more vertical extent, softer silhouette)
+   * - **Clamped** ≈ [0.005, 0.25]
+   *
+   * @defaultValue 0.05
    */
   diskAspectRatio: number;
 
   /**
-   * Peak effective temperature near the ISCO, in units of **1000 K** (raw).
-   * Example: `48` → T_peak = 48 000 K.
+   * Peak effective temperature near the ISCO, in units of **1000 K**.
+   * Example: `50` → T_peak = 50 000 K.
    *
    * Drives thin-disk **T(r)** and **temperature→peach RGB** (plus Doppler-shifted T).
-   * Try ±15 for visible shifts; never produces pure white.
-   * @defaultValue 48
+   * Never pure white.
+   *
+   * - **Lower** → cooler / redder-rust fire
+   * - **Higher** → hotter / brighter peach-gold (try ±15 for a clear shift)
+   * - **Clamped** ≥ 1
+   *
+   * @defaultValue 50
    */
   peakTemperature: number;
 
   /**
-   * Radial temperature index **α** in **T ∝ r^{−α}** (raw).
+   * Radial temperature index **α** in **T ∝ r^{−α}**.
    * Shakura–Sunyaev / multi-temperature thin disk: **α ≈ 0.75**.
-   * @defaultValue 0.75
+   *
+   * - **Lower** → flatter T profile (outer disk stays warmer)
+   * - **Higher** → steeper falloff (hot core, cooler outer rim)
+   * - **Clamped** ≈ [0.5, 1.5]
+   *
+   * @defaultValue 1
    */
   temperatureIndex: number;
 
   /**
-   * Relative accretion rate / surface emissivity (∝ **Ṁ**, raw).
-   * Primary brightness control. Does not change geometry.
-   * @defaultValue 8.5
+   * Relative accretion rate / surface emissivity (∝ **Ṁ**).
+   * Primary **brightness** control — does not change geometry.
+   *
+   * - **Lower** → dimmer disks (good for light theme / subtle hero)
+   * - **Higher** → brighter fire (watch bloom / page contrast)
+   * - **Clamped** ≥ 0.1 · light theme multiplies by 0.55 when `themeColors` is on
+   *
+   * @defaultValue 5
    */
   accretionRate: number;
 }>;
 
 /** Alias: fully specified raw physics surface (all overrides required). */
 export type RawBlackHolePhysics = Required<BlackHoleOverrides>;
+
+/**
+ * Pick only raw physics keys from a loose object (ignores host props, theme, …).
+ * Safe for React prop bags and flat `buildBlackHoleConfig` calls.
+ */
+export function pickPhysicsOverrides(
+  source: Partial<Record<RawPhysicsKey, unknown>> | null | undefined,
+): BlackHoleOverrides {
+  if (!source) return {};
+  const out: BlackHoleOverrides = {};
+  for (const key of RAW_PHYSICS_KEYS) {
+    const value = source[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+/**
+ * Shallow-merge partial physics layers (later wins).
+ * Skips empty / undefined layers.
+ */
+export function mergePhysicsOverrides(
+  ...layers: Array<BlackHoleOverrides | undefined | null>
+): BlackHoleOverrides {
+  const out: BlackHoleOverrides = {};
+  for (const layer of layers) {
+    if (!layer) continue;
+    for (const key of RAW_PHYSICS_KEYS) {
+      const value = layer[key];
+      if (typeof value === "number" && Number.isFinite(value)) {
+        out[key] = value;
+      }
+    }
+  }
+  return out;
+}
 
 // ── Resolved config (mesh + host) ───────────────────────────────────────────
 
@@ -213,9 +343,9 @@ export type BlackHoleConfig = {
   iscoSecondary: number;
 
   // ── Observer ────────────────────────────────────────────────────────────
-  /** Inclination i in degrees. */
+  /** Inclination i in degrees (0–180). */
   inclination: number;
-  /** Observer distance D (may be FOV-adjusted). */
+  /** Observer distance D (raw, min 8). */
   cameraDistance: number;
 
   // ── Disk ────────────────────────────────────────────────────────────────
@@ -251,9 +381,25 @@ export type BlackHoleConfig = {
   colorLevels: number;
 };
 
-/** Options for {@link buildBlackHoleConfig}. */
-export type BuildBlackHoleConfigOptions = {
-  /** Partial physics overrides merged onto {@link defaultPhysics}. */
+/**
+ * Options for {@link buildBlackHoleConfig}.
+ *
+ * Prefer **flat knobs** on the same object (only pass what you change):
+ * `buildBlackHoleConfig({ spin: 0.8, inclination: 135 })`.
+ *
+ * Nested `physics` / `overrides` bags are supported for grouping or back-compat.
+ * Merge order (later wins): `physics` → `overrides` → top-level knobs.
+ */
+export type BuildBlackHoleConfigOptions = BlackHoleOverrides & {
+  /**
+   * Nested partial physics bag (merged before top-level knobs).
+   * Same as {@link BuildBlackHoleConfigOptions.overrides}.
+   */
+  physics?: BlackHoleOverrides;
+  /**
+   * Alias of {@link BuildBlackHoleConfigOptions.physics} (historical name).
+   * Prefer top-level knobs or `physics` for new code.
+   */
   overrides?: BlackHoleOverrides;
   /**
    * When true and `mode === "light"`, scales down `accretionRate` so the
@@ -269,16 +415,21 @@ export type BuildBlackHoleConfigOptions = {
 /**
  * Site physics defaults for the hero banner.
  *
- * Prefer tuning {@link BlackHoleOverrides.peakTemperature} (hue bias) and
- * {@link BlackHoleOverrides.accretionRate} (brightness) first; then
- * {@link BlackHoleOverrides.separation} for binary spacing.
+ * Edit here for the production look, or pass partials at call sites:
+ * `buildBlackHoleConfig({ spin: 0.9 })` / `<BlackHole spin={0.9} />`.
+ *
+ * Tuning order that usually works well:
+ * 1. `accretionRate` (brightness) + `peakTemperature` (peach heat)
+ * 2. `inclination` + `cameraDistance` (view)
+ * 3. `separation` + `massRatio` (binary layout)
+ * 4. `spin` / disk size knobs (detail)
  */
 export const defaultPhysics = {
   primaryMass: 0.5,
   massRatio: 1.5,
   separation: 20,
   spin: 0.5,
-  inclination: 135,
+  inclination: 98,
   cameraDistance: 30,
   diskOuterRadiusM: 15,
   diskAspectRatio: 0.05,
@@ -292,13 +443,29 @@ export const defaultPhysics = {
  * Intentionally **not** on the public override surface.
  */
 export const defaultRender = {
-  /** Base raymarch step (smaller → sharper near horizons, costlier). */
+  /**
+   * Base raymarch step.
+   * - Lower → sharper near horizons, costlier
+   * - Higher → faster, softer / more stepped
+   */
   stepSize: 0.5,
-  /** Pixel cell size (larger → chunkier pixel art, cheaper). */
+  /**
+   * Pixel cell size (combined with host DPR).
+   * - Lower → finer pixels
+   * - Higher → chunkier pixel art, cheaper
+   */
   pixelSize: 2,
-  /** Ordered dither amount after quantize. */
+  /**
+   * Ordered dither strength after quantize ∈ [0, 1].
+   * - 0 → flat bands
+   * - Higher → more grain / less banding
+   */
   ditherStrength: 0.3,
-  /** Quantization ladder for the pixel grade. */
+  /**
+   * Color quantization ladder.
+   * - Lower → posterized grade
+   * - Higher → smoother ramps
+   */
   colorLevels: 16,
 } as const;
 
@@ -309,6 +476,16 @@ function mergePhysics(
   overrides: BlackHoleOverrides,
 ): Required<BlackHoleOverrides> {
   return { ...base, ...overrides };
+}
+
+/**
+ * Resolve a partial user bag into a complete raw physics object
+ * (defaults + overrides). Useful for previews without deriving Kerr scales.
+ */
+export function resolvePhysics(
+  ...layers: Array<BlackHoleOverrides | undefined | null>
+): Required<BlackHoleOverrides> {
+  return mergePhysics(defaultPhysics, mergePhysicsOverrides(...layers));
 }
 
 /**
@@ -399,15 +576,35 @@ function resolveHole(
 }
 
 /**
- * Merge overrides, clamp physical ranges, derive Kerr scales and Kepler Ω.
+ * Merge partial physics, clamp physical ranges, derive Kerr scales and Kepler Ω.
+ *
+ * Accepts flat knobs and/or nested `physics` / `overrides` bags — you never
+ * need to supply a full config.
+ *
+ * @example
+ * ```ts
+ * buildBlackHoleConfig({ spin: 0.9, inclination: 135 })
+ * buildBlackHoleConfig({ physics: { separation: 16 } })
+ * ```
  *
  * @returns A complete {@link BlackHoleConfig} ready for the mesh uniform bag
  */
 export function buildBlackHoleConfig(
   options: BuildBlackHoleConfigOptions = {},
 ): BlackHoleConfig {
-  const { overrides = {}, themeColors = false, mode } = options;
-  const physics = mergePhysics(defaultPhysics, overrides);
+  const {
+    overrides,
+    physics: physicsBag,
+    themeColors = false,
+    mode,
+    ...rest
+  } = options;
+
+  // Flat knobs on the options object (preferred DX)
+  const flat = pickPhysicsOverrides(rest);
+  // Nested bags: physics then overrides, then flat wins
+  const merged = mergePhysicsOverrides(physicsBag, overrides, flat);
+  const physics = mergePhysics(defaultPhysics, merged);
 
   const primaryMass = Math.max(0.08, physics.primaryMass);
   const massRatio = Math.min(4, Math.max(0.15, physics.massRatio));
@@ -453,7 +650,6 @@ export function buildBlackHoleConfig(
     separation,
     orbitalFrequency,
     spin,
-    /** Primary a = χ M₁ (CPU-only; light bend is Schwarzschild). */
     spinParameter: primary.a,
     eventHorizonPrimary: primary.eventHorizon,
     eventHorizonSecondary: secondary.eventHorizon,

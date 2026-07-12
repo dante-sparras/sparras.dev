@@ -16,6 +16,8 @@ export type {
   BlackHoleConfig,
   KerrScales,
   RawBlackHolePhysics,
+  RawPhysicsKey,
+  BuildBlackHoleConfigOptions,
 } from "./config";
 export {
   defaultPhysics,
@@ -26,6 +28,10 @@ export {
   CAMERA_FOV_DEG,
   orbitDistanceLimits,
   skyDomeRadius,
+  RAW_PHYSICS_KEYS,
+  pickPhysicsOverrides,
+  mergePhysicsOverrides,
+  resolvePhysics,
 } from "./config";
 export {
   diskTemperatureK,

@@ -12,7 +12,11 @@
  *
  * @example
  * ```tsx
- * <BlackHole overrides={{ separation: 16, spin: 0.7 }} />
+ * // Flat knobs — only pass what you change
+ * <BlackHole spin={0.8} inclination={135} />
+ *
+ * // Nested bag
+ * <BlackHole physics={{ separation: 16, accretionRate: 3 }} />
  * ```
  */
 
@@ -39,7 +43,9 @@ import {
   buildBlackHoleConfig,
   cameraPositionFromObserver,
   CAMERA_FOV_DEG,
+  mergePhysicsOverrides,
   orbitDistanceLimits,
+  pickPhysicsOverrides,
   skyDomeRadius,
   type BlackHoleConfig,
   type BlackHoleOverrides,
@@ -160,7 +166,7 @@ function BlackHoleMesh({
 
 // ── Public host ─────────────────────────────────────────────────────────────
 
-export type BlackHoleProps = {
+type BlackHoleHostProps = {
   className?: string;
   /** Drag-orbit / scroll-zoom. @defaultValue true */
   interactive?: boolean;
@@ -173,10 +179,31 @@ export type BlackHoleProps = {
    * Pass `true` for gentle defaults, or a {@link BloomProps} object.
    */
   bloom?: boolean | BloomProps;
-  /** Physics overrides (see `BlackHoleOverrides` / `defaultPhysics`). */
+  /**
+   * Nested partial physics bag (same keys as top-level knobs).
+   * Merge order: `physics` → `overrides` → top-level knobs (later wins).
+   */
+  physics?: BlackHoleOverrides;
+  /**
+   * Alias of {@link BlackHoleHostProps.physics} (historical).
+   * Prefer flat knobs or `physics` for new code.
+   */
   overrides?: BlackHoleOverrides;
   "aria-label"?: string;
 };
+
+/**
+ * Public props: host flags **plus optional raw physics knobs**.
+ *
+ * Only pass knobs you want to change — site {@link defaultPhysics} fill the rest.
+ *
+ * @example
+ * ```tsx
+ * <BlackHole spin={0.9} inclination={135} />
+ * <BlackHole physics={{ separation: 16 }} />
+ * ```
+ */
+export type BlackHoleProps = BlackHoleHostProps & BlackHoleOverrides;
 
 const Hatch = <div className={FALLBACK_CLASS} aria-hidden />;
 const PIXEL_STYLE = { imageRendering: "pixelated" as const };
@@ -288,6 +315,11 @@ function Scene({
 /**
  * Client-only black-hole surface.
  * In RSC trees use `HeroBanner` from `@/components/hero-section`.
+ *
+ * Pass only the physics knobs you want to change (flat or via `physics`):
+ * ```tsx
+ * <BlackHole spin={0.9} inclination={135} />
+ * ```
  */
 export function BlackHole({
   className,
@@ -295,14 +327,23 @@ export function BlackHole({
   autoRotate = true,
   themeColors = true,
   bloom = false,
+  physics,
   overrides,
   "aria-label": ariaLabel = ARIA_LABEL,
+  ...rest
 }: BlackHoleProps) {
   const [failed, setFailed] = useState(false);
   /** IntersectionObserver: pause sim when the banner is off-screen. */
   const [inView, setInView] = useState(true);
   const shellRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
+
+  // Flat physics knobs on the component (preferred DX)
+  const flatPhysics = useMemo(() => pickPhysicsOverrides(rest), [rest]);
+  const physicsBag = useMemo(
+    () => mergePhysicsOverrides(physics, overrides, flatPhysics),
+    [physics, overrides, flatPhysics],
+  );
 
   useEffect(() => {
     const el = shellRef.current;
@@ -325,11 +366,11 @@ export function BlackHole({
   const config = useMemo(
     () =>
       buildBlackHoleConfig({
-        overrides,
+        physics: physicsBag,
         themeColors: Boolean(themeColors && theme),
         mode: theme,
       }),
-    [overrides, themeColors, theme],
+    [physicsBag, themeColors, theme],
   );
 
   const orbit = useMemo(
