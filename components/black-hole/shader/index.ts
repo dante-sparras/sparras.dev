@@ -114,9 +114,10 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         float(0.0),
         float(1.0),
       );
-      // Mild flare + taller mid for the “dome” over the hole
+      // Scale height: *very* thin near the hole so the band crossing the void
+      // stays razor-thin (reference images). Mild outer flare only.
       const scaleH = uniforms.diskScaleHeight.mul(
-        mix(float(0.75), float(2.1), pow(normR, float(0.5))),
+        mix(float(0.35), float(1.15), pow(normR, float(0.85))),
       );
       const absY = abs(rayPos.y);
       // Soft radial gate (0–1 floats — no boolean .toFloat())
@@ -126,7 +127,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         cylR,
       ).mul(smoothstep(outerR.mul(1.06), outerR.mul(1.0), cylR));
       const nearDisk = radialGate.mul(
-        float(1.0).sub(smoothstep(float(0.0), scaleH.mul(2.8), absY)),
+        float(1.0).sub(smoothstep(float(0.0), scaleH.mul(3.5), absY)),
       );
 
       const nearHole = float(1.0).sub(
@@ -161,16 +162,16 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
           float(1.0),
         );
         const mH = uniforms.diskScaleHeight.mul(
-          mix(float(0.75), float(2.1), pow(mNorm, float(0.5))),
+          mix(float(0.35), float(1.15), pow(mNorm, float(0.85))),
         );
         const mAbsY = abs(mid.y);
-        // Gaussian vertical profile — taller = more volume dome
+        // Sharp vertical Gaussian — thin ribbon when edge-on through the void
         const yOverH = mAbsY.div(max(mH, float(1.0e-4)));
-        const vert = exp(yOverH.mul(yOverH).negate());
+        const vert = exp(yOverH.mul(yOverH).mul(float(2.4)).negate());
         const inVol = mR
           .greaterThan(innerR)
           .and(mR.lessThan(outerR))
-          .and(vert.greaterThan(0.008));
+          .and(vert.greaterThan(0.02));
 
         If(inVol, () => {
           const hitAngle = atan(mid.z, mid.x);
@@ -181,8 +182,8 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
             rayDir,
           );
 
-          // Lower bulk density so streamlines stay visible through the volume
-          const dens = vert.mul(diskResult.w).mul(float(1.55));
+          // Higher density in a thinner slab so the ribbon still reads solid
+          const dens = vert.mul(diskResult.w).mul(float(3.4));
           const optical = dens.mul(dt);
           const stepA = float(1.0).sub(exp(optical.negate())).min(float(1.0));
 

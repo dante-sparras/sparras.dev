@@ -111,8 +111,8 @@ export const defaultBlackHoleConfig = {
   diskEdgeSoftnessInner: 0.32,
   diskEdgeSoftnessOuter: 0.9,
   diskSaturation: 1.0,
-  // Thick enough to read as volume / dome when tilted
-  diskScaleHeight: 0.72,
+  // Razor-thin slab (refs: thin band through the void, not a fat fog)
+  diskScaleHeight: 0.14,
 
   turbulenceScale: 2.1,
   turbulenceStretch: 18.0,
