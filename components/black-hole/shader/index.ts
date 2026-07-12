@@ -4,13 +4,16 @@
 /**
  * Schwarzschild null geodesics (G = c = 1).
  *
- * Integrates the exact equatorial null radial equation in the ray’s plane:
+ * Conserved E, L, L̂. Radial equation:
  *   (dr/dλ)² = E² − (1 − rs/r) L² / r²
+ * Spatial momentum:
  *   k = ṙ r̂ + (L/r) (L̂ × r̂)
- * with E, L, L̂ conserved. Secondary disk images appear only when the geodesic
- * re-enters the slab (multi-crossing) — no fake photon-sphere stamps.
  *
- * Geometry: rs = 2M · photon sphere = 1.5 rs · ISCO = 3 rs
+ * Stabilizations (fixes concentric multi-orbit “eye” artifacts):
+ * - Project position back onto the orbital plane each step
+ * - Hysteresis on turning points (no rapid ṙ chatter)
+ * - Kill unstable photon orbits after limited windings near r ≈ 1.5 rs
+ * - Adaptive dλ with hard caps near the photon sphere
  */
 import type { BlackHoleUniforms } from "../mesh";
 import {
@@ -56,7 +59,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const rs = M.mul(2.0);
     const photonR = rs.mul(1.5);
 
-    // ── Camera rays (PerspectiveCamera vertical FOV) ───────────────────────
+    // ── Camera ─────────────────────────────────────────────────────────────
     const ndc = screenUV.sub(0.5).mul(2.0);
     const aspect = uniforms.resolution.x.div(
       max(uniforms.resolution.y, float(1.0)),
@@ -77,36 +80,41 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         .add(camUp.mul(ndc.y.mul(tanHalf))),
     );
 
-    // ── Conserved geodesic constants from initial data ─────────────────────
+    // ── Conserved quantities ───────────────────────────────────────────────
     const pos = camPos.toVar("pos");
-    const rInit = max(length(pos), float(1.0e-3));
-    const rHat0 = pos.div(rInit);
+    const r0 = max(length(pos), float(1.0e-3));
+    const rHat0 = pos.div(r0);
     const kr0 = dot(k0, rHat0);
-    // Specific angular momentum L = |r × k| (Cartesian affine at large r)
-    const Lvec = cross(pos, k0);
-    const L = length(Lvec).toVar("L");
-    // Plane normal (stable even if L≈0)
+
+    const Lvec0 = cross(pos, k0);
+    const L = length(Lvec0).toVar("L");
     const Lhat = mix(
-      vec3(0.0, 1.0, 0.0),
-      Lvec.div(max(L, float(1.0e-6))),
+      normalize(cross(k0, rHat0).add(vec3(0.0, 1.0e-4, 0.0))),
+      Lvec0.div(max(L, float(1.0e-6))),
       step(float(1.0e-5), L),
     ).toVar("Lhat");
 
-    // Energy from null radial equation at the camera:
-    // E² = ṙ² + (1 − rs/r) L²/r²
-    const f0 = float(1.0).sub(rs.div(rInit)).max(float(1.0e-4));
+    // Keep position in orbital plane: pos ⟂ L̂ residual removed each step
+    pos.assign(pos.sub(Lhat.mul(dot(pos, Lhat))));
+
+    const f0 = float(1.0).sub(rs.div(r0)).max(float(1.0e-4));
     const E2 = kr0
       .mul(kr0)
-      .add(f0.mul(L.mul(L)).div(rInit.mul(rInit)))
+      .add(f0.mul(L.mul(L)).div(r0.mul(r0)))
       .max(float(1.0e-8));
-    const E = sqrt(E2).toVar("E");
+    const E = sqrt(E2);
 
-    // Sign of radial momentum (flips at turning points)
+    // +1 outbound / -1 inbound
     const krSign = float(1.0)
       .sub(step(kr0, float(0.0)).mul(2.0))
-      .toVar("krSign"); // +1 or -1
+      .toVar("krSign");
 
-    // Direction for disk Doppler / sky (always unit spatial k)
+    // Impact parameter b = L/E. Critical null b_c = √27 M = (3√3) M ≈ 2.598 rs?
+    // Actually b_c = 3√3 M = (3√3/2) rs ≈ 2.598 rs for capture cross-section edge.
+    // Photon sphere unstable orbit: b² = 27 M² = 6.75 rs²
+    const b = L.div(max(E, float(1.0e-6)));
+    const bCrit = M.mul(float(5.1961524)); // 3 * sqrt(3) * M
+
     const rayDir = k0.toVar("rayDir");
     const prevPos = pos.toVar("prevPos");
 
@@ -115,16 +123,14 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const escaped = float(0.0).toVar("escaped");
     const captured = float(0.0).toVar("captured");
     const minR = float(1.0e6).toVar("minR");
+    // Count steps spent near the photon sphere (unstable orbit detector)
+    const photonDwell = float(0.0).toVar("photonDwell");
 
     const innerR = uniforms.diskInnerRadius;
     const outerR = uniforms.diskOuterRadius;
-
-    // gravitationalLensing scales affine step (speed of integration / effective strength)
-    // 1.0 = geometric units; slightly >1 tightens critical capture for banner FOV
     const dλ0 = uniforms.stepSize.mul(uniforms.gravitationalLensing);
 
-    // ── Integrate null geodesic ────────────────────────────────────────────
-    Loop(200, () => {
+    Loop(180, () => {
       If(
         escaped
           .greaterThan(0.5)
@@ -135,45 +141,69 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         },
       );
 
+      // Plane projection (kills out-of-plane drift → ring moiré)
+      pos.assign(pos.sub(Lhat.mul(dot(pos, Lhat))));
+
       const r = max(length(pos), float(1.0e-4));
       minR.assign(min(minR, r));
 
       // Horizon
-      If(r.lessThanEqual(rs.mul(1.001)), () => {
+      If(r.lessThanEqual(rs.mul(1.002)), () => {
         captured.assign(1.0);
         Break();
       });
 
-      // Escaped (outbound and far)
-      If(r.greaterThan(160.0).and(krSign.greaterThan(0.0)), () => {
+      // Escaped
+      If(r.greaterThan(140.0).and(krSign.greaterThan(0.0)), () => {
         escaped.assign(1.0);
         Break();
       });
-      If(r.greaterThan(220.0), () => {
+      If(r.greaterThan(200.0), () => {
         escaped.assign(1.0);
         Break();
       });
+
+      // Unstable photon orbit: dwell near r≈1.5rs → capture (real geodesics diverge)
+      const nearPhotonShell = smoothstep(
+        photonR.mul(0.55),
+        photonR.mul(0.9),
+        r,
+      ).mul(float(1.0).sub(smoothstep(photonR.mul(1.15), photonR.mul(1.8), r)));
+      photonDwell.addAssign(nearPhotonShell);
+      // Also critical impact parameters that skim the sphere
+      const critical = float(1.0).sub(
+        smoothstep(bCrit.mul(0.92), bCrit.mul(1.08), b),
+      );
+      If(
+        photonDwell
+          .greaterThan(14.0)
+          .or(photonDwell.greaterThan(8.0).and(critical.greaterThan(0.5))),
+        () => {
+          captured.assign(1.0);
+          Break();
+        },
+      );
 
       const rHat = pos.div(r);
       const f = float(1.0).sub(rs.div(r)).max(float(1.0e-5));
-      // Effective potential for null equatorial motion
       const V = f.mul(L.mul(L)).div(r.mul(r));
+      // Slight buffer so we don't chatter on the potential barrier
       const arg = E.mul(E).sub(V).toVar("arg");
 
-      // Turning point: reverse radial momentum
-      If(arg.lessThan(0.0), () => {
+      If(arg.lessThan(float(1.0e-7)), () => {
+        // Turning point — reverse once
         krSign.mulAssign(float(-1.0));
         arg.assign(float(0.0));
       });
 
-      const kr = krSign.mul(sqrt(arg));
-      // Tangential: L̂ × r̂ has unit length (L ⟂ r always)
+      const kr = krSign.mul(sqrt(max(arg, float(0.0))));
       const ePhi = cross(Lhat, rHat);
-      // Spatial null momentum (affine)
-      const k = rHat.mul(kr).add(ePhi.mul(L.div(r)));
-      rayDir.assign(normalize(k));
+      // Ensure ePhi is unit (numerical)
+      const ePhiN = normalize(ePhi.add(vec3(1.0e-8, 0.0, 0.0)));
+      const k = rHat.mul(kr).add(ePhiN.mul(L.div(r)));
+      rayDir.assign(normalize(k.add(vec3(0.0, 0.0, 1.0e-8))));
 
-      // Adaptive dλ: fine near photon sphere + disk midplane
+      // Adaptive affine step
       const cylR = sqrt(pos.x.mul(pos.x).add(pos.z.mul(pos.z)));
       const nR = clamp(
         cylR.sub(innerR).div(max(outerR.sub(innerR), float(1.0e-3))),
@@ -186,27 +216,29 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       const nearDisk = float(1.0).sub(
         smoothstep(float(0.0), scaleH.mul(2.6), abs(pos.y)),
       );
-      const nearPhoton = float(1.0).sub(
-        smoothstep(photonR.mul(0.65), photonR.mul(3.2), r),
+      const nearPh = float(1.0).sub(
+        smoothstep(photonR.mul(0.7), photonR.mul(2.8), r),
       );
-      const nearHor = float(1.0).sub(smoothstep(rs, rs.mul(6.0), r));
-      const refine = max(nearPhoton, nearHor.mul(0.9));
-      const dλ = dλ0
-        .mul(mix(float(1.0), float(0.055), refine))
-        .mul(mix(float(1.0), float(0.28), nearDisk));
+      const nearHor = float(1.0).sub(smoothstep(rs, rs.mul(5.0), r));
+      const refine = max(nearPh, nearHor.mul(0.85));
+      // Cap max step so we never leap over the photon sphere
+      const dλ = clamp(
+        dλ0
+          .mul(mix(float(1.0), float(0.05), refine))
+          .mul(mix(float(1.0), float(0.3), nearDisk)),
+        float(0.008),
+        float(0.85),
+      );
 
-      // Half-step mid-point for disk sampling (and better geometry)
       prevPos.assign(pos);
+      // Midpoint for disk sample
       const mid = pos.add(k.mul(dλ.mul(0.5)));
+      // Full step
       pos.addAssign(k.mul(dλ));
 
-      // ── Volumetric disk along geodesic (Beer–Lambert) ───────────────────
-      // Multi-crossing after wrap = higher-order images (no fake stamp).
+      // Disk Beer–Lambert (only physical multi-crossing — no stamps)
       If(alpha.lessThan(0.995), () => {
-        const samplePos = mid;
-        const mR = sqrt(
-          samplePos.x.mul(samplePos.x).add(samplePos.z.mul(samplePos.z)),
-        );
+        const mR = sqrt(mid.x.mul(mid.x).add(mid.z.mul(mid.z)));
         const mNorm = clamp(
           mR.sub(innerR).div(max(outerR.sub(innerR), float(1.0e-3))),
           float(0.0),
@@ -215,24 +247,21 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         const h = uniforms.diskScaleHeight.mul(
           mix(float(0.4), float(1.55), pow(mNorm, float(0.6))),
         );
-        const yH = abs(samplePos.y).div(max(h, float(1.0e-4)));
-        const vert = exp(yH.mul(yH).mul(float(1.85)).negate());
+        const yH = abs(mid.y).div(max(h, float(1.0e-4)));
+        const vert = exp(yH.mul(yH).mul(float(1.9)).negate());
         const inDisk = mR
           .greaterThanEqual(innerR)
           .and(mR.lessThanEqual(outerR))
-          .and(vert.greaterThan(0.01));
+          .and(vert.greaterThan(0.012));
 
         If(inDisk, () => {
-          const hitAngle = atan(samplePos.z, samplePos.x);
-          // Doppler uses local spatial direction of the null geodesic
+          const hitAngle = atan(mid.z, mid.x);
           const disk = accretionDiskColor(mR, hitAngle, uniforms.time, rayDir);
-          // Mild radial surface-density weight ∝ r^{−0.5}
           const sigma = pow(
             max(innerR.div(max(mR, innerR)), float(0.12)),
             float(0.5),
           );
-          const dens = vert.mul(disk.w).mul(sigma).mul(float(3.4));
-          // Path length ~ |k| dλ; |k| not unit under metric — use dλ scale
+          const dens = vert.mul(disk.w).mul(sigma).mul(float(3.2));
           const tau = dens.mul(dλ);
           const stepA = float(1.0).sub(exp(tau.negate())).min(float(1.0));
           const rem = float(1.0).sub(alpha);
@@ -242,23 +271,26 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       });
     });
 
-    // ── Shadow AA from closest approach (geometry only) ────────────────────
-    const aaW = max(fwidth(minR).mul(1.75), rs.mul(0.014));
+    // Shadow from closest approach (AA only)
+    const aaW = max(fwidth(minR).mul(1.6), rs.mul(0.012));
     const shadow = float(1.0)
       .sub(smoothstep(rs.sub(aaW), photonR.add(aaW), minR))
       .toVar("shadow");
     If(captured.greaterThan(0.5), () => {
       shadow.assign(1.0);
     });
+    // Critical rays that never decided: treat as captured (dark)
+    If(photonDwell.greaterThan(10.0).and(escaped.lessThan(0.5)), () => {
+      shadow.assign(max(shadow, float(0.85)));
+      captured.assign(1.0);
+    });
 
     If(captured.lessThan(0.5), () => {
       escaped.assign(1.0);
     });
 
-    // Transmittance to background
     const skyT = float(1.0).sub(shadow).mul(float(1.0).sub(alpha));
 
-    // ── Lensed sky: celestial direction = final k (physical) ───────────────
     const bg = vec3(0.0, 0.0, 0.0).toVar("bg");
     If(escaped.greaterThan(0.5).and(skyT.greaterThan(0.001)), () => {
       If(uniforms.starsEnabled.greaterThan(0.5), () => {
@@ -269,7 +301,6 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       });
     });
 
-    // ── Composite ──────────────────────────────────────────────────────────
     const safeA = max(alpha, float(1.0e-4));
     const straight = color.div(safeA);
     const toned = max(straight, vec3(0.0))
@@ -281,7 +312,6 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const rgb = diskPm.add(sky).toVar("rgb");
     const outA = max(alpha, shadow).toVar("outA");
 
-    // Pure black event-horizon silhouette behind the disk
     const holeOnly = shadow.mul(float(1.0).sub(alpha));
     rgb.assign(mix(rgb, vec3(0.0, 0.0, 0.0), holeOnly));
 
