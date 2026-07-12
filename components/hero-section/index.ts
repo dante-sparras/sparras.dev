@@ -1,7 +1,7 @@
 /**
- * Home hero — portrait, banner, title + role.
+ * Home hero — portrait, pixel-art black-hole banner, title + role.
  *
- * Public: `HeroSection`. Internal: `HeroBanner` (Next dynamic shell).
+ * Public: `HeroSection`, `HeroBanner`.
  */
 export { HeroSection, type HeroSectionProps } from "./hero";
 export { HeroBanner } from "./hero-banner";

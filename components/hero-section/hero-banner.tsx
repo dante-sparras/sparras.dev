@@ -3,13 +3,10 @@
 /**
  * RSC-safe hero banner (WebGPU black hole).
  * Next 16 only allows `dynamic(..., { ssr: false })` in Client Components.
- *
- * Outside `components/black-hole/` so the feature folder stays pure sim/WebGPU;
- * this file is only the Next dynamic boundary for the profile hero.
  */
 import dynamic from "next/dynamic";
 import type { BlackHoleProps } from "@/components/black-hole";
-import { SHELL_CLASS } from "@/components/black-hole/constants";
+import { SHELL_CLASS } from "@/components/black-hole";
 
 const BlackHoleLazy = dynamic(
   () => import("@/components/black-hole").then((m) => m.BlackHole),

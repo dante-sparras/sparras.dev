@@ -43,23 +43,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Resume:** on-site page only — **not** a navbar download button
 - **Naming:** short names (`Navbar`, `NavbarMenu`); theme/language triggers **icon-only**; logo initials in **Geist Pixel Square**
 - **Mobile:** `navbar-menu.tsx` — shadcn **Sheet** (`md:hidden`)
-- **Feature folders:** colocate (e.g. `components/black-hole/`, `components/navbar/`, `components/providers/`)
-
-## Three.js / WebGPU (React Three Fiber)
-
-- **Stack:** `three` (WebGPU + TSL) + `@react-three/fiber` + `@react-three/drei`
-- **Shared kit** (`@/components/three` — 4 files):
-  - `WebGPUCanvas` — official R3F async `WebGPURenderer(props)` + `init()`, `extend(THREE)`, error boundary, NoToneMapping/LinearSRGB
-  - `Bloom` — TSL RenderPipeline bloom (re-entrancy / depth guard)
-  - `CameraLookAt` + `IdleOrbit` — in `camera.tsx` (aim + OrbitControls idle spin)
-- **Feature scenes** live under `components/<feature>/` as R3F children of `WebGPUCanvas`
-- **Black hole** (`@/components/black-hole`):
-  - Public: `BlackHole` + `overrides?: BlackHoleOverrides` from `@/components/black-hole`
-  - Private: `constants`, `mesh`, `config` (full bag internal), `shader/*` (noise · blackbody · stars · nebula · disk · march)
-- **Hero section** (`@/components/hero-section`): portrait + banner + name/role only (`HeroSection` / `HeroBanner`)
-- **Profile details** (`@/components/profile-details`): bio/contact facts under the hero — not part of hero chrome
-- **Next SSR:** Server Components import `HeroBanner` / `HeroSection` only. Never use `dynamic(..., { ssr: false })` inside RSCs (Next 16).
-- Never import `three` / R3F into Server Components. Site void hex via raw color path (`starBackgroundColor`).
+- **Feature folders:** colocate (e.g. `components/navbar/`, `components/providers/`, `components/hero-section/`)
+- **Hero section** (`@/components/hero-section`): portrait + `HeroBanner` (binary black hole) + name/role; details = `ProfileDetails`. Black-hole knobs: `defaultPhysics` in `components/black-hole/config.ts` (JSDoc on types).
 
 ## Theme
 
@@ -68,7 +53,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Types:** `ThemeChoice` / `ResolvedTheme` / `THEME_CHOICES` from `@/components/providers`
 - **Switcher:** system / light / dark; labels passed in from server Navbar (not `getDictionary` on the client)
 - **CSS tokens:** `useCssTokens` / `CSS_TOKENS` in `@/hooks` (tokens only — not mode types). Mirrors every custom property on `:root` / `.dark` in `app/globals.css`. Keep the list in sync when globals change.
-- **WebGPU colors:** pass full token bag into feature config (e.g. black hole picks what it needs) — config modules do not read the DOM
 
 ## Quality checks (no Lefthook / Husky / custom install scripts)
 

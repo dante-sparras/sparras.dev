@@ -7,8 +7,11 @@ export type HeroSectionProps = {
 };
 
 /**
- * Home hero: portrait · WebGPU banner · name + role.
+ * Home hero: portrait · banner (pixel-art binary black hole) · name + role.
  * Contact / bio facts live in `ProfileDetails`.
+ *
+ * Sim knobs (including `separation`) live in
+ * `components/black-hole/config.ts` → `defaultPhysics`.
  */
 export function HeroSection({ hero }: HeroSectionProps) {
   return (

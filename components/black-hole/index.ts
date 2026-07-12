@@ -1,8 +1,22 @@
 /**
- * Public API — black-hole sim surface.
+ * Public API — binary black-hole simulation (client components only).
  *
- * Client: `BlackHole` + `overrides?: BlackHoleOverrides`
- * RSC: import `HeroBanner` / `HeroSection` from `@/components/hero-section`
+ * ```
+ * config.ts      physics knobs, defaults, Kerr scales, buildBlackHoleConfig
+ * shader.ts      WebGPU/TSL raymarch
+ * black-hole.tsx R3F host + mesh
+ * ```
+ *
+ * From a Server Component use `HeroBanner` in `@/components/hero-section`.
  */
-export { BlackHole, type BlackHoleProps } from "./black-hole";
-export type { BlackHoleOverrides } from "./config";
+
+export { BlackHole, type BlackHoleProps, SHELL_CLASS } from "./black-hole";
+export type { BlackHoleOverrides, BlackHoleConfig, KerrScales } from "./config";
+export {
+  defaultPhysics,
+  defaultRender,
+  buildBlackHoleConfig,
+  cameraPositionFromObserver,
+  kerrScales,
+  keplerOmega,
+} from "./config";

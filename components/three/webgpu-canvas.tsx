@@ -95,9 +95,18 @@ const CANVAS_STYLE = {
   backgroundColor: "transparent",
 } as const;
 
-async function createWebGPURenderer(props: unknown) {
+type GlInitProps = {
+  antialias?: boolean;
+  powerPreference?: string;
+  [key: string]: unknown;
+};
+
+async function createWebGPURenderer(
+  props: unknown,
+  overrides: GlInitProps = {},
+) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- R3F passes a props bag typed for WebGL
-  const bag = { ...(props as object) } as Record<string, unknown>;
+  const bag = { ...(props as object), ...overrides } as Record<string, unknown>;
   // WebGPUBackend: alpha:true → canvas alphaMode 'premultiplied' (not configurable).
   const renderer = new THREE.WebGPURenderer({
     ...bag,
@@ -121,6 +130,8 @@ export type WebGPUCanvasProps = Omit<CanvasProps, "gl" | "children"> & {
   className?: string;
   onFailed?: () => void;
   fallback?: ReactNode;
+  /** Extra flags merged into the WebGPURenderer constructor (e.g. antialias). */
+  glProps?: GlInitProps;
 };
 
 /** Full-bleed WebGPU R3F canvas. Feature scenes are pure children. */
@@ -131,11 +142,14 @@ export function WebGPUCanvas({
   fallback = null,
   dpr = DPR,
   camera = DEFAULT_CAMERA,
+  glProps,
   ...rest
 }: WebGPUCanvasProps) {
   const [failed, setFailed] = useState(false);
   const onFailedRef = useRef(onFailed);
   onFailedRef.current = onFailed;
+  const glPropsRef = useRef(glProps);
+  glPropsRef.current = glProps;
 
   const fail = useCallback(() => {
     setFailed(true);
@@ -146,7 +160,7 @@ export function WebGPUCanvas({
   const gl = useCallback(
     async (props: Record<string, unknown>) => {
       try {
-        return await createWebGPURenderer(props);
+        return await createWebGPURenderer(props, glPropsRef.current);
       } catch (err) {
         console.error("[WebGPUCanvas] init failed:", err);
         fail();
