@@ -209,19 +209,27 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     const cover = mix(alpha, float(1.0), softCapture);
 
-    const voidCol = uniforms.starBackgroundColor;
-    const finalColor = mix(voidCol, contentTone, cover).toVar("finalColor");
+    // RGB is content + sky only — no void fill.
+    // Void pixels stay transparent so the host shell `bg-background` (#050505) shows through.
+    const finalColor = contentTone.mul(cover).toVar("finalColor");
+    const outAlpha = cover.toVar("outAlpha");
 
     If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
-      finalColor.addAssign(nebCol.mul(float(1.0).sub(alpha)).mul(skyOk));
+      const n = nebCol.mul(float(1.0).sub(alpha)).mul(skyOk);
+      finalColor.addAssign(n);
+      outAlpha.assign(max(outAlpha, max(n.x, max(n.y, n.z))));
     });
 
     If(uniforms.starsEnabled.greaterThan(0.5), () => {
       const starsLit = pow(max(starsCol, vec3(0.0)), vec3(1.0 / 2.2)).mul(3.0);
-      finalColor.addAssign(starsLit.mul(float(1.0).sub(alpha)).mul(skyOk));
+      const s = starsLit.mul(float(1.0).sub(alpha)).mul(skyOk);
+      finalColor.addAssign(s);
+      outAlpha.assign(max(outAlpha, max(s.x, max(s.y, s.z))));
     });
-    finalColor.assign(clamp(finalColor, float(0.0), float(1.12)));
 
-    return vec4(finalColor, 1.0);
+    finalColor.assign(clamp(finalColor, float(0.0), float(1.12)));
+    outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
+
+    return vec4(finalColor, outAlpha);
   })();
 }

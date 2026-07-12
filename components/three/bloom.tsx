@@ -6,6 +6,9 @@
  * R3F ends each frame with `gl.render(scene, camera)`. We replace the top-level
  * call with `post.render()`. Nested pipeline renders must hit the real renderer —
  * the depth guard prevents infinite recursion / stack overflow.
+ *
+ * Alpha is preserved so transparent void pixels (CSS `bg-background`) stay open.
+ * Bloom glow lifts `a` where the bloom is bright so the halo still composites.
  */
 import { useThree } from "@react-three/fiber";
 import { useLayoutEffect, useRef } from "react";
@@ -17,7 +20,11 @@ export type BloomProps = {
   threshold?: number;
 };
 
-type Pipeline = { render: () => void; outputNode: unknown };
+type Pipeline = {
+  render: () => void;
+  outputNode: unknown;
+  outputColorTransform?: boolean;
+};
 type BloomNode = {
   threshold: { value: number };
   strength: { value: number };
@@ -82,7 +89,7 @@ export function Bloom({
 
     void (async () => {
       try {
-        const { pass } = await import("three/tsl");
+        const { pass, max, float, vec4 } = await import("three/tsl");
         const { bloom } = await import("three/addons/tsl/display/BloomNode.js");
         if (cancelled) return;
 
@@ -91,7 +98,14 @@ export function Bloom({
           (THREE as any).RenderPipeline ?? (THREE as any).PostProcessing;
         if (!Ctor) return;
 
+        // Ensure scene pass clears transparent (void → CSS bg).
+        gl.setClearColor(0x000000, 0);
+        scene.background = null;
+
         const post = new Ctor(gl) as Pipeline;
+        // Display-referred sim — don't sRGB-encode on the way out (lifts grays).
+        post.outputColorTransform = false;
+
         const sceneColor = pass(scene, camera).getTextureNode();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const node: any = bloom(sceneColor);
@@ -101,7 +115,15 @@ export function Bloom({
           initial.current.radius,
           initial.current.threshold,
         );
-        post.outputNode = sceneColor.add(node);
+
+        // rgb += bloom; alpha = max(scene.a, bloom luma) so void stays open
+        // unless the bloom halo itself is visible.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bloomLuma = max(node.r, max(node.g, node.b)) as any;
+        post.outputNode = vec4(
+          sceneColor.rgb.add(node),
+          max(sceneColor.a, bloomLuma.mul(float(0.85))),
+        );
 
         if (cancelled) return;
 

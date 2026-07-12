@@ -3,14 +3,24 @@
 /**
  * WebGPU Schwarzschild black hole (dgreenheck port) on React Three Fiber.
  *
+ * Void color is NOT painted by the GPU — the host shell uses `bg-background`
+ * (#050505 in dark) and the canvas is transparent there. That avoids every
+ * Three color-management / bloom path fighting CSS.
+ *
  * @example
  * <BlackHole className="h-40 w-full" />
  * <BlackHole overrides={{ diskBrightness: 6, bloomStrength: 0.7 }} />
  *
  * From Server Components use `HeroBanner` via `@/components/hero-section`.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
-import * as THREE from "three/webgpu";
+import { useThree } from "@react-three/fiber";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Bloom,
   CameraLookAt,
@@ -51,17 +61,20 @@ type SceneProps = {
   autoRotate: boolean;
 };
 
-function Scene({ config, interactive, autoRotate }: SceneProps) {
-  // Display-referred clear color (same path as mesh uniforms — not sRGB-decoded).
-  const bgArgs = useMemo(() => {
-    const c = new THREE.Color();
-    c.setStyle(config.starBackgroundColor, THREE.LinearSRGBColorSpace);
-    return [c] as [THREE.Color];
-  }, [config.starBackgroundColor]);
+/** Transparent clear so shell `bg-background` is the void. */
+function TransparentClear() {
+  const { gl, scene } = useThree();
+  useLayoutEffect(() => {
+    scene.background = null;
+    gl.setClearColor(0x000000, 0);
+  }, [gl, scene]);
+  return null;
+}
 
+function Scene({ config, interactive, autoRotate }: SceneProps) {
   return (
     <>
-      <color attach="background" args={bgArgs} />
+      <TransparentClear />
       <CameraLookAt />
       <BlackHoleMesh config={config} />
       <IdleOrbit interactive={interactive} autoRotate={autoRotate} />

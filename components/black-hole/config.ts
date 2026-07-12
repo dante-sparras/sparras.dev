@@ -117,7 +117,7 @@ export const defaultBlackHoleConfig = {
   turbulenceLacunarity: 2.1,
   turbulencePersistence: 0.55,
 
-  starsEnabled: true,
+  starsEnabled: false,
   starDensity: 0.1,
   starSize: 1.75,
   starBrightness: 0.1,

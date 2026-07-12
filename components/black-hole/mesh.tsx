@@ -187,6 +187,8 @@ export function BlackHoleMesh({ config }: { config: BlackHoleConfig }) {
         colorNode={colorNode}
         side={THREE.DoubleSide}
         depthWrite={false}
+        transparent
+        // Premultiply not set — output is straight alpha (void a=0 → CSS bg).
       />
     </mesh>
   );

@@ -95,11 +95,16 @@ const CANVAS_STYLE = {
 
 async function createWebGPURenderer(props: unknown) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- R3F passes a props bag typed for WebGL
-  const renderer = new THREE.WebGPURenderer(props as any);
+  const renderer = new THREE.WebGPURenderer({
+    ...(props as object),
+    alpha: true,
+    premultipliedAlpha: false,
+  } as any);
   await renderer.init();
   renderer.toneMapping = THREE.NoToneMapping;
-  // Identity output — pairs with LinearSRGB hex parse in black-hole mesh.
+  // Display-referred content; void is CSS (transparent canvas), not GPU-filled.
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+  renderer.setClearColor(0x000000, 0);
   return renderer;
 }
 
