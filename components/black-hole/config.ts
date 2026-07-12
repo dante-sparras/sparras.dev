@@ -6,12 +6,15 @@
  * and time scale (r_s = 2M for Schwarzschild).
  *
  * ## Layers
- * 1. {@link BlackHoleOverrides} / {@link defaultPhysics} — what you edit
+ * 1. {@link BlackHoleOverrides} / {@link defaultPhysics} — **raw** knobs only
  * 2. {@link BlackHoleConfig} — resolved masses, Kerr scales, Kepler Ω, render
  * 3. {@link defaultRender} — pixel-art only (not public overrides)
  *
- * Kerr helpers live in `./kerr` ({@link kerrScales}, {@link keplerOmega}) and
- * are re-exported here for a stable public path.
+ * **Public knobs are raw only** (M, q, d, χ, i, D, H/R, T_peak, α, Ṁ).
+ * Derived quantities (r₊, ISCO, photon sphere, a, Ω, absolute H, …) are
+ * computed by {@link buildBlackHoleConfig} and are never user overrides.
+ *
+ * Kerr helpers live in `./kerr` and are re-exported here.
  *
  * @module components/black-hole/config
  */
@@ -60,10 +63,12 @@ export function skyDomeRadius(orbitMaxDistance: number): number {
 // ── Public physics surface ──────────────────────────────────────────────────
 
 /**
- * User-editable **physics and observer** parameters.
+ * User-editable **raw** physics and observer parameters.
  *
  * Every field is optional; omitted keys fall back to {@link defaultPhysics}.
- * Do not put pixel-art or numerical fudge factors here.
+ * Do **not** put derived scales (r₊, ISCO, Ω, absolute H, …) or pixel-art
+ * fudge factors here — those come from {@link buildBlackHoleConfig} /
+ * {@link defaultRender}.
  */
 export type BlackHoleOverrides = Partial<{
   /**
@@ -74,8 +79,7 @@ export type BlackHoleOverrides = Partial<{
   primaryMass: number;
 
   /**
-   * Mass ratio **q = M₂ / M₁**.
-   * Secondary mass is derived as `primaryMass × massRatio`.
+   * Mass ratio **q = M₂ / M₁** (raw). Secondary mass is derived as M₁·q.
    * Clamped to about `[0.15, 4]` when building the config.
    * @defaultValue 1
    */
@@ -84,22 +88,16 @@ export type BlackHoleOverrides = Partial<{
   /**
    * Center-to-center orbital separation **d** (geometric units).
    *
-   * Hole barycentric distances:
-   * - r₁ = d · M₂ / M_tot
-   * - r₂ = d · M₁ / M_tot
-   *
-   * Circular Kepler angular frequency: **Ω = √(M_tot / d³)**.
-   * The camera only pulls back if both holes would leave the FOV, so changing
-   * `separation` is visible on screen.
+   * Derived: r₁ = d·M₂/M_tot, r₂ = d·M₁/M_tot, Ω = √(M_tot/d³).
+   * Camera only pulls back if both holes would leave the FOV.
    * @defaultValue 12
    */
   separation: number;
 
   /**
    * Dimensionless spin **χ = a / M**, applied to **both** holes (`|χ| < 1`).
-   * Feeds Kerr outer horizon r₊, equatorial photon sphere, and prograde ISCO
-   * on the **CPU**. Light bending in the shader is still superposed weak-field
-   * Schwarzschild (∝ 2M/r²); χ does not alter the deflection law yet.
+   * Derives r₊, photon sphere, ISCO on the CPU; GPU uses χ in local Kerr
+   * null deflection and disk orbital velocity (Doppler).
    * @defaultValue 0.35
    */
   spin: number;
@@ -122,53 +120,44 @@ export type BlackHoleOverrides = Partial<{
 
   /**
    * Mini-disk outer radius in units of **each hole’s own mass**:
-   * `r_out = diskOuterRadiusM × Mᵢ`.
-   * Inner edge is the prograde ISCO of that hole.
+   * `r_out = diskOuterRadiusM × Mᵢ` (raw). Inner edge = prograde ISCO (derived).
    * @defaultValue 12
    */
   diskOuterRadiusM: number;
 
   /**
-   * Disk aspect ratio **H / R** (vertical scale height over cylindrical radius).
-   * Larger → thicker gas column along the line of sight → brighter rings.
-   * Thin-disk theory: typically ≪ 1; visual range roughly `0.05`–`0.12`.
+   * Disk aspect ratio **H / R** (raw). Absolute scale height is derived.
    * @defaultValue 0.06
    */
   diskAspectRatio: number;
 
   /**
-   * Peak effective temperature near the ISCO, in units of **1000 K**.
+   * Peak effective temperature near the ISCO, in units of **1000 K** (raw).
    * Example: `48` → T_peak = 48 000 K.
    *
-   * Used for:
-   * - Thin-disk brightness: `T(r) = T_peak · (r_in / r)^temperatureIndex`
-   * - Mild warmer/cooler bias on the geometric red→amber radial fire curve
-   *   (hue is primarily **where you are between r_in and r_out**, not pure
-   *   blackbody(T) — keeps Interstellar peach without white plate)
-   *
-   * Visual guide (try ±15, not ±2):
-   * - ~30 → redder outer annuli
-   * - ~48 → reference-like fire orange
-   * - ~70 → brighter amber inner (still not white)
+   * Drives thin-disk **T(r)** and **temperature→peach RGB** (plus Doppler-shifted T).
+   * Try ±15 for visible shifts; never produces pure white.
    * @defaultValue 48
    */
   peakTemperature: number;
 
   /**
-   * Radial temperature index **α** in **T ∝ r^{−α}**.
+   * Radial temperature index **α** in **T ∝ r^{−α}** (raw).
    * Shakura–Sunyaev / multi-temperature thin disk: **α ≈ 0.75**.
-   * Lower α → outer disk stays warmer; higher → steeper cool-down with radius.
    * @defaultValue 0.75
    */
   temperatureIndex: number;
 
   /**
-   * Relative accretion rate / surface emissivity (∝ **Ṁ**).
+   * Relative accretion rate / surface emissivity (∝ **Ṁ**, raw).
    * Primary brightness control. Does not change geometry.
    * @defaultValue 8.5
    */
   accretionRate: number;
 }>;
+
+/** Alias: fully specified raw physics surface (all overrides required). */
+export type RawBlackHolePhysics = Required<BlackHoleOverrides>;
 
 // ── Resolved config (mesh + host) ───────────────────────────────────────────
 

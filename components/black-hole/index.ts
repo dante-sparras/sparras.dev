@@ -11,7 +11,12 @@
  */
 
 export { BlackHole, type BlackHoleProps, SHELL_CLASS } from "./black-hole";
-export type { BlackHoleOverrides, BlackHoleConfig, KerrScales } from "./config";
+export type {
+  BlackHoleOverrides,
+  BlackHoleConfig,
+  KerrScales,
+  RawBlackHolePhysics,
+} from "./config";
 export {
   defaultPhysics,
   defaultRender,
@@ -23,3 +28,9 @@ export {
   kerrScales,
   keplerOmega,
 } from "./config";
+export {
+  diskTemperatureK,
+  diskDopplerG,
+  intensityDopplerWeight,
+} from "./disk-physics";
+export { temperatureToDiskColor } from "./blackbody";

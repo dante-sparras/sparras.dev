@@ -1,0 +1,2 @@
+# Bun runtime / test config for sparras.dev
+# Path aliases come from root tsconfig.json (`baseUrl` + `paths`).

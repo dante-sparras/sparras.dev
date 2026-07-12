@@ -8,12 +8,12 @@ import {
   defaultPhysics,
   orbitDistanceLimits,
   skyDomeRadius,
-} from "@/components/black-hole/config";
+} from "../../components/black-hole/config";
 import {
   clampSpin,
   keplerOmega,
   kerrScales,
-} from "@/components/black-hole/kerr";
+} from "../../components/black-hole/kerr";
 
 describe("clampSpin", () => {
   test("passes through interior values", () => {
@@ -54,7 +54,6 @@ describe("kerrScales", () => {
 
 describe("keplerOmega", () => {
   test("Schwarzschild circular orbit at r=6M", () => {
-    // Ω = 1 / (r^{3/2}/√M) = √M / r^{3/2} for a=0
     const omega = keplerOmega(6, 1, 0);
     expect(omega).toBeCloseTo(1 / Math.pow(6, 1.5), 8);
   });
@@ -90,9 +89,7 @@ describe("buildBlackHoleConfig", () => {
     const c = buildBlackHoleConfig({
       overrides: { separation: 40, cameraDistance: 28 },
     });
-    // FOV fit: max(base, sep*1.55+4, 12)
     expect(c.cameraDistance).toBeGreaterThanOrEqual(40 * 1.55 + 4);
-    // Angular gap still grows: sep/D should be larger than default sep/D
     const def = buildBlackHoleConfig();
     expect(c.separation / c.cameraDistance).toBeGreaterThan(
       (def.separation / def.cameraDistance) * 0.5,

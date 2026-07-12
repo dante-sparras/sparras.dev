@@ -2,11 +2,16 @@
 // Three.js TSL Fn() bodies are not accurately typed.
 
 /**
- * Main binary black-hole fragment: raymarch + silhouette + tonemap + quantize.
+ * Main binary black-hole fragment: local Kerr raymarch + T-driven disks + Doppler.
  *
  * IMPORTANT: Front-to-back disk composite must `addAssign` the outer
  * `toVar("color")` / `toVar("alpha")` nodes **inline**. Nested Fn parameters
  * do not write back parent accumulators in TSL (disks go black).
+ *
+ * Physics model (banner):
+ * - Hole centers: Newtonian Ω = √(M/d³) in XZ
+ * - Light: local Kerr null deflection (nearest / blended charts)
+ * - Disks: T(r) → peach RGB; Doppler g = g_grav · g_sr; I ∝ g³
  */
 
 import {
@@ -16,7 +21,6 @@ import {
   length,
   normalize,
   dot,
-  atan,
   max,
   min,
   abs,
@@ -33,9 +37,15 @@ import {
   Discard,
   screenUV,
 } from "three/tsl";
-import { MARCH, DISK, GRADE } from "./constants";
+import { MARCH, GRADE } from "./constants";
 import { bayer4 } from "./bayer";
-import { cylindricalRadiusXZ, sampleMiniDisk } from "./disk";
+import {
+  cylindricalRadiusXZ,
+  sampleMiniDisk,
+  orbitalApproachMu,
+  diskDopplerG,
+} from "./disk";
+import { kerrNullDeflect } from "./geodesic";
 import type { BlackHoleUniforms } from "./types";
 
 const PI = float(Math.PI);
@@ -51,8 +61,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const Mtot = max(uniforms.totalMass, float(1e-4));
     const separation = max(uniforms.separation, float(MARCH.separationFloor));
     const omega = uniforms.orbitalFrequency;
-    // |χ| — mild near-hole bend boost (not full Kerr geodesics)
-    const chiAbs = abs(uniforms.spin);
+    const chi = uniforms.spin;
 
     const horizon1 = max(uniforms.eventHorizonPrimary, float(1e-3));
     const horizon2 = max(uniforms.eventHorizonSecondary, float(1e-3));
@@ -126,7 +135,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     const tempIdx = uniforms.temperatureIndex;
     const mdot = uniforms.accretionRate;
 
-    // ── 3. Raymarch ───────────────────────────────────────────────────────
+    // ── 3. Raymarch (local Kerr charts) ───────────────────────────────────
     Loop(MARCH.maxSteps, () => {
       If(
         escaped
@@ -195,33 +204,13 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         .min(min(r1, r2).mul(MARCH.stepRLimit))
         .max(stepBase.mul(MARCH.stepMinMul));
 
-      const n1 = off1.negate().div(max(r1, float(1e-4)));
-      const n2 = off2.negate().div(max(r2, float(1e-4)));
-      // Schwarzschild base ∝ 2M/r²; near photon sphere, boost slightly with |χ|
-      const spinProx1 = float(1).sub(
-        smoothstep(
-          photon1.mul(MARCH.spinBendInnerMul),
-          photon1.mul(MARCH.spinBendOuterMul),
-          r1,
-        ),
-      );
-      const spinProx2 = float(1).sub(
-        smoothstep(
-          photon2.mul(MARCH.spinBendInnerMul),
-          photon2.mul(MARCH.spinBendOuterMul),
-          r2,
-        ),
-      );
-      const boost1 = float(1).add(
-        chiAbs.mul(MARCH.spinBendBoost).mul(spinProx1),
-      );
-      const boost2 = float(1).add(
-        chiAbs.mul(MARCH.spinBendBoost).mul(spinProx2),
-      );
-      const bend1 = M1.mul(2).div(r1.mul(r1)).mul(dStep).mul(boost1);
-      const bend2 = M2.mul(2).div(r2.mul(r2)).mul(dStep).mul(boost2);
-      rayDir.addAssign(n1.mul(bend1).add(n2.mul(bend2)));
-      rayDir.assign(normalize(rayDir));
+      // Local Kerr deflection: soft-blend two hole charts by 1/r³
+      const w1 = float(1).div(max(r1.mul(r1).mul(r1), float(1e-6)));
+      const w2 = float(1).div(max(r2.mul(r2).mul(r2), float(1e-6)));
+      const use1 = w1.div(max(w1.add(w2), float(1e-6)));
+      const d1 = kerrNullDeflect(off1, rayDir, M1, chi, dStep);
+      const d2 = kerrNullDeflect(off2, rayDir, M2, chi, dStep);
+      rayDir.assign(normalize(mix(d2, d1, use1)));
 
       prevPos.assign(rayPos);
       rayPos.addAssign(rayDir.mul(dStep));
@@ -230,12 +219,11 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       const cyl1 = cylindricalRadiusXZ(mid, pos1);
       const cyl2 = cylindricalRadiusXZ(mid, pos2);
 
-      const beam1 = cos(atan(mid.z.sub(pos1.z), mid.x.sub(pos1.x)).sub(phase))
-        .mul(DISK.beamAmp)
-        .add(1);
-      const beam2 = cos(atan(mid.z.sub(pos2.z), mid.x.sub(pos2.x)).sub(phase))
-        .mul(DISK.beamAmp)
-        .add(1);
+      // Proper Doppler from prograde orbital velocity (not phase cosine)
+      const mu1 = orbitalApproachMu(mid, pos1, rayDir);
+      const mu2 = orbitalApproachMu(mid, pos2, rayDir);
+      const g1 = diskDopplerG(cyl1, M1, chi, mu1);
+      const g2 = diskDopplerG(cyl2, M2, chi, mu2);
 
       // Inline composite — see file header
       If(alpha.lessThan(0.99), () => {
@@ -249,7 +237,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
           tempIdx,
           mdot,
           dStep,
-          beam1,
+          g1,
         );
         const rem = float(1).sub(alpha);
         color.addAssign(s.xyz.mul(rem));
@@ -266,7 +254,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
           tempIdx,
           mdot,
           dStep,
-          beam2,
+          g2,
         );
         const rem = float(1).sub(alpha);
         color.addAssign(s.xyz.mul(rem));

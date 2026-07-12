@@ -9,7 +9,7 @@ export type UniformNode<T = number> = { value: T };
 /**
  * Scalar fields copied from {@link BlackHoleConfig} into the GPU.
  * Keep this list in sync with what the raymarch reads.
- * `spin` (χ) is used for a mild near-hole bend boost (not full Kerr geodesics).
+ * `spin` (χ) drives local Kerr null deflection + disk orbital Doppler.
  * (No pixelSize — host DPR owns pixel art resolution.)
  */
 export const CONFIG_SCALAR_KEYS = [

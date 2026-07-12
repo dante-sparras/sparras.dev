@@ -28,14 +28,6 @@ export const MARCH = {
   stepRLimit: 0.3,
   stepMinMul: 0.28,
   softCapturePhotonMul: 2,
-  /**
-   * Extra near-hole bend boost ∝ |χ| (weak Kerr proxy on Schwarzschild base).
-   * 0 = pure Schwarzschild; ~0.2 is a subtle spin-dependent lensing cue.
-   */
-  spinBendBoost: 0.22,
-  /** Radial falloff of spin bend: full near photon·inner, zero by photon·outer. */
-  spinBendInnerMul: 1.2,
-  spinBendOuterMul: 6,
 } as const;
 
 export const DISK = {
