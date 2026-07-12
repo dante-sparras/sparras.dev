@@ -1,5 +1,5 @@
 /**
- * Per-knob override coverage + flat / nested config DX.
+ * Per-knob override coverage + flat / physics bag DX.
  * Run: bun test tests/black-hole
  */
 import { describe, expect, test } from "bun:test";
@@ -7,13 +7,13 @@ import {
   buildBlackHoleConfig,
   defaultPhysics,
   mergePhysicsOverrides,
+  physicsOverridesKey,
   pickPhysicsOverrides,
   RAW_PHYSICS_KEYS,
   resolvePhysics,
   type RawPhysicsKey,
 } from "../../components/black-hole/config";
 
-/** Distinct probe values so each key can be overridden alone. */
 const PROBE: Record<RawPhysicsKey, number> = {
   primaryMass: 0.42,
   massRatio: 0.8,
@@ -59,6 +59,14 @@ describe("pickPhysicsOverrides / mergePhysicsOverrides", () => {
     expect(m.separation).toBe(10);
     expect(m.inclination).toBe(45);
   });
+
+  test("physicsOverridesKey stable for same values", () => {
+    const a = physicsOverridesKey({ spin: 0.5, separation: 12 });
+    const b = physicsOverridesKey({ spin: 0.5, separation: 12 });
+    const c = physicsOverridesKey({ spin: 0.6, separation: 12 });
+    expect(a).toBe(b);
+    expect(a).not.toBe(c);
+  });
 });
 
 describe("resolvePhysics", () => {
@@ -73,7 +81,7 @@ describe("resolvePhysics", () => {
   });
 });
 
-describe("buildBlackHoleConfig — flat & nested DX", () => {
+describe("buildBlackHoleConfig — flat & physics bag DX", () => {
   test("flat knobs (no nested bag)", () => {
     const c = buildBlackHoleConfig({ spin: 0.88, inclination: 135 });
     expect(c.spin).toBeCloseTo(0.88, 5);
@@ -86,15 +94,9 @@ describe("buildBlackHoleConfig — flat & nested DX", () => {
     expect(c.separation).toBe(14);
   });
 
-  test("overrides bag still works (alias)", () => {
-    const c = buildBlackHoleConfig({ overrides: { accretionRate: 2.5 } });
-    expect(c.accretionRate).toBe(2.5);
-  });
-
-  test("merge order: physics → overrides → flat", () => {
+  test("merge order: physics → flat", () => {
     const c = buildBlackHoleConfig({
       physics: { spin: 0.2, separation: 10 },
-      overrides: { spin: 0.4 },
       spin: 0.6,
       separation: 12,
     });
@@ -108,9 +110,7 @@ describe("buildBlackHoleConfig — each raw knob in isolation", () => {
     test(`override only ${key}`, () => {
       const probe = PROBE[key];
       const c = buildBlackHoleConfig({ [key]: probe });
-      // After clamps the value should still reflect the probe when in-range
       expect(c[key as keyof typeof c]).toBeCloseTo(probe, 5);
-      // Unrelated default preserved (spot-check separation unless under test)
       if (key !== "separation") {
         expect(c.separation).toBe(defaultPhysics.separation);
       }
@@ -180,7 +180,7 @@ describe("buildBlackHoleConfig — low vs high semantics (smoke)", () => {
     expect(c.accretionRate).toBe(4);
   });
 
-  test("inclination low vs high keeps range and moves camera y", () => {
+  test("inclination low vs high keeps range", () => {
     const face = buildBlackHoleConfig({ inclination: 10 });
     const under = buildBlackHoleConfig({ inclination: 160 });
     expect(face.inclination).toBe(10);

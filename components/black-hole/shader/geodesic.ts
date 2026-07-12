@@ -18,13 +18,18 @@ import {
   max,
   clamp,
 } from "three/tsl";
+import { DOPPLER_LIMITS, SPIN_LIMITS } from "../limits";
 
 /**
  * kerrNullDeflect(relPos, rayDir, mass, spinChi, dStep) → new unit rayDir
  */
 export const kerrNullDeflect = Fn(([relPos, rayDir, mass, spinChi, dStep]) => {
-  const M = max(mass, float(1e-4));
-  const chi = clamp(spinChi, float(-0.998), float(0.998));
+  const M = max(mass, float(DOPPLER_LIMITS.massFloor));
+  const chi = clamp(
+    spinChi,
+    float(-SPIN_LIMITS.absMax),
+    float(SPIN_LIMITS.absMax),
+  );
   const a = chi.mul(M);
   const r = max(length(relPos), float(1e-4));
   const rHat = normalize(relPos);

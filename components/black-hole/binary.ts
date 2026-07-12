@@ -1,8 +1,5 @@
 /**
- * Newtonian binary kinematics (geometric units) for the banner.
- * Pure — no React / GPU. Centers orbit in the XZ plane.
- *
- * @module components/black-hole/binary
+ * Newtonian binary kinematics (geometric units).
  */
 
 /** Circular two-body mean motion Ω = √(M_tot / d³). */

@@ -24,13 +24,9 @@ import {
   dot,
   length,
 } from "three/tsl";
+import { DOPPLER_LIMITS, SPIN_LIMITS } from "../limits";
 import { DISK } from "./constants";
 import { temperatureToDiskColor } from "./blackbody";
-
-/** Remap x from [a, b] → [0, 1] with hard clamp. */
-export const unitRange = Fn(([x, a, b]) => {
-  return clamp(x.sub(a).div(max(b.sub(a), float(1e-3))), float(0), float(1));
-});
 
 /**
  * Horizontal distance from a point to a hole center in the XZ plane.
@@ -56,10 +52,14 @@ export const diskTemperatureAtRadius = Fn(
  * Kerr circular Ω = 1 / (r^{3/2}/√M + a), a = χ M
  */
 export const kerrCircularOmega = Fn(([radius, mass, spinChi]) => {
-  const M = max(mass, float(1e-4));
-  const chi = clamp(spinChi, float(-0.998), float(0.998));
+  const M = max(mass, float(DOPPLER_LIMITS.massFloor));
+  const chi = clamp(
+    spinChi,
+    float(-SPIN_LIMITS.absMax),
+    float(SPIN_LIMITS.absMax),
+  );
   const a = chi.mul(M);
-  const r = max(radius, float(1e-3));
+  const r = max(radius, float(DOPPLER_LIMITS.radiusFloor));
   return float(1).div(pow(r, float(1.5)).div(sqrt(M)).add(a));
 });
 
@@ -68,16 +68,20 @@ export const kerrCircularOmega = Fn(([radius, mass, spinChi]) => {
  * mu = cos angle between orbital v and LOS (approaching > 0).
  */
 export const diskDopplerG = Fn(([radius, mass, spinChi, mu]) => {
-  const M = max(mass, float(1e-4));
-  const r = max(radius, float(1.05).mul(M));
+  const M = max(mass, float(DOPPLER_LIMITS.massFloor));
+  const r = max(radius, float(DOPPLER_LIMITS.radiusOverMassMin).mul(M));
   const omega = kerrCircularOmega(r, M, spinChi);
-  const beta = min(float(0.85), abs(omega.mul(r)));
+  const beta = min(float(DOPPLER_LIMITS.betaCap), abs(omega.mul(r)));
   const m = clamp(mu, float(-1), float(1));
   const gSr = sqrt(max(float(1e-6), float(1).sub(beta.mul(beta)))).div(
     max(float(1e-4), float(1).sub(beta.mul(m))),
   );
   const gGrav = sqrt(max(float(1e-4), float(1).sub(M.mul(2).div(r))));
-  return clamp(gSr.mul(gGrav), float(0.3), float(2.5));
+  return clamp(
+    gSr.mul(gGrav),
+    float(DOPPLER_LIMITS.gMin),
+    float(DOPPLER_LIMITS.gMax),
+  );
 });
 
 /**
@@ -130,7 +134,11 @@ export const sampleMiniDisk = Fn(
       temperatureIndex,
     );
     // Doppler-shifted temperature for thermal spectrum
-    const g = clamp(dopplerG, float(0.3), float(2.5));
+    const g = clamp(
+      dopplerG,
+      float(DOPPLER_LIMITS.gMin),
+      float(DOPPLER_LIMITS.gMax),
+    );
     const tObs = localT.mul(g);
     const color = temperatureToDiskColor(tObs);
 

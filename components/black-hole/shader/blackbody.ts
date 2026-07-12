@@ -3,22 +3,32 @@
 
 /**
  * Absolute Kelvin → Interstellar peach RGB (never pure white).
- * Keep stops aligned with components/black-hole/blackbody.ts.
+ * Stops/limits aligned with components/black-hole/blackbody.ts + limits.ts.
  */
 
 import { vec3, float, Fn, max, log, pow, mix, clamp } from "three/tsl";
+import {
+  HOT_PEACH,
+  AMBER,
+  ORANGE,
+  FIRE_RED,
+  DEEP_RED,
+  COOL_RUST,
+} from "../blackbody";
+import { PALETTE_LIMITS } from "../limits";
+import { unitRange } from "./unit-range";
 
-const unitRange = Fn(([x, a, b]) => {
-  return clamp(x.sub(a).div(max(b.sub(a), float(1e-3))), float(0), float(1));
-});
+function rgb(v) {
+  return vec3(v[0], v[1], v[2]);
+}
 
 /**
  * temperatureToDiskColor(kelvin) — primary hue driver for mini-disks.
  */
 export const temperatureToDiskColor = Fn(([kelvin]) => {
   const t = max(kelvin, float(1));
-  const lo = float(Math.log(8000));
-  const hi = float(Math.log(80000));
+  const lo = float(Math.log(PALETTE_LIMITS.coolFloorK));
+  const hi = float(Math.log(PALETTE_LIMITS.hotCeilK));
   const heat = clamp(
     log(t)
       .sub(lo)
@@ -26,14 +36,14 @@ export const temperatureToDiskColor = Fn(([kelvin]) => {
     float(0),
     float(1),
   );
-  const s = pow(heat, float(1.25));
+  const s = pow(heat, float(PALETTE_LIMITS.heatPower));
 
-  const coolRust = vec3(0.45, 0.04, 0.01);
-  const deepRed = vec3(0.7, 0.05, 0.0);
-  const fireRed = vec3(0.95, 0.14, 0.01);
-  const orange = vec3(1.0, 0.32, 0.04);
-  const amber = vec3(1.0, 0.48, 0.08);
-  const hotPeach = vec3(1.0, 0.58, 0.12); // never white
+  const coolRust = rgb(COOL_RUST);
+  const deepRed = rgb(DEEP_RED);
+  const fireRed = rgb(FIRE_RED);
+  const orange = rgb(ORANGE);
+  const amber = rgb(AMBER);
+  const hotPeach = rgb(HOT_PEACH);
 
   const c0 = mix(coolRust, deepRed, unitRange(s, float(0), float(0.25)));
   const c1 = mix(deepRed, fireRed, unitRange(s, float(0.25), float(0.45)));

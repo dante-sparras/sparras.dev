@@ -7,6 +7,8 @@
  * @module components/black-hole/kerr
  */
 
+import { SPIN_LIMITS } from "./limits";
+
 export type KerrScales = {
   /** Mass M. */
   mass: number;
@@ -37,7 +39,8 @@ export type KerrScales = {
  */
 export function clampSpin(chi: number): number {
   if (!Number.isFinite(chi)) return 0;
-  return Math.min(0.998, Math.max(-0.998, chi));
+  const m = SPIN_LIMITS.absMax;
+  return Math.min(m, Math.max(-m, chi));
 }
 
 /**

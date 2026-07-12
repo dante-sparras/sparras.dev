@@ -1,9 +1,11 @@
 /**
  * Absolute temperature → Interstellar peach disk RGB (never pure white).
- * CPU reference — TSL port lives in shader/blackbody.ts (keep curves aligned).
+ * CPU reference — TSL port in shader/blackbody.ts uses the same stops + limits.
  *
  * @module components/black-hole/blackbody
  */
+
+import { PALETTE_LIMITS } from "./limits";
 
 export type Rgb = readonly [number, number, number];
 
@@ -29,13 +31,12 @@ function mixRgb(a: Rgb, b: Rgb, t: number): Rgb {
 }
 
 /**
- * Map absolute Kelvin to [0,1] heat using a soft log scale between
- * coolFloor and hotCeil (defaults cover thin-disk banner range).
+ * Map absolute Kelvin to [0,1] heat using a soft log scale.
  */
 export function temperatureHeat(
   kelvin: number,
-  coolFloorK = 8_000,
-  hotCeilK = 80_000,
+  coolFloorK = PALETTE_LIMITS.coolFloorK,
+  hotCeilK = PALETTE_LIMITS.hotCeilK,
 ): number {
   const t = Math.max(kelvin, 1);
   const lo = Math.log(coolFloorK);
@@ -44,13 +45,11 @@ export function temperatureHeat(
 }
 
 /**
- * Temperature-driven Interstellar fire color.
- * Higher T → peach/gold core; lower T → deep red. Never pure white.
+ * Temperature-driven Interstellar fire color. Never pure white.
  */
 export function temperatureToDiskColor(kelvin: number): Rgb {
   const h = temperatureHeat(kelvin);
-  // Stretch: most of the range stays red/orange; only hottest tip is gold
-  const s = Math.pow(h, 1.25);
+  const s = Math.pow(h, PALETTE_LIMITS.heatPower);
   if (s < 0.25) {
     return mixRgb(COOL_RUST, DEEP_RED, s / 0.25);
   }
@@ -66,7 +65,7 @@ export function temperatureToDiskColor(kelvin: number): Rgb {
   return mixRgb(AMBER, HOT_PEACH, (s - 0.85) / 0.15);
 }
 
-/** Hard guard — used in tests and optional post-pass. */
+/** Hard guard — used in tests. */
 export function assertNotWhitePlate(rgb: Rgb, eps = 0.02): boolean {
   return !(rgb[0] > 1 - eps && rgb[1] > 1 - eps && rgb[2] > 1 - eps);
 }

@@ -1,6 +1,8 @@
 /**
  * Named numerical knobs for the raymarch / disk / grade pipeline.
- * Presentation + numerics only — not public physics overrides.
+ * Presentation + numerics only — not public physics knobs.
+ *
+ * Soft-capture / silhouette use GRADE only (no dead MARCH aliases).
  */
 
 export const MARCH = {
@@ -27,8 +29,6 @@ export const MARCH = {
   nearPlaneStepMul: 0.55,
   stepRLimit: 0.3,
   stepMinMul: 0.28,
-  /** @deprecated use GRADE.softCapturePhotonMul — kept for march dwell only */
-  softCapturePhotonMul: 1.15,
 } as const;
 
 export const DISK = {
@@ -50,8 +50,6 @@ export const DISK = {
   odHeatHi: 1.15,
   odStepScale: 2.8,
   segmentOpacityCap: 0.55,
-  /** Fake orbital-phase brightness asymmetry (not true Doppler). */
-  beamAmp: 0.25,
   /** peakTemperature (1000 K units) warmer-bias window. */
   peakTCool: 28,
   peakTHot: 75,
@@ -80,7 +78,7 @@ export const GRADE = {
   matteAlphaHi: 0.45,
   /** Second matte pass — keep low so disk gas isn't painted black. */
   matteStrength: 0.35,
-  /** Soft-capture radius in units of each hole's own photon sphere (not max of both). */
+  /** Soft-capture radius in units of each hole's own photon sphere. */
   softCapturePhotonMul: 1.15,
   discardAlpha: 0.002,
   discardPeak: 0.002,

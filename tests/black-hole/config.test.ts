@@ -8,13 +8,16 @@ import {
   binaryOrbitalOmega,
 } from "../../components/black-hole/binary";
 import {
+  binaryVisualExtent,
   buildBlackHoleConfig,
   CAMERA_FOV_DEG,
   cameraPositionFromObserver,
   defaultPhysics,
   defaultRender,
   orbitDistanceLimits,
+  PHYSICS_LIMITS,
   skyDomeRadius,
+  withLightThemeAccretion,
 } from "../../components/black-hole/config";
 import { kerrScales } from "../../components/black-hole/kerr";
 import { CONFIG_SCALAR_KEYS } from "../../components/black-hole/shader/types";
@@ -22,11 +25,19 @@ import { CONFIG_SCALAR_KEYS } from "../../components/black-hole/shader/types";
 describe("orbitDistanceLimits / skyDomeRadius", () => {
   test("sky shell stays outside max zoom", () => {
     for (const d of [12, 28, 50, 100]) {
-      const { min, max } = orbitDistanceLimits(d);
+      const { min, max } = orbitDistanceLimits(d, 10);
       expect(min).toBeLessThan(max);
       expect(skyDomeRadius(max)).toBeGreaterThanOrEqual(max);
-      expect(skyDomeRadius(max)).toBeGreaterThanOrEqual(80);
+      expect(skyDomeRadius(max)).toBeGreaterThanOrEqual(
+        PHYSICS_LIMITS.skyDomeMin,
+      );
     }
+  });
+
+  test("geometry extent raises orbit min (anti-tunnel)", () => {
+    const noExtent = orbitDistanceLimits(30);
+    const wide = orbitDistanceLimits(30, 25);
+    expect(wide.min).toBeGreaterThanOrEqual(noExtent.min);
   });
 });
 
@@ -49,9 +60,7 @@ describe("cameraPositionFromObserver", () => {
   test("i=135 places camera below the orbital plane (y < 0)", () => {
     const [x, y, z] = cameraPositionFromObserver(135, 28);
     expect(y).toBeLessThan(0);
-    // 45° past edge-on: |y| = D cos(135°) magnitude
     expect(Math.abs(y)).toBeCloseTo(28 * Math.SQRT1_2, 4);
-    // Slight azimuth bias on x makes |r| a hair above D
     expect(Math.hypot(x, y, z)).toBeGreaterThanOrEqual(28 - 1e-6);
     expect(Math.hypot(x, y, z)).toBeLessThan(28 * 1.02);
   });
@@ -62,9 +71,11 @@ describe("cameraPositionFromObserver", () => {
     expect(Math.abs(z)).toBeLessThan(1e-6);
   });
 
-  test("distance floored at 8", () => {
+  test("distance floored at cameraDistanceMin", () => {
     const [x, y, z] = cameraPositionFromObserver(45, 1);
-    expect(Math.hypot(x, y, z)).toBeGreaterThanOrEqual(8 - 1e-6);
+    expect(Math.hypot(x, y, z)).toBeGreaterThanOrEqual(
+      PHYSICS_LIMITS.cameraDistanceMin - 1e-6,
+    );
   });
 });
 
@@ -98,7 +109,9 @@ describe("buildBlackHoleConfig", () => {
 
   test("secondary mass and Ω match pure binary helpers", () => {
     const c = buildBlackHoleConfig({
-      overrides: { primaryMass: 0.6, massRatio: 0.5, separation: 14 },
+      primaryMass: 0.6,
+      massRatio: 0.5,
+      separation: 14,
     });
     expect(c.secondaryMass).toBeCloseTo(0.6 * 0.5, 8);
     expect(c.totalMass).toBeCloseTo(0.6 + 0.3, 8);
@@ -112,7 +125,9 @@ describe("buildBlackHoleConfig", () => {
 
   test("derived Kerr scales match kerrScales(M, χ)", () => {
     const c = buildBlackHoleConfig({
-      overrides: { primaryMass: 0.7, massRatio: 1.2, spin: 0.5 },
+      primaryMass: 0.7,
+      massRatio: 1.2,
+      spin: 0.5,
     });
     const p = kerrScales(c.primaryMass, c.spin);
     const s = kerrScales(c.secondaryMass, c.spin);
@@ -125,7 +140,7 @@ describe("buildBlackHoleConfig", () => {
   });
 
   test("inclination 135 is preserved (not clamped to 90)", () => {
-    const c = buildBlackHoleConfig({ overrides: { inclination: 135 } });
+    const c = buildBlackHoleConfig({ inclination: 135 });
     expect(c.inclination).toBe(135);
     const [, y] = cameraPositionFromObserver(c.inclination, c.cameraDistance);
     expect(y).toBeLessThan(0);
@@ -133,69 +148,76 @@ describe("buildBlackHoleConfig", () => {
 
   test("respects raw cameraDistance (not forced by separation)", () => {
     const near = buildBlackHoleConfig({
-      overrides: { separation: 40, cameraDistance: 18 },
+      separation: 40,
+      cameraDistance: 18,
     });
     const far = buildBlackHoleConfig({
-      overrides: { separation: 40, cameraDistance: 60 },
+      separation: 40,
+      cameraDistance: 60,
     });
     expect(near.cameraDistance).toBe(18);
     expect(far.cameraDistance).toBe(60);
     expect(far.cameraDistance).toBeGreaterThan(near.cameraDistance);
   });
 
-  test("cameraDistance floored only at absolute minimum 8", () => {
+  test("cameraDistance floored only at absolute minimum", () => {
     const c = buildBlackHoleConfig({
-      overrides: { cameraDistance: 2, separation: 30 },
+      cameraDistance: 2,
+      separation: 30,
     });
-    expect(c.cameraDistance).toBe(8);
+    expect(c.cameraDistance).toBe(PHYSICS_LIMITS.cameraDistanceMin);
   });
 
   test("mass ratio yields different per-hole scale heights", () => {
-    const c = buildBlackHoleConfig({
-      overrides: { massRatio: 0.3 },
-    });
+    const c = buildBlackHoleConfig({ massRatio: 0.3 });
     expect(c.diskScaleHeightSecondary).toBeLessThan(c.diskScaleHeightPrimary);
     expect(c.iscoSecondary).toBeLessThan(c.iscoPrimary);
   });
 
   test("clamps extreme raw knobs", () => {
     const c = buildBlackHoleConfig({
-      overrides: {
-        primaryMass: -1,
-        massRatio: 100,
-        spin: 5,
-        inclination: 200,
-        diskAspectRatio: 9,
-        temperatureIndex: 0.01,
-        accretionRate: -5,
-        separation: 0.1,
-        diskOuterRadiusM: 0.5,
-      },
+      primaryMass: -1,
+      massRatio: 100,
+      spin: 5,
+      inclination: 200,
+      diskAspectRatio: 9,
+      temperatureIndex: 0.01,
+      accretionRate: -5,
+      separation: 0.1,
+      diskOuterRadiusM: 0.5,
     });
-    expect(c.primaryMass).toBeGreaterThanOrEqual(0.08);
-    expect(c.massRatio).toBeLessThanOrEqual(4);
+    expect(c.primaryMass).toBeGreaterThanOrEqual(PHYSICS_LIMITS.primaryMassMin);
+    expect(c.massRatio).toBeLessThanOrEqual(PHYSICS_LIMITS.massRatioMax);
     expect(Math.abs(c.spin)).toBeLessThanOrEqual(0.998);
-    expect(c.inclination).toBeLessThanOrEqual(180);
-    expect(c.inclination).toBeGreaterThanOrEqual(0);
-    expect(c.diskAspectRatio).toBeLessThanOrEqual(0.25);
-    expect(c.temperatureIndex).toBeGreaterThanOrEqual(0.5);
-    expect(c.accretionRate).toBeGreaterThanOrEqual(0.1);
-    expect(c.separation).toBeGreaterThanOrEqual(2.5);
-    expect(c.diskOuterRadiusM).toBeGreaterThanOrEqual(3);
+    expect(c.inclination).toBeLessThanOrEqual(PHYSICS_LIMITS.inclinationMax);
+    expect(c.inclination).toBeGreaterThanOrEqual(PHYSICS_LIMITS.inclinationMin);
+    expect(c.diskAspectRatio).toBeLessThanOrEqual(PHYSICS_LIMITS.diskAspectMax);
+    expect(c.temperatureIndex).toBeGreaterThanOrEqual(
+      PHYSICS_LIMITS.temperatureIndexMin,
+    );
+    expect(c.accretionRate).toBeGreaterThanOrEqual(
+      PHYSICS_LIMITS.accretionRateMin,
+    );
+    expect(c.separation).toBeGreaterThanOrEqual(PHYSICS_LIMITS.separationMin);
+    expect(c.diskOuterRadiusM).toBeGreaterThanOrEqual(
+      PHYSICS_LIMITS.diskOuterRadiusMMin,
+    );
   });
 
-  test("light theme dims accretion when themeColors enabled", () => {
-    const dark = buildBlackHoleConfig({
-      themeColors: true,
-      mode: "dark",
-      overrides: { accretionRate: 10 },
-    });
-    const light = buildBlackHoleConfig({
-      themeColors: true,
-      mode: "light",
-      overrides: { accretionRate: 10 },
-    });
-    expect(light.accretionRate).toBeCloseTo(dark.accretionRate * 0.55, 8);
+  test("pure build does not dim accretion for light theme", () => {
+    const c = buildBlackHoleConfig({ accretionRate: 10 });
+    expect(c.accretionRate).toBe(10);
+  });
+
+  test("withLightThemeAccretion dims when enabled", () => {
+    const base = buildBlackHoleConfig({ accretionRate: 10 });
+    const light = withLightThemeAccretion(base, true);
+    const dark = withLightThemeAccretion(base, false);
+    expect(light.accretionRate).toBeCloseTo(
+      10 * PHYSICS_LIMITS.lightThemeAccretionScale,
+      8,
+    );
+    expect(dark.accretionRate).toBe(10);
   });
 
   test("render fields come from defaultRender only", () => {
@@ -208,12 +230,21 @@ describe("buildBlackHoleConfig", () => {
 
   test("every CONFIG_SCALAR_KEY exists as finite number on config", () => {
     const c = buildBlackHoleConfig({
-      overrides: { massRatio: 0.4, spin: 0.7, separation: 16 },
+      massRatio: 0.4,
+      spin: 0.7,
+      separation: 16,
     });
     for (const key of CONFIG_SCALAR_KEYS) {
       const v = c[key];
       expect(typeof v).toBe("number");
       expect(Number.isFinite(v)).toBe(true);
     }
+  });
+
+  test("binaryVisualExtent is positive and finite", () => {
+    const c = buildBlackHoleConfig();
+    const e = binaryVisualExtent(c);
+    expect(e).toBeGreaterThan(0);
+    expect(Number.isFinite(e)).toBe(true);
   });
 });
