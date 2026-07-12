@@ -4,14 +4,14 @@
 /**
  * Accretion disk — always-cloudy plasma packs.
  *
- * Why pure Kepler co-rotation fails long-term:
- *   φ − ω(r)·t with ω ∝ r^{-3/2} winds structure into smooth concentric rings.
+ * Seam fix: never sample noise in (r, φ) — atan branch cut makes a radial line
+ * where the disk “ends don’t meet”. All cloud fields use continuous co-rotating
+ * Cartesian (r·cos φ, r·sin φ).
  *
- * Fix:
- *   1. Large cloud packs orbit with solid-body rotation (blob shapes stable forever)
- *   2. Medium/fine use cyclic Kepler shear (crossfade) — differential flow, no wind-up
- *   3. Variable-size/density Worley cells for chaos that never washes out
- *   4. Multi-hue cloud tints + dimmed inner rim (less blinding ISCO glow)
+ * Motion:
+ *   1. Large packs — solid-body rotation (blob shapes stable forever)
+ *   2. Medium/fine — cyclic Kepler shear (crossfade, no wind-up rings)
+ *   3. Variable-size Worley cells + multi-hue peach tints
  */
 
 import type { BlackHoleUniforms } from "../mesh";
@@ -36,21 +36,46 @@ import {
 import { cellularClouds2D, fbm, noise3D } from "./noise";
 import { blackbodyColor } from "./blackbody";
 
-/** Solid-body rotating UV — cloud shapes stay blob-like forever. */
-const solidUV = Fn(([hitR, hitAngle, time, omega0, sR, sPhi]) => {
+/**
+ * Continuous co-rotating Cartesian UV (seamless around 2π).
+ * Optional orbital stretch: scale radial vs tangential in the local frame
+ * without ever using φ as a linear coordinate.
+ */
+const cartUV = Fn(([hitR, phi, sRad, sTan]) => {
   const r = max(hitR, float(0.35));
-  const phi = hitAngle.sub(time.mul(omega0));
-  return vec2(r.mul(sR), phi.mul(sPhi));
+  const c = cos(phi);
+  const s = sin(phi);
+  // Lab-frame position (seamless)
+  const x = r.mul(c);
+  const z = r.mul(s);
+  // Local radial / tangential basis
+  // p_local = (radial · p) * sRad * radial_hat + (tan · p) * sTan * tan_hat
+  // radial · p = r, tan · p = 0 for pure midplane point — so pure p*s is isotropic.
+  // For orbital elongation: squash radial, expand circumferential via elliptic
+  // scale in the rotating Cartesian frame (still seamless):
+  //   p' = radial_hat * (r * sRad) is 1D; instead mix scales on x,z after rotation:
+  // Stretch: reconstruct with different radial vs equal axes:
+  // p = radial_hat * (r * sRad) + 0  collapses.
+  // Use: scale the 2D position anisotropically along radial_hat:
+  //   p_aniso = p + radial_hat * dot(p, radial_hat) * (sRad/sTan - 1) ...
+  // Simpler continuous stretch used in practice:
+  //   sample at (x, z) * sTan, and add radial bias via r * (sRad - sTan)
+  //   offset along radial: seamless
+  const base = vec2(x, z).mul(sTan);
+  const radialPush = vec2(c, s).mul(r.mul(sRad.sub(sTan)));
+  return base.add(radialPush);
 });
 
-/**
- * Cyclic Kepler UV — shearTime is within one cycle only (bounded winding).
- */
-const keplerUV = Fn(([hitR, hitAngle, shearTime, speed, sR, sPhi]) => {
+/** Solid-body phase. */
+const solidPhi = Fn(([hitAngle, time, omega0]) => {
+  return hitAngle.sub(time.mul(omega0));
+});
+
+/** Cyclic Kepler phase (bounded shear time). */
+const keplerPhi = Fn(([hitR, hitAngle, shearTime, speed]) => {
   const r = max(hitR, float(0.35));
   const omega = speed.div(pow(r, float(1.5)));
-  const phi = hitAngle.sub(shearTime.mul(omega));
-  return vec2(r.mul(sR), phi.mul(sPhi));
+  return hitAngle.sub(shearTime.mul(omega));
 });
 
 export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
@@ -103,7 +128,7 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
       ),
     );
 
-    // ── Motion: solid-body + cyclic shear (no wind-up) ──────────────────────
+    // ── Motion: solid-body + cyclic shear (seamless Cartesian) ─────────────
     const speed = uniforms.diskRotationSpeed;
     const sc = uniforms.turbulenceScale;
     const rRef = mix(innerR, outerR, float(0.35));
@@ -114,18 +139,13 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
     const t1 = t0.add(cycle);
     const blend = t0.div(cycle);
 
-    const sR = sc.mul(0.95);
-    const sPhi = sc.mul(1.85);
+    // sRad / sTan control radial vs orbital elongation (still seamless)
+    const sRad = sc.mul(0.85);
+    const sTan = sc.mul(1.35);
 
-    // ── Large packs: solid-body (always cloudy) ────────────────────────────
-    const uvBig = solidUV(
-      hitR,
-      hitAngle,
-      time,
-      omega0,
-      sR.mul(0.48),
-      sPhi.mul(0.7),
-    );
+    // ── Large packs: solid-body (always cloudy, seamless) ──────────────────
+    const phiBig = solidPhi(hitAngle, time, omega0);
+    const uvBig = cartUV(hitR, phiBig, sRad.mul(0.48), sTan.mul(0.7));
     const wBig = noise3D(vec3(uvBig.x, uvBig.y, time.mul(0.03))).sub(0.5);
     const big = cellularClouds2D(
       uvBig.add(vec2(wBig.mul(0.65), wBig.mul(0.55))),
@@ -136,22 +156,10 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
     );
 
     // ── Medium: cyclic Kepler shear ────────────────────────────────────────
-    const uvM0 = keplerUV(
-      hitR,
-      hitAngle,
-      t0,
-      speed,
-      sR.mul(1.05),
-      sPhi.mul(1.15),
-    );
-    const uvM1 = keplerUV(
-      hitR,
-      hitAngle,
-      t1,
-      speed,
-      sR.mul(1.05),
-      sPhi.mul(1.15),
-    );
+    const phiM0 = keplerPhi(hitR, hitAngle, t0, speed);
+    const phiM1 = keplerPhi(hitR, hitAngle, t1, speed);
+    const uvM0 = cartUV(hitR, phiM0, sRad.mul(1.05), sTan.mul(1.15));
+    const uvM1 = cartUV(hitR, phiM1, sRad.mul(1.05), sTan.mul(1.15));
     const med0 = cellularClouds2D(
       uvM0,
       float(0.22),
@@ -169,22 +177,10 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
     const med = mix(med1, med0, blend);
 
     // ── Fine: faster cyclic shear ──────────────────────────────────────────
-    const uvF0 = keplerUV(
-      hitR,
-      hitAngle,
-      t0,
-      speed.mul(1.2),
-      sR.mul(2.0),
-      sPhi.mul(1.9),
-    );
-    const uvF1 = keplerUV(
-      hitR,
-      hitAngle,
-      t1,
-      speed.mul(1.2),
-      sR.mul(2.0),
-      sPhi.mul(1.9),
-    );
+    const phiF0 = keplerPhi(hitR, hitAngle, t0, speed.mul(1.2));
+    const phiF1 = keplerPhi(hitR, hitAngle, t1, speed.mul(1.2));
+    const uvF0 = cartUV(hitR, phiF0, sRad.mul(2.0), sTan.mul(1.9));
+    const uvF1 = cartUV(hitR, phiF1, sRad.mul(2.0), sTan.mul(1.9));
     const fine0 = cellularClouds2D(
       uvF0,
       float(0.18),
@@ -202,14 +198,10 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
     const fine = mix(fine1, fine0, blend);
 
     // ── Extra chaos (solid body, offset) ───────────────────────────────────
-    const uvC = solidUV(
-      hitR,
-      hitAngle,
-      time,
-      omega0.mul(0.9),
-      sR.mul(0.7),
-      sPhi.mul(1.0),
-    ).add(vec2(5.1, 3.3));
+    const phiC = solidPhi(hitAngle, time, omega0.mul(0.9));
+    const uvC = cartUV(hitR, phiC, sRad.mul(0.7), sTan.mul(1.0)).add(
+      vec2(5.1, 3.3),
+    );
     const chaos = cellularClouds2D(
       uvC,
       float(0.24),
@@ -218,13 +210,15 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
       float(1.3),
     );
 
-    // FBM texture in solid frame
-    const phiS = hitAngle.sub(time.mul(omega0));
+    // FBM texture in solid frame — continuous cos/sin embedding (no φ line)
+    const phiS = solidPhi(hitAngle, time, omega0);
+    const cS = cos(phiS);
+    const sS = sin(phiS);
     const fbmP = vec3(
-      hitR.mul(sc.mul(1.55)),
-      cos(phiS).mul(sc.mul(1.05)),
-      sin(phiS).mul(sc.mul(1.05)),
-    ).add(vec3(time.mul(0.08), 0.0, time.mul(0.06)));
+      hitR.mul(cS).mul(sc.mul(1.55)),
+      hitR.mul(sS).mul(sc.mul(1.55)),
+      time.mul(0.08),
+    );
     const turb = clamp(
       fbm(fbmP, uniforms.turbulenceLacunarity, uniforms.turbulencePersistence),
       float(0.0),
@@ -235,9 +229,13 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
       max(uniforms.turbulenceSharpness.mul(0.4), float(0.4)),
     );
 
-    // Thickness fluctuation
+    // Thickness fluctuation — also Cartesian seamless
     const thickNoise = noise3D(
-      vec3(hitR.mul(sc.mul(0.8)), phiS.mul(1.2), time.mul(0.07)),
+      vec3(
+        hitR.mul(cS).mul(sc.mul(0.8)),
+        hitR.mul(sS).mul(sc.mul(0.8)),
+        time.mul(0.07),
+      ),
     );
     const thickVar = mix(float(0.75), float(1.2), thickNoise);
 
@@ -274,16 +272,20 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
       smoothstep(float(0.0), float(0.38), normR),
     );
 
-    // ── Multi-hue cloud color variation ────────────────────────────────────
+    // ── Multi-hue cloud color (seamless Cartesian) ─────────────────────────
     const hueN = noise3D(
       vec3(
-        hitR.mul(sc.mul(0.55)),
-        phiS.mul(1.4),
+        hitR.mul(cS).mul(sc.mul(0.55)),
+        hitR.mul(sS).mul(sc.mul(0.55)),
         time.mul(0.05).add(struct.mul(0.3)),
       ),
     );
     const hueN2 = noise3D(
-      vec3(hitR.mul(sc.mul(1.1)), phiS.mul(2.1).add(2.5), time.mul(0.07)),
+      vec3(
+        hitR.mul(cS).mul(sc.mul(1.1)).add(2.5),
+        hitR.mul(sS).mul(sc.mul(1.1)),
+        time.mul(0.07),
+      ),
     );
     const cPeach = vec3(1.15, 0.78, 0.55);
     const cCopper = vec3(1.2, 0.55, 0.28);
