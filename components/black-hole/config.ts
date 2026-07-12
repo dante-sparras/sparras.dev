@@ -92,8 +92,8 @@ export type BuildBlackHoleConfigOptions = {
 
 // ── Defaults ────────────────────────────────────────────────────────────────
 
-/** Site void — must stay #0a0a0a in dark (pixel-sample). */
-const VOID = "#0a0a0a";
+/** Site void — dark `--background` in app/globals.css. */
+const VOID = "#050505";
 
 export const defaultBlackHoleConfig = {
   blackHoleMass: 0.4,
@@ -122,7 +122,7 @@ export const defaultBlackHoleConfig = {
   starSize: 1.75,
   starBrightness: 0.1,
 
-  nebulaEnabled: true,
+  nebulaEnabled: false,
   nebula1Scale: 2,
   nebula1Density: 0.5,
   nebula2Scale: 5.5,
@@ -158,6 +158,7 @@ function colorsForTheme(mode: ResolvedTheme, tokens: CssTokens): ThemeColors {
   const foreground = tokens.foreground || "#fafafa";
   const muted = tokens.muted || "#262626";
   const border = tokens.border || "#404040";
+  const secondary = tokens.secondary || "#fafafa";
 
   if (mode === "light") {
     return {
@@ -171,8 +172,8 @@ function colorsForTheme(mode: ResolvedTheme, tokens: CssTokens): ThemeColors {
 
   return {
     starBackgroundColor: background,
-    nebula1Color: "#000000",
-    nebula2Color: "#121212",
+    nebula1Color: background,
+    nebula2Color: secondary,
     starTint: border,
     diskTint: foreground,
   };

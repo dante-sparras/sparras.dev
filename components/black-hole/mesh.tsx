@@ -77,7 +77,7 @@ const tmp3 = new THREE.Vector3();
 const tmp4 = new THREE.Vector4();
 const tmpColor = new THREE.Color();
 
-/** Theme colors are `#rrggbb` (optional `#rrggbbaa`). Uses Three's parser. */
+/** Parse CSS hex (`#rrggbb`). Three treats input as sRGB → linear working space. */
 function hexToVec3(hex: string, out = new THREE.Vector3()) {
   tmpColor.set(hex);
   return out.set(tmpColor.r, tmpColor.g, tmpColor.b);

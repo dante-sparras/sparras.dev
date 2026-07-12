@@ -31,10 +31,10 @@ export function HeroSection({ hero }: HeroSectionProps) {
           <HeroBanner />
 
           <div className="shrink-0 border-t border-border p-0">
-            <h1 className="border-b border-border px-2 py-0.5 text-2xl font-semibold tracking-tight leading-none sm:px-2.5 sm:text-3xl">
+            <h1 className="border-b border-border px-2 py-1.5 text-2xl font-semibold tracking-tight sm:px-2.5 sm:text-3xl">
               {hero.name}
             </h1>
-            <p className="text-muted-foreground px-2 py-0.5 text-sm leading-none sm:px-2.5 sm:text-base">
+            <p className="text-muted-foreground px-2 py-1.5 text-sm leading-none sm:px-2.5 sm:text-base">
               {hero.role}
             </p>
           </div>

@@ -10,7 +10,7 @@
  *     return r;
  *   }}
  *
- * Site defaults: NoToneMapping + LinearSRGB so void #0a0a0a stays exact.
+ * Site defaults: NoToneMapping + sRGB output so CSS hex (e.g. #050505) matches the page.
  */
 import { Canvas, extend, type CanvasProps } from "@react-three/fiber";
 import type { ThreeToJSXElements } from "@react-three/fiber/dist/declarations/src/three-types";
@@ -94,7 +94,9 @@ async function createWebGPURenderer(props: unknown) {
   const renderer = new THREE.WebGPURenderer(props as any);
   await renderer.init();
   renderer.toneMapping = THREE.NoToneMapping;
-  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+  // sRGB encode on write — matches CSS / hex colors from the design system.
+  // LinearSRGB output made voids look near-black (sRGB decode without re-encode).
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   return renderer;
 }
 
