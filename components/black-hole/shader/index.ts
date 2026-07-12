@@ -197,26 +197,19 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       ),
     );
 
-    // Soften void transition band (AA, not erase)
-    const edgeBand = softCapture.mul(float(1.0).sub(softCapture)).mul(4.0);
-    contentTone.assign(
-      mix(
-        contentTone,
-        contentTone.mul(0.94),
-        clamp(edgeBand, float(0.0), float(1.0)),
-      ),
-    );
+    // Composite: disk in front, void/stars only in the remaining transmittance.
+    // softCapture must NOT wipe disk — it only fills *behind* with pure black.
+    // (Previously mul(cover) + force-black erased lensed disk over the hole.)
+    const diskA = alpha;
+    const remaining = float(1.0).sub(diskA);
+    const skyW = remaining.mul(skyOk);
 
-    const cover = mix(alpha, float(1.0), softCapture);
-
-    // Disk soft-edge: lit * coverage once (premultiplied contrib).
-    // Stars/nebula are additive. Do NOT multiply rgb by alpha again at the end
-    // (that was cover² and dulled rims/stars after bloom took over).
-    const rgb = contentTone.mul(cover).toVar("rgb");
-    const outAlpha = cover.toVar("outAlpha");
+    // Disk PM contribution (tonemapped from march accumulation).
+    const rgb = contentTone.toVar("rgb");
+    const outAlpha = diskA.toVar("outAlpha");
 
     If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
-      const n = nebCol.mul(float(1.0).sub(alpha)).mul(skyOk);
+      const n = nebCol.mul(skyW);
       rgb.addAssign(n);
       const nLuma = max(n.x, max(n.y, n.z));
       outAlpha.assign(max(outAlpha, nLuma.mul(2.0).min(float(1.0))));
@@ -224,25 +217,22 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     If(uniforms.starsEnabled.greaterThan(0.5), () => {
       const starsLit = pow(max(starsCol, vec3(0.0)), vec3(1.0 / 2.2)).mul(3.0);
-      const s = starsLit.mul(float(1.0).sub(alpha)).mul(skyOk);
+      const s = starsLit.mul(skyW);
       rgb.addAssign(s);
       const sLuma = max(s.x, max(s.y, s.z));
       outAlpha.assign(max(outAlpha, sLuma.mul(6.0).min(float(1.0))));
     });
 
+    // Event horizon / capture: opaque pure black *behind* the disk only.
+    // outAlpha → 1 where captured; rgb stays (disk in front, black fills gaps).
+    outAlpha.assign(max(outAlpha, softCapture));
+
     rgb.assign(clamp(rgb, float(0.0), float(1.12)));
     outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
 
-    // Event horizon must stay pure black (no residual tone / CSS bleed).
-    If(softCapture.greaterThan(0.97), () => {
-      rgb.assign(vec3(0.0, 0.0, 0.0));
-      outAlpha.assign(1.0);
-    });
-
-    // Empty sky → transparent clear (CSS bg-background).
+    // Empty sky (no disk, no hole, no stars) → CSS bg-background.
     Discard(outAlpha.lessThan(0.002));
 
-    // rgb is already the buffer color (PM disk + additive stars).
     return rgb.toVec4(outAlpha);
   })();
 }
