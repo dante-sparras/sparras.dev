@@ -218,24 +218,27 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
       const n = nebCol.mul(float(1.0).sub(alpha)).mul(skyOk);
       finalColor.addAssign(n);
-      outAlpha.assign(max(outAlpha, max(n.x, max(n.y, n.z))));
+      // Coverage from nebula so dim haze is not discarded
+      const nLuma = max(n.x, max(n.y, n.z));
+      outAlpha.assign(max(outAlpha, nLuma.mul(2.0).min(float(1.0))));
     });
 
     If(uniforms.starsEnabled.greaterThan(0.5), () => {
       const starsLit = pow(max(starsCol, vec3(0.0)), vec3(1.0 / 2.2)).mul(3.0);
       const s = starsLit.mul(float(1.0).sub(alpha)).mul(skyOk);
       finalColor.addAssign(s);
-      outAlpha.assign(max(outAlpha, max(s.x, max(s.y, s.z))));
+      // Stars are sparse/dim — boost coverage so Discard + PM don't erase them
+      const sLuma = max(s.x, max(s.y, s.z));
+      outAlpha.assign(max(outAlpha, sLuma.mul(6.0).min(float(1.0))));
     });
 
     finalColor.assign(clamp(finalColor, float(0.0), float(1.12)));
     outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
 
-    // Hard void cut — more reliable than alpha blend alone (bloom/post often force a=1).
-    Discard(outAlpha.lessThan(0.004));
+    // Hard void cut (empty sky only). Threshold stays low so dim stars survive.
+    Discard(outAlpha.lessThan(0.002));
 
-    // Premultiplied RGB for WebGPU canvas (alphaMode: 'premultiplied').
-    // Use toVec4(a) — vec4(vec3, float) is fine, but keep one pattern site-wide.
+    // Premultiply once here. Bloom must not multiply by alpha again.
     return finalColor.mul(outAlpha).toVec4(outAlpha);
   })();
 }

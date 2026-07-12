@@ -3,11 +3,11 @@
 /**
  * TSL bloom via RenderPipeline — optional glow only.
  *
- * IMPORTANT: post.output must preserve transparent void (a=0). WebGPU canvas
- * uses alphaMode 'premultiplied' when renderer.alpha is true.
+ * Scene shader already writes *premultiplied* RGBA (WebGPU canvas is
+ * alphaMode:'premultiplied'). Bloom must ADD glow and must NOT multiply
+ * scene.rgb by alpha again (that double-PM blacks disk rims and kills stars).
  *
- * If setup fails, bloom is skipped and the scene renders normally (void still
- * transparent via fragment discard).
+ * If setup fails, bloom is skipped; the scene still renders normally.
  */
 import { useThree } from "@react-three/fiber";
 import { useLayoutEffect, useRef } from "react";
@@ -35,8 +35,6 @@ type RendererLike = {
   render: RenderFn;
   setClearColor: (color: number, alpha?: number) => void;
   setClearAlpha: (alpha: number) => void;
-  autoClear: boolean;
-  alpha: boolean;
 };
 
 function applyBloomParams(
@@ -127,19 +125,20 @@ export function Bloom({
           initial.current.threshold,
         );
 
-        // Premultiplied composite for WebGPU canvas alphaMode.
-        // Bloom node is vec4 — never pass it into vec4(...) as a whole or TSL
-        // throws "Length of parameters exceeds maximum length of function 'vec4()'".
+        // sceneColor is already premultiplied (rgb*a, a) from the black-hole shader.
+        // Bloom glow is additive. Do NOT mul scene by alpha again.
         const bloomRgb = node.rgb;
         const sceneRgb = sceneColor.rgb;
         const bloomLuma = max(bloomRgb.r, max(bloomRgb.g, bloomRgb.b));
+        // Only lift alpha where bloom is actually visible (keep void transparent).
         const bloomA = bloomLuma
-          .sub(float(0.04))
+          .sub(float(0.02))
           .max(float(0.0))
-          .mul(float(1.2));
-        const outA = max(sceneColor.a, bloomA).min(float(1.0));
-        const outRgb = sceneRgb.add(bloomRgb).mul(outA);
-        post.outputNode = outRgb.toVec4(outA);
+          .mul(float(1.1))
+          .min(float(1.0));
+        const outA = max(sceneColor.a, bloomA);
+        // Additive composite; preserve premultiplied scene rgb.
+        post.outputNode = sceneRgb.add(bloomRgb).toVec4(outA);
         post.needsUpdate = true;
 
         // Compose quad must blend (default NodeMaterial is opaque).
