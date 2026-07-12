@@ -20,6 +20,7 @@ import {
   max,
   min,
   smoothstep,
+  step,
   mix,
   clamp,
   Loop,
