@@ -11,7 +11,7 @@ export type HeroSectionProps = {
  * Contact / bio facts live in `ProfileDetails`.
  *
  * Sim knobs (including `separation`) live in
- * `components/black-hole/config.ts` → `defaultPhysics`.
+ * `components/black-hole/physics/config.ts` → `defaultPhysics`.
  */
 export function HeroSection({ hero }: HeroSectionProps) {
   return (

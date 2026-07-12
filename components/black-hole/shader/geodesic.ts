@@ -18,7 +18,7 @@ import {
   max,
   clamp,
 } from "three/tsl";
-import { DOPPLER_LIMITS, SPIN_LIMITS } from "../limits";
+import { DOPPLER_LIMITS, SPIN_LIMITS } from "../physics/limits";
 
 /**
  * kerrNullDeflect(relPos, rayDir, mass, spinChi, dStep) → new unit rayDir

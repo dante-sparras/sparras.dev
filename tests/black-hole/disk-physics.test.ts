@@ -3,7 +3,7 @@
  * Run: bun test tests/black-hole
  */
 import { describe, expect, test } from "bun:test";
-import { keplerOmega } from "../../components/black-hole/kerr";
+import { keplerOmega } from "../../components/black-hole/physics/kerr";
 import {
   circularOrbitalBeta,
   diskDopplerG,
@@ -12,7 +12,7 @@ import {
   intensityDopplerWeight,
   kerrCircularOmega,
   specialRelDopplerG,
-} from "../../components/black-hole/disk-physics";
+} from "../../components/black-hole/physics/disk";
 
 describe("diskTemperatureK", () => {
   test("at r_in equals peak kelvin", () => {

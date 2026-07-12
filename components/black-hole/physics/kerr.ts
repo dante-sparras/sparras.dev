@@ -4,7 +4,7 @@
  * Pure functions — no site defaults, theme, or render knobs.
  * Used by {@link buildBlackHoleConfig} and available for tests.
  *
- * @module components/black-hole/kerr
+ * @module components/black-hole/physics/kerr
  */
 
 import { SPIN_LIMITS } from "./limits";

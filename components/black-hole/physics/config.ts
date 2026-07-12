@@ -6,36 +6,28 @@
  * and time scale (r_s = 2M for Schwarzschild).
  *
  * ## Layers
- * 1. {@link BlackHoleOverrides} / {@link defaultPhysics} — **raw** knobs only
+ * 1. {@link PhysicsParams} / {@link defaultPhysics} — **raw** knobs only
  * 2. {@link BlackHoleConfig} — resolved masses, Kerr scales, Kepler Ω, render
  * 3. {@link defaultRender} — pixel-art only (not public knobs)
  *
- * ## Configure (partial only)
+ * ## Configure (partial only — flat knobs)
  * ```ts
  * buildBlackHoleConfig({ spin: 0.8, inclination: 135 })
- * buildBlackHoleConfig({ physics: { spin: 0.8 } })
  * <BlackHole spin={0.8} inclination={135} />
- * <BlackHole physics={{ separation: 16 }} />
  * ```
  *
  * Public knobs are raw only. Derived scales are never user inputs.
- * Theme dimming is **not** applied here — use {@link withLightThemeAccretion}.
+ * One visual look (no light/dark presentation branch).
  *
- * @module components/black-hole/config
+ * @module components/black-hole/physics/config
  */
 
 import { binaryOrbitalOmega } from "./binary";
 import { clampSpin, kerrScales } from "./kerr";
-import { CAMERA, PHYSICS_LIMITS } from "./limits";
+import { PHYSICS_LIMITS } from "./limits";
+import { clampInclinationDegrees } from "./observer";
 
 export type { KerrScales } from "./kerr";
-export {
-  clampSpin,
-  iscoRadius,
-  keplerOmega,
-  kerrScales,
-  photonSphereRadius,
-} from "./kerr";
 export {
   CAMERA,
   DOPPLER_LIMITS,
@@ -43,91 +35,19 @@ export {
   PHYSICS_LIMITS,
   SPIN_LIMITS,
 } from "./limits";
-
-/**
- * Clamp observer inclination in **degrees** from the orbital / disk normal.
- * - `0` face-on +Y · `90` edge-on · `180` face-on −Y
- */
-export function clampInclinationDegrees(inclination: number): number {
-  if (!Number.isFinite(inclination)) return PHYSICS_LIMITS.inclinationFallback;
-  return Math.min(
-    PHYSICS_LIMITS.inclinationMax,
-    Math.max(PHYSICS_LIMITS.inclinationMin, inclination),
-  );
-}
-
-/** Vertical FOV used by the host canvas and shader ray basis. */
-export const CAMERA_FOV_DEG = CAMERA.fovDeg;
-
-/**
- * Characteristic outer radius of the binary (arms + mini-disk extents).
- * Used for orbit min (avoid tunneling) and zoom-out headroom.
- */
-export function binaryVisualExtent(config: {
-  separation: number;
-  primaryMass: number;
-  secondaryMass: number;
-  diskOuterRadiusM: number;
-  eventHorizonPrimary: number;
-  eventHorizonSecondary: number;
-}): number {
-  const arm = config.separation * 0.5;
-  const disk1 = config.diskOuterRadiusM * config.primaryMass;
-  const disk2 = config.diskOuterRadiusM * config.secondaryMass;
-  const hole = Math.max(
-    config.eventHorizonPrimary,
-    config.eventHorizonSecondary,
-  );
-  return Math.max(
-    arm + Math.max(disk1, disk2),
-    hole * 3,
-    config.separation * 0.55,
-  );
-}
-
-/**
- * Orbit zoom limits from observer distance **and** binary geometry.
- * - **min**: stay outside the visual binary (no zoom into/through holes)
- * - **max**: allow pull-back past D without leaving useful framing
- */
-export function orbitDistanceLimits(
-  cameraDistance: number,
-  extent?: number,
-): { min: number; max: number } {
-  const d = Math.max(PHYSICS_LIMITS.cameraDistanceMin, cameraDistance);
-  const visual = Math.max(0, extent ?? 0);
-  const minFromGeometry =
-    visual > 0 ? visual * 1.15 : PHYSICS_LIMITS.orbitMinFloor;
-  const min = Math.max(
-    PHYSICS_LIMITS.orbitMinFloor,
-    minFromGeometry,
-    d * PHYSICS_LIMITS.orbitMinOfDistance * 0.35, // soft floor vs D only when close
-  );
-  // Prefer not locking min above a large D (user zoomed out already)
-  const minClamped = Math.min(min, d * 0.92);
-  const max = Math.max(
-    d * PHYSICS_LIMITS.orbitMaxOfDistance,
-    visual * PHYSICS_LIMITS.orbitMaxOfExtent,
-    minClamped + 4,
-  );
-  return { min: Math.min(minClamped, max * 0.5), max };
-}
-
-/**
- * Inverted skydome radius — must stay larger than orbit max zoom.
- */
-export function skyDomeRadius(orbitMaxDistance: number): number {
-  return Math.max(
-    PHYSICS_LIMITS.skyDomeMin,
-    orbitMaxDistance * PHYSICS_LIMITS.skyDomeOfOrbitMax,
-  );
-}
+export {
+  binaryVisualExtent,
+  cameraPositionFromObserver,
+  clampInclinationDegrees,
+  orbitDistanceLimits,
+  skyDomeRadius,
+} from "./observer";
 
 // ── Public physics surface ──────────────────────────────────────────────────
 
 /**
  * Canonical list of raw physics knobs.
- * @see {@link BlackHoleOverrides}
+ * @see {@link PhysicsParams}
  */
 export const RAW_PHYSICS_KEYS = [
   "primaryMass",
@@ -150,7 +70,7 @@ export type RawPhysicsKey = (typeof RAW_PHYSICS_KEYS)[number];
  * User-editable **raw** physics and observer parameters.
  * Every field is optional; omitted keys fall back to {@link defaultPhysics}.
  */
-export type BlackHoleOverrides = Partial<{
+export type PhysicsParams = Partial<{
   /**
    * Primary mass **M₁** (geometric units).
    * - Lower → smaller primary · Higher → larger primary / stronger lensing
@@ -227,39 +147,25 @@ export type BlackHoleOverrides = Partial<{
   /**
    * Relative accretion / emissivity ∝ **Ṁ** (brightness only, not geometry).
    * - Lower dimmer · Higher brighter
-   * - Light theme: apply {@link withLightThemeAccretion} in the host
    * @defaultValue 5
    */
   accretionRate: number;
 }>;
 
 /** Fully specified raw physics surface. */
-export type RawBlackHolePhysics = Required<BlackHoleOverrides>;
+export type RawPhysics = Required<PhysicsParams>;
 
-/** Pick only raw physics keys from a loose object. */
-export function pickPhysicsOverrides(
-  source: Partial<Record<RawPhysicsKey, unknown>> | null | undefined,
-): BlackHoleOverrides {
-  if (!source) return {};
-  const out: BlackHoleOverrides = {};
-  for (const key of RAW_PHYSICS_KEYS) {
-    const value = source[key];
-    if (typeof value === "number" && Number.isFinite(value)) {
-      out[key] = value;
-    }
-  }
-  return out;
-}
-
-/** Shallow-merge partial physics layers (later wins). */
-export function mergePhysicsOverrides(
-  ...layers: Array<BlackHoleOverrides | undefined | null>
-): BlackHoleOverrides {
-  const out: BlackHoleOverrides = {};
-  for (const layer of layers) {
-    if (!layer) continue;
+/**
+ * Pick finite raw physics numbers from one or more loose objects (later wins).
+ */
+export function pickPhysics(
+  ...sources: Array<Partial<Record<RawPhysicsKey, unknown>> | null | undefined>
+): PhysicsParams {
+  const out: PhysicsParams = {};
+  for (const source of sources) {
+    if (!source) continue;
     for (const key of RAW_PHYSICS_KEYS) {
-      const value = layer[key];
+      const value = source[key];
       if (typeof value === "number" && Number.isFinite(value)) {
         out[key] = value;
       }
@@ -268,19 +174,9 @@ export function mergePhysicsOverrides(
   return out;
 }
 
-/**
- * Stable key for React deps: only changes when raw knobs change.
- * Avoids `rest` object identity thrashing every render.
- */
-export function physicsOverridesKey(physics: BlackHoleOverrides): string {
-  const parts: string[] = [];
-  for (const key of RAW_PHYSICS_KEYS) {
-    const v = physics[key];
-    if (typeof v === "number" && Number.isFinite(v)) {
-      parts.push(`${key}:${v}`);
-    }
-  }
-  return parts.join("|");
+/** Defaults + partial (no Kerr derivation). */
+export function resolvePhysics(partial: PhysicsParams = {}): RawPhysics {
+  return { ...defaultPhysics, ...pickPhysics(partial) };
 }
 
 // ── Resolved config ─────────────────────────────────────────────────────────
@@ -298,8 +194,8 @@ export type BlackHoleConfig = {
   orbitalFrequency: number;
 
   spin: number;
-  /** Primary a = χ M₁ */
-  spinParameter: number;
+  /** Primary dimensional spin a = χ M₁ */
+  primarySpinA: number;
   eventHorizonPrimary: number;
   eventHorizonSecondary: number;
   photonSpherePrimary: number;
@@ -324,16 +220,6 @@ export type BlackHoleConfig = {
   colorLevels: number;
 };
 
-/**
- * Options for {@link buildBlackHoleConfig}.
- * Flat knobs and/or one nested `physics` bag. No other aliases.
- * Merge: `physics` then top-level knobs (later wins).
- */
-export type BuildBlackHoleConfigOptions = BlackHoleOverrides & {
-  /** Nested partial physics bag (optional grouping). */
-  physics?: BlackHoleOverrides;
-};
-
 // ── Defaults ────────────────────────────────────────────────────────────────
 
 /**
@@ -352,7 +238,7 @@ export const defaultPhysics = {
   peakTemperature: 50,
   temperatureIndex: 1,
   accretionRate: 5,
-} as const satisfies Required<BlackHoleOverrides>;
+} as const satisfies RawPhysics;
 
 /** Pixel-art / march presentation (not public knobs). */
 export const defaultRender = {
@@ -368,43 +254,9 @@ export const defaultRender = {
 
 // ── Build ───────────────────────────────────────────────────────────────────
 
-function mergePhysics(
-  base: typeof defaultPhysics,
-  overrides: BlackHoleOverrides,
-): Required<BlackHoleOverrides> {
-  return { ...base, ...overrides };
-}
-
-/** Defaults + partial layers (no Kerr derivation). */
-export function resolvePhysics(
-  ...layers: Array<BlackHoleOverrides | undefined | null>
-): Required<BlackHoleOverrides> {
-  return mergePhysics(defaultPhysics, mergePhysicsOverrides(...layers));
-}
-
-/**
- * World-space camera looking at origin.
- * Disk plane XZ; inclination 0 → +Y, 90 edge-on, 180 → −Y.
- */
-export function cameraPositionFromObserver(
-  inclination: number,
-  cameraDistance: number,
-): [number, number, number] {
-  const inclinationRadians =
-    (clampInclinationDegrees(inclination) * Math.PI) / 180;
-  const distance = Math.max(PHYSICS_LIMITS.cameraDistanceMin, cameraDistance);
-  const sinI = Math.sin(inclinationRadians);
-  const cosI = Math.cos(inclinationRadians);
-  const bias = CAMERA.azimuthBias;
-  return [distance * sinI * bias, distance * cosI, distance * sinI];
-}
-
-function characteristicDiskRadius(
-  isco: number,
-  mass: number,
-  diskOuterRadiusM: number,
-): number {
-  return 0.5 * (isco + diskOuterRadiusM * mass);
+function clamp(n: number, lo: number, hi = Number.POSITIVE_INFINITY): number {
+  if (!Number.isFinite(n)) return lo;
+  return Math.min(hi, Math.max(lo, n));
 }
 
 function scaleHeightFromAspect(
@@ -413,27 +265,16 @@ function scaleHeightFromAspect(
   mass: number,
   diskOuterRadiusM: number,
 ): number {
-  return Math.max(
-    PHYSICS_LIMITS.scaleHeightFloor,
-    aspect * characteristicDiskRadius(isco, mass, diskOuterRadiusM),
-  );
+  const charR = 0.5 * (isco + diskOuterRadiusM * mass);
+  return Math.max(PHYSICS_LIMITS.scaleHeightFloor, aspect * charR);
 }
-
-type ResolvedHole = {
-  mass: number;
-  eventHorizon: number;
-  photonSphere: number;
-  isco: number;
-  diskScaleHeight: number;
-  a: number;
-};
 
 function resolveHole(
   mass: number,
   spin: number,
   diskAspectRatio: number,
   diskOuterRadiusM: number,
-): ResolvedHole {
+) {
   const scales = kerrScales(mass, spin);
   return {
     mass: scales.mass,
@@ -452,45 +293,34 @@ function resolveHole(
 
 /**
  * Pure resolve: merge knobs → clamps → Kerr scales → Ω.
- * Does **not** apply light-theme dimming.
  */
 export function buildBlackHoleConfig(
-  options: BuildBlackHoleConfigOptions = {},
+  partial: PhysicsParams = {},
 ): BlackHoleConfig {
-  const { physics: physicsBag, ...rest } = options;
-  const flat = pickPhysicsOverrides(rest);
-  const merged = mergePhysicsOverrides(physicsBag, flat);
-  const physics = mergePhysics(defaultPhysics, merged);
-
+  const p = resolvePhysics(partial);
   const L = PHYSICS_LIMITS;
-  const primaryMass = Math.max(L.primaryMassMin, physics.primaryMass);
-  const massRatio = Math.min(
-    L.massRatioMax,
-    Math.max(L.massRatioMin, physics.massRatio),
-  );
+
+  const primaryMass = clamp(p.primaryMass, L.primaryMassMin);
+  const massRatio = clamp(p.massRatio, L.massRatioMin, L.massRatioMax);
   const secondaryMass = primaryMass * massRatio;
   const totalMass = primaryMass + secondaryMass;
-  const separation = Math.max(L.separationMin, physics.separation);
-  const spin = clampSpin(physics.spin);
-  const inclination = clampInclinationDegrees(physics.inclination);
-  const diskOuterRadiusM = Math.max(
-    L.diskOuterRadiusMMin,
-    physics.diskOuterRadiusM,
-  );
-  const diskAspectRatio = Math.min(
+  const separation = clamp(p.separation, L.separationMin);
+  const spin = clampSpin(p.spin);
+  const inclination = clampInclinationDegrees(p.inclination);
+  const diskOuterRadiusM = clamp(p.diskOuterRadiusM, L.diskOuterRadiusMMin);
+  const diskAspectRatio = clamp(
+    p.diskAspectRatio,
+    L.diskAspectMin,
     L.diskAspectMax,
-    Math.max(L.diskAspectMin, physics.diskAspectRatio),
   );
-  const peakTemperature = Math.max(
-    L.peakTemperatureMin,
-    physics.peakTemperature,
-  );
-  const temperatureIndex = Math.min(
+  const peakTemperature = clamp(p.peakTemperature, L.peakTemperatureMin);
+  const temperatureIndex = clamp(
+    p.temperatureIndex,
+    L.temperatureIndexMin,
     L.temperatureIndexMax,
-    Math.max(L.temperatureIndexMin, physics.temperatureIndex),
   );
-  const accretionRate = Math.max(L.accretionRateMin, physics.accretionRate);
-  const cameraDistance = Math.max(L.cameraDistanceMin, physics.cameraDistance);
+  const accretionRate = clamp(p.accretionRate, L.accretionRateMin);
+  const cameraDistance = clamp(p.cameraDistance, L.cameraDistanceMin);
 
   const primary = resolveHole(
     primaryMass,
@@ -513,7 +343,7 @@ export function buildBlackHoleConfig(
     separation,
     orbitalFrequency: binaryOrbitalOmega(totalMass, separation),
     spin,
-    spinParameter: primary.a,
+    primarySpinA: primary.a,
     eventHorizonPrimary: primary.eventHorizon,
     eventHorizonSecondary: secondary.eventHorizon,
     photonSpherePrimary: primary.photonSphere,
@@ -533,21 +363,5 @@ export function buildBlackHoleConfig(
     pixelSize: defaultRender.pixelSize,
     ditherStrength: defaultRender.ditherStrength,
     colorLevels: defaultRender.colorLevels,
-  };
-}
-
-/**
- * Presentation: dim accretion for light page backgrounds.
- * Pure — call from the host after {@link buildBlackHoleConfig}.
- */
-export function withLightThemeAccretion(
-  config: BlackHoleConfig,
-  enabled: boolean,
-): BlackHoleConfig {
-  if (!enabled) return config;
-  return {
-    ...config,
-    accretionRate:
-      config.accretionRate * PHYSICS_LIMITS.lightThemeAccretionScale,
   };
 }

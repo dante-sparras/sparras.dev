@@ -2,7 +2,7 @@
  * Absolute temperature → Interstellar peach disk RGB (never pure white).
  * CPU reference — TSL port in shader/blackbody.ts uses the same stops + limits.
  *
- * @module components/black-hole/blackbody
+ * @module components/black-hole/physics/blackbody
  */
 
 import { PALETTE_LIMITS } from "./limits";

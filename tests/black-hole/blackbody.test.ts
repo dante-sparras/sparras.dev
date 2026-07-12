@@ -13,7 +13,7 @@ import {
   ORANGE,
   temperatureHeat,
   temperatureToDiskColor,
-} from "../../components/black-hole/blackbody";
+} from "../../components/black-hole/physics/blackbody";
 
 describe("temperatureHeat", () => {
   test("increases with T", () => {

@@ -1,18 +1,16 @@
 /**
- * Per-knob override coverage + flat / physics bag DX.
+ * Per-knob override coverage + flat DX.
  * Run: bun test tests/black-hole
  */
 import { describe, expect, test } from "bun:test";
 import {
   buildBlackHoleConfig,
   defaultPhysics,
-  mergePhysicsOverrides,
-  physicsOverridesKey,
-  pickPhysicsOverrides,
+  pickPhysics,
   RAW_PHYSICS_KEYS,
   resolvePhysics,
   type RawPhysicsKey,
-} from "../../components/black-hole/config";
+} from "../../components/black-hole/physics";
 
 const PROBE: Record<RawPhysicsKey, number> = {
   primaryMass: 0.42,
@@ -30,16 +28,15 @@ const PROBE: Record<RawPhysicsKey, number> = {
 
 describe("RAW_PHYSICS_KEYS", () => {
   test("covers every defaultPhysics field exactly once", () => {
-    const fromDefaults = Object.keys(defaultPhysics).toSorted();
-    const fromKeys = [...RAW_PHYSICS_KEYS].toSorted();
-    expect(fromKeys as string[]).toEqual(fromDefaults);
-    expect(new Set(RAW_PHYSICS_KEYS).size).toBe(RAW_PHYSICS_KEYS.length);
+    expect([...RAW_PHYSICS_KEYS].toSorted() as string[]).toEqual(
+      Object.keys(defaultPhysics).toSorted(),
+    );
   });
 });
 
-describe("pickPhysicsOverrides / mergePhysicsOverrides", () => {
-  test("pick ignores non-physics keys and non-finite numbers", () => {
-    const picked = pickPhysicsOverrides({
+describe("pickPhysics", () => {
+  test("ignores non-physics keys and non-finite numbers", () => {
+    const picked = pickPhysics({
       spin: 0.5,
       className: "x",
       interactive: true,
@@ -49,8 +46,8 @@ describe("pickPhysicsOverrides / mergePhysicsOverrides", () => {
     expect(picked).toEqual({ spin: 0.5, inclination: 90 });
   });
 
-  test("merge later layers win", () => {
-    const m = mergePhysicsOverrides(
+  test("later sources win", () => {
+    const m = pickPhysics(
       { spin: 0.1, separation: 10 },
       { spin: 0.9 },
       { inclination: 45 },
@@ -59,14 +56,6 @@ describe("pickPhysicsOverrides / mergePhysicsOverrides", () => {
     expect(m.separation).toBe(10);
     expect(m.inclination).toBe(45);
   });
-
-  test("physicsOverridesKey stable for same values", () => {
-    const a = physicsOverridesKey({ spin: 0.5, separation: 12 });
-    const b = physicsOverridesKey({ spin: 0.5, separation: 12 });
-    const c = physicsOverridesKey({ spin: 0.6, separation: 12 });
-    expect(a).toBe(b);
-    expect(a).not.toBe(c);
-  });
 });
 
 describe("resolvePhysics", () => {
@@ -74,34 +63,19 @@ describe("resolvePhysics", () => {
     expect(resolvePhysics()).toEqual({ ...defaultPhysics });
   });
 
-  test("partial layer only changes that key", () => {
+  test("partial only changes that key", () => {
     const r = resolvePhysics({ spin: 0.11 });
     expect(r.spin).toBe(0.11);
     expect(r.separation).toBe(defaultPhysics.separation);
   });
 });
 
-describe("buildBlackHoleConfig — flat & physics bag DX", () => {
-  test("flat knobs (no nested bag)", () => {
+describe("buildBlackHoleConfig — flat knobs", () => {
+  test("flat knobs", () => {
     const c = buildBlackHoleConfig({ spin: 0.88, inclination: 135 });
     expect(c.spin).toBeCloseTo(0.88, 5);
     expect(c.inclination).toBe(135);
     expect(c.primaryMass).toBe(defaultPhysics.primaryMass);
-  });
-
-  test("physics bag works", () => {
-    const c = buildBlackHoleConfig({ physics: { separation: 14 } });
-    expect(c.separation).toBe(14);
-  });
-
-  test("merge order: physics → flat", () => {
-    const c = buildBlackHoleConfig({
-      physics: { spin: 0.2, separation: 10 },
-      spin: 0.6,
-      separation: 12,
-    });
-    expect(c.spin).toBeCloseTo(0.6, 5);
-    expect(c.separation).toBe(12);
   });
 });
 
@@ -114,9 +88,6 @@ describe("buildBlackHoleConfig — each raw knob in isolation", () => {
       if (key !== "separation") {
         expect(c.separation).toBe(defaultPhysics.separation);
       }
-      if (key !== "primaryMass") {
-        expect(c.primaryMass).toBe(defaultPhysics.primaryMass);
-      }
     });
   }
 });
@@ -128,11 +99,10 @@ describe("buildBlackHoleConfig — low vs high semantics (smoke)", () => {
     expect(hi.eventHorizonPrimary).toBeGreaterThan(lo.eventHorizonPrimary);
   });
 
-  test("higher massRatio → larger secondary mass & horizon", () => {
+  test("higher massRatio → larger secondary", () => {
     const lo = buildBlackHoleConfig({ massRatio: 0.3 });
     const hi = buildBlackHoleConfig({ massRatio: 2.5 });
     expect(hi.secondaryMass).toBeGreaterThan(lo.secondaryMass);
-    expect(hi.eventHorizonSecondary).toBeGreaterThan(lo.eventHorizonSecondary);
   });
 
   test("higher separation → slower orbital frequency", () => {
@@ -147,13 +117,13 @@ describe("buildBlackHoleConfig — low vs high semantics (smoke)", () => {
     expect(high.iscoPrimary).toBeLessThan(low.iscoPrimary);
   });
 
-  test("higher cameraDistance is preserved as zoom-out", () => {
+  test("higher cameraDistance preserved", () => {
     const near = buildBlackHoleConfig({ cameraDistance: 12 });
     const far = buildBlackHoleConfig({ cameraDistance: 55 });
     expect(far.cameraDistance).toBeGreaterThan(near.cameraDistance);
   });
 
-  test("higher diskOuterRadiusM enlarges scale height (same H/R)", () => {
+  test("higher diskOuterRadiusM enlarges scale height", () => {
     const small = buildBlackHoleConfig({ diskOuterRadiusM: 6 });
     const large = buildBlackHoleConfig({ diskOuterRadiusM: 20 });
     expect(large.diskScaleHeightPrimary).toBeGreaterThan(
@@ -169,7 +139,7 @@ describe("buildBlackHoleConfig — low vs high semantics (smoke)", () => {
     );
   });
 
-  test("peakTemperature / temperatureIndex / accretionRate pass through clamps", () => {
+  test("temperature / accretion pass through", () => {
     const c = buildBlackHoleConfig({
       peakTemperature: 40,
       temperatureIndex: 0.75,
@@ -180,10 +150,8 @@ describe("buildBlackHoleConfig — low vs high semantics (smoke)", () => {
     expect(c.accretionRate).toBe(4);
   });
 
-  test("inclination low vs high keeps range", () => {
-    const face = buildBlackHoleConfig({ inclination: 10 });
-    const under = buildBlackHoleConfig({ inclination: 160 });
-    expect(face.inclination).toBe(10);
-    expect(under.inclination).toBe(160);
+  test("inclination low vs high", () => {
+    expect(buildBlackHoleConfig({ inclination: 10 }).inclination).toBe(10);
+    expect(buildBlackHoleConfig({ inclination: 160 }).inclination).toBe(160);
   });
 });

@@ -8,7 +8,7 @@ import {
   binaryHolePositions,
   binaryOrbitalOmega,
   holeCenterSeparation,
-} from "../../components/black-hole/binary";
+} from "../../components/black-hole/physics/binary";
 
 describe("binaryOrbitalOmega", () => {
   test("Ω = √(M/d³)", () => {

@@ -24,7 +24,7 @@ import {
   dot,
   length,
 } from "three/tsl";
-import { DOPPLER_LIMITS, SPIN_LIMITS } from "../limits";
+import { DOPPLER_LIMITS, SPIN_LIMITS } from "../physics/limits";
 import { DISK } from "./constants";
 import { temperatureToDiskColor } from "./blackbody";
 

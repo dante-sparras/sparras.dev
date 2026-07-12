@@ -2,7 +2,7 @@
  * Pure disk / orbital physics for the banner (geometric units G = c = 1).
  * CPU reference — TSL ports in shader/* must use the same {@link DOPPLER_LIMITS}.
  *
- * @module components/black-hole/disk-physics
+ * @module components/black-hole/physics/disk
  */
 
 import { clampSpin, keplerOmega } from "./kerr";

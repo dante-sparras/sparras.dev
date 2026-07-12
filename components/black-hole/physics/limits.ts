@@ -2,7 +2,7 @@
  * Named numeric limits for the black-hole banner.
  * Single source of truth — used by build, host, CPU physics, and TSL (`float(X)`).
  *
- * @module components/black-hole/limits
+ * @module components/black-hole/physics/limits
  */
 
 /** Clamps for raw public knobs and derived safety floors. */
@@ -39,8 +39,6 @@ export const PHYSICS_LIMITS = {
   temperatureIndexMax: 1.5,
   /** ∝ Ṁ. */
   accretionRateMin: 0.1,
-  /** Light theme multiplies accretion (presentation). */
-  lightThemeAccretionScale: 0.55,
   /** Inclination degrees. */
   inclinationMin: 0,
   inclinationMax: 180,

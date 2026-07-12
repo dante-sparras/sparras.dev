@@ -6,7 +6,7 @@
  * @example
  * ```tsx
  * <BlackHole spin={0.8} inclination={135} />
- * <BlackHole physics={{ separation: 16, accretionRate: 3 }} />
+ * <BlackHole separation={16} accretionRate={3} />
  * ```
  */
 
@@ -27,21 +27,18 @@ import {
   WebGPUCanvas,
   type BloomProps,
 } from "@/components/three";
-import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import {
   binaryVisualExtent,
   buildBlackHoleConfig,
+  CAMERA,
   cameraPositionFromObserver,
-  CAMERA_FOV_DEG,
-  mergePhysicsOverrides,
   orbitDistanceLimits,
-  pickPhysicsOverrides,
+  pickPhysics,
   skyDomeRadius,
-  withLightThemeAccretion,
   type BlackHoleConfig,
-  type BlackHoleOverrides,
-} from "./config";
+  type PhysicsParams,
+} from "./physics";
 import { createBlackHoleShader, type BlackHoleUniforms } from "./shader";
 import {
   applyConfig,
@@ -49,8 +46,6 @@ import {
   createUniforms,
   syncCamera,
 } from "./uniforms";
-
-// ── Shell / a11y ────────────────────────────────────────────────────────────
 
 /** Flex-safe wrapper so the absolute canvas has a real height. */
 export const SHELL_CLASS =
@@ -66,19 +61,15 @@ export const ARIA_LABEL =
 const MAX_DT = 1 / 30;
 const SKY_SCALE: [number, number, number] = [-1, 1, 1];
 const SKY_SEGMENTS = 24;
-
 const DEFAULT_BLOOM: BloomProps = {
   strength: 0.35,
   radius: 0.25,
   threshold: 0.4,
 };
 
-// ── Mesh ────────────────────────────────────────────────────────────────────
-
 type MeshProps = {
   config: BlackHoleConfig;
   skyRadius: number;
-  /** When false, skip time advance (tab hidden or off-screen). */
   simActive: boolean;
 };
 
@@ -145,30 +136,21 @@ function BlackHoleMesh({ config, skyRadius, simActive }: MeshProps) {
   );
 }
 
-// ── Public host props ───────────────────────────────────────────────────────
-
-type BlackHoleHostProps = {
+type HostProps = {
   className?: string;
   /** Drag-orbit / scroll-zoom. @defaultValue true */
   interactive?: boolean;
   /** Slow auto-rotate when idle. @defaultValue true */
   autoRotate?: boolean;
-  /** Dim disks in light theme via Ṁ scale. @defaultValue true */
-  themeColors?: boolean;
   /**
    * Optional TSL bloom. Pass `true` for gentle defaults, or BloomProps.
    */
   bloom?: boolean | BloomProps;
-  /** Nested partial physics bag (same keys as top-level knobs). */
-  physics?: BlackHoleOverrides;
   "aria-label"?: string;
 };
 
-/**
- * Host flags + optional raw physics knobs (flat).
- * Only pass what you change — {@link defaultPhysics} fills the rest.
- */
-export type BlackHoleProps = BlackHoleHostProps & BlackHoleOverrides;
+/** Host flags + optional raw physics knobs (flat). */
+export type BlackHoleProps = HostProps & PhysicsParams;
 
 const Hatch = <div className={FALLBACK_CLASS} aria-hidden />;
 const PIXEL_STYLE = { imageRendering: "pixelated" as const };
@@ -184,10 +166,7 @@ function TransparentClear() {
   return null;
 }
 
-/**
- * Apply observer knobs to the live camera when inclination / D change.
- * OrbitControls owns pose after mount — re-sync position + controls target.
- */
+/** Apply observer knobs when inclination / D change; reset OrbitControls. */
 function ObserverCamera({
   inclination,
   cameraDistance,
@@ -283,16 +262,13 @@ export function BlackHole({
   className,
   interactive = true,
   autoRotate = true,
-  themeColors = true,
   bloom = false,
-  physics,
   "aria-label": ariaLabel = ARIA_LABEL,
   ...rest
 }: BlackHoleProps) {
   const [failed, setFailed] = useState(false);
   const [inView, setInView] = useState(true);
   const shellRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const el = shellRef.current;
@@ -307,25 +283,14 @@ export function BlackHole({
     return () => io.disconnect();
   }, []);
 
-  const theme =
-    resolvedTheme === "light" || resolvedTheme === "dark"
-      ? resolvedTheme
-      : undefined;
-
-  // Pure build is cheap — no useMemo (avoids rest-object identity thrash)
-  const physicsBag = mergePhysicsOverrides(physics, pickPhysicsOverrides(rest));
-  const config = withLightThemeAccretion(
-    buildBlackHoleConfig({ physics: physicsBag }),
-    Boolean(themeColors && theme === "light"),
-  );
-
+  const config = buildBlackHoleConfig(pickPhysics(rest));
   const extent = binaryVisualExtent(config);
   const orbit = orbitDistanceLimits(config.cameraDistance, extent);
   const skyRadius = skyDomeRadius(orbit.max);
 
   const camera = useMemo(
     () => ({
-      fov: CAMERA_FOV_DEG,
+      fov: CAMERA.fovDeg,
       near: 0.1,
       far: Math.max(1000, skyRadius * 2),
       position: cameraPositionFromObserver(

@@ -1,4 +1,4 @@
-import type { BlackHoleConfig } from "../config";
+import type { BlackHoleConfig } from "../physics/config";
 
 /**
  * TSL / Three uniform bag entry. Host uses `uniform(...)` from three/tsl;

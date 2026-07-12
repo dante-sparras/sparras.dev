@@ -9,7 +9,7 @@ import {
   keplerOmega,
   kerrScales,
   photonSphereRadius,
-} from "../../components/black-hole/kerr";
+} from "../../components/black-hole/physics/kerr";
 
 describe("clampSpin", () => {
   test("passes through interior values", () => {

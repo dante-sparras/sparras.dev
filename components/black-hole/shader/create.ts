@@ -319,30 +319,13 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     const rgb = toned.mul(alpha).toVar("rgb");
     const peak = max(toned.x, max(toned.y, toned.z));
-    // Prefer keeping disk RGB wherever the disk is already bright
+    // Keep disk RGB where already bright; silhouettes fill empty sky near holes
     const brightCover = alpha.mul(
       smoothstep(float(GRADE.brightCoverLo), float(GRADE.brightCoverHi), peak),
     );
     rgb.assign(
       mix(rgb, vec3(0, 0, 0), silhouette.mul(float(1).sub(brightCover))),
     );
-    // Secondary matte only where disk is nearly empty (don't blacken gas)
-    const matte = silhouette
-      .mul(
-        float(1).sub(
-          smoothstep(float(GRADE.mattePeakLo), float(GRADE.mattePeakHi), peak),
-        ),
-      )
-      .mul(
-        float(1).sub(
-          smoothstep(
-            float(GRADE.matteAlphaLo),
-            float(GRADE.matteAlphaHi),
-            alpha,
-          ),
-        ),
-      );
-    rgb.assign(mix(rgb, vec3(0, 0, 0), matte.mul(GRADE.matteStrength)));
 
     const outA = max(alpha, silhouette).toVar("outA");
     rgb.assign(clamp(rgb, float(0), float(1)));

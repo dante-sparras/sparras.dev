@@ -1,13 +1,9 @@
-"use client";
-
 /**
  * RSC-safe hero banner (WebGPU black hole).
  * Next 16 only allows `dynamic(..., { ssr: false })` in Client Components.
  *
- * Accepts the same props as {@link BlackHole} — flat physics knobs or `physics`:
  * ```tsx
  * <HeroBanner spin={0.8} inclination={135} />
- * <HeroBanner physics={{ separation: 16 }} />
  * ```
  */
 import dynamic from "next/dynamic";

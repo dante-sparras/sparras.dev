@@ -4,7 +4,7 @@
  *
  * Spin axis in the banner is +Y (disk normal); orbital plane is XZ.
  *
- * @module components/black-hole/kerr-geodesic
+ * @module components/black-hole/physics/geodesic
  */
 
 import { clampSpin } from "./kerr";

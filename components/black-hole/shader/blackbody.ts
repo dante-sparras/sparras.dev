@@ -14,8 +14,8 @@ import {
   FIRE_RED,
   DEEP_RED,
   COOL_RUST,
-} from "../blackbody";
-import { PALETTE_LIMITS } from "../limits";
+} from "../physics/blackbody";
+import { PALETTE_LIMITS } from "../physics/limits";
 import { unitRange } from "./unit-range";
 
 function rgb(v) {

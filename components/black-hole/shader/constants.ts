@@ -1,8 +1,6 @@
 /**
  * Named numerical knobs for the raymarch / disk / grade pipeline.
  * Presentation + numerics only — not public physics knobs.
- *
- * Soft-capture / silhouette use GRADE only (no dead MARCH aliases).
  */
 
 export const MARCH = {
@@ -32,14 +30,12 @@ export const MARCH = {
 } as const;
 
 export const DISK = {
-  /** Radial soft-edge width near ISCO / outer rim. */
   softIn: 0.05,
   softOut: 0.08,
   scaleHeightFloor: 0.08,
   verticalExp: 1.2,
   verticalGateLo: 0.008,
   verticalGateHi: 0.2,
-  /** Relative brightness / optical-depth fudge (exposure stack). */
   brightnessScale: 0.38,
   heatBrightLo: 0.75,
   heatBrightHi: 1.2,
@@ -50,7 +46,6 @@ export const DISK = {
   odHeatHi: 1.15,
   odStepScale: 2.8,
   segmentOpacityCap: 0.55,
-  /** peakTemperature (1000 K units) warmer-bias window. */
   peakTCool: 28,
   peakTHot: 75,
   heatPow: 1.35,
@@ -61,24 +56,20 @@ export const DISK = {
 export const GRADE = {
   tonemapSoft: 0.55,
   tonemapGain: 1.15,
-  /** Chroma mix amount — must stay in [0, 1]. */
   chromaMix: 1,
   greenCapOfRed: 0.72,
   blueCapOfRed: 0.25,
-  /** Soft silhouette width as fraction of horizon (keep tight — avoids fat black halos). */
+  /** Soft silhouette width as fraction of horizon. */
   silAaHorizonFrac: 0.04,
   silAaScreenPx: 1.0,
-  /** Silhouette outer edge blend: 0 = horizon only, 1 = full photon sphere. */
+  /** Silhouette outer edge: 0 = horizon only, 1 = full photon sphere. */
   silPhotonMix: 0.35,
+  /**
+   * Where disk is bright, keep gas RGB under the silhouette
+   * (single cover term — no second matte pass).
+   */
   brightCoverLo: 0.02,
   brightCoverHi: 0.22,
-  mattePeakLo: 0.05,
-  mattePeakHi: 0.3,
-  matteAlphaLo: 0.05,
-  matteAlphaHi: 0.45,
-  /** Second matte pass — keep low so disk gas isn't painted black. */
-  matteStrength: 0.35,
-  /** Soft-capture radius in units of each hole's own photon sphere. */
   softCapturePhotonMul: 1.15,
   discardAlpha: 0.002,
   discardPeak: 0.002,

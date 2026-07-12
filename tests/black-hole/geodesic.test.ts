@@ -6,7 +6,7 @@ import { describe, expect, test } from "bun:test";
 import {
   chartWeight,
   localKerrNullStep,
-} from "../../components/black-hole/kerr-geodesic";
+} from "../../components/black-hole/physics/geodesic";
 
 function dirLen(d: readonly [number, number, number]): number {
   return Math.hypot(d[0], d[1], d[2]);
