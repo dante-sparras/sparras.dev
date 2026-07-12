@@ -195,67 +195,73 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       });
     });
 
-    // Soft horizon AA — outer edge near photon sphere
-    const aaW = max(fwidth(minR).mul(2.25), rs.mul(0.025));
+    // Soft horizon AA — silhouette is nearly circular (Schwarzschild shadow).
+    // Keep the outer edge near ~1.35 rs (not 1.55) so soft capture doesn't
+    // swallow the lower secondary ring into a second bent void.
+    const aaW = max(fwidth(minR).mul(2.0), rs.mul(0.02));
     const softCapture = float(1.0)
-      .sub(smoothstep(rs.mul(0.9).sub(aaW), rs.mul(1.55).add(aaW), minR))
+      .sub(smoothstep(rs.mul(0.9).sub(aaW), rs.mul(1.35).add(aaW), minR))
       .toVar("softCapture");
     If(captured.greaterThan(0.5), () => {
       softCapture.assign(1.0);
     });
 
-    // ── Lensed secondary disk images (upper dome + lower ring) ─────────────
-    // Primary march alone reads as a thin equator. Interstellar’s wrap is
-    // higher-order light: sample the disk again near the critical curve.
+    // ── Lensed secondary disk (bright ring only — never a second dark hole) ─
+    // Higher-order images live in a thin annulus around the photon sphere.
+    // Gate hard by softCapture so nothing paints *into* the event-horizon void
+    // (that was bending the lower silhouette from elevated views).
     const photonR = rs.mul(1.5);
     const distPhoton = minR.sub(photonR).abs();
-    const secondaryBand = float(1.0)
-      .sub(smoothstep(float(0.0), rs.mul(0.55), distPhoton))
-      .mul(float(1.0).sub(softCapture.mul(0.85)))
-      .toVar("secondaryBand");
+    // Thin annulus around photon sphere; zero inside the shadow
+    const ringAnnulus = float(1.0)
+      .sub(smoothstep(float(0.0), rs.mul(0.28), distPhoton))
+      .toVar("ringAnnulus");
+    const outsideShadow = float(1.0)
+      .sub(smoothstep(float(0.15), float(0.55), softCapture))
+      .toVar("outsideShadow");
+    const secondaryBand = ringAnnulus.mul(outsideShadow).toVar("secondaryBand");
 
-    If(secondaryBand.greaterThan(0.04).and(alpha.lessThan(0.97)), () => {
-      // Map closest approach → disk radius (inner bright secondary)
+    // Accumulate secondary as *emission only* into a separate buffer so we
+    // never create an opaque dark blob under the hole.
+    const secEmit = vec3(0.0, 0.0, 0.0).toVar("secEmit");
+    const secAlpha = float(0.0).toVar("secAlpha");
+
+    If(secondaryBand.greaterThan(0.05).and(alpha.lessThan(0.97)), () => {
       const secR = mix(
         innerR.mul(1.05),
-        outerR.mul(0.62),
-        clamp(minR.sub(rs.mul(1.15)).div(rs.mul(1.4)), float(0.0), float(1.0)),
+        outerR.mul(0.55),
+        clamp(minR.sub(rs.mul(1.2)).div(rs.mul(1.2)), float(0.0), float(1.0)),
       );
-      // Two opposite azimuths = near-side + far-side contribution
+      // World-space azimuth from bent ray (not screen-space — angle-stable)
       const a0 = atan(rayDir.z, rayDir.x);
       const a1 = a0.add(float(Math.PI));
       const secA = accretionDiskColor(secR, a0, uniforms.time, rayDir);
       const secB = accretionDiskColor(secR, a1, uniforms.time, rayDir);
-      // Bias lower screen half slightly (classic secondary ring below)
-      const lowerBias = smoothstep(float(0.15), float(-0.55), screenPos.y)
-        .mul(float(0.35))
-        .add(float(0.65));
-      const upperBias = smoothstep(float(-0.1), float(0.65), screenPos.y)
-        .mul(float(0.4))
-        .add(float(0.55));
-      // Mix opposites; weight by lobe
       const secMix = mix(secA, secB, float(0.5));
-      const lobeW = mix(lowerBias, upperBias, float(0.5)).mul(secondaryBand);
-      const rem = float(1.0).sub(alpha);
-      const w = lobeW.mul(float(0.72)).mul(rem);
-      color.addAssign(secMix.xyz.mul(secMix.w).mul(w));
-      alpha.addAssign(rem.mul(secMix.w).mul(lobeW).mul(float(0.55)));
 
-      // Extra lower-ring pass (far side of disk under the hole)
-      const secR2 = mix(innerR.mul(1.15), outerR.mul(0.48), float(0.4));
+      // Emission weight: bright filaments, little solid opacity
+      const w = secondaryBand.mul(float(0.85)).mul(float(1.0).sub(alpha));
+      secEmit.addAssign(secMix.xyz.mul(secMix.w).mul(w).mul(1.35));
+      secAlpha.addAssign(secMix.w.mul(w).mul(float(0.35)));
+
+      // Far-side lower wrap — still emission-only, weaker
       const secLow = accretionDiskColor(
-        secR2,
-        a0.add(float(1.2)),
+        mix(innerR.mul(1.1), outerR.mul(0.45), float(0.35)),
+        a0.add(float(1.15)),
         uniforms.time,
         rayDir,
       );
-      const lowW = lowerBias
-        .mul(secondaryBand)
-        .mul(float(0.5))
-        .mul(float(1.0).sub(alpha));
-      color.addAssign(secLow.xyz.mul(secLow.w).mul(lowW));
-      alpha.addAssign(float(1.0).sub(alpha).mul(secLow.w).mul(lowW).mul(0.8));
+      const lowW = secondaryBand.mul(float(0.4)).mul(float(1.0).sub(alpha));
+      secEmit.addAssign(secLow.xyz.mul(secLow.w).mul(lowW));
+      secAlpha.addAssign(secLow.w.mul(lowW).mul(float(0.25)));
     });
+
+    // Merge secondary emission into march buffer (behind primary only)
+    {
+      const rem = float(1.0).sub(alpha);
+      color.addAssign(secEmit.mul(rem));
+      alpha.addAssign(rem.mul(secAlpha).min(float(0.45)));
+    }
 
     const skyOk = float(1.0).sub(softCapture);
 
@@ -303,25 +309,30 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     const diskPm = toned.mul(diskA).toVar("diskPm");
     const remaining = float(1.0).sub(diskA);
-    const skyFade = pow(max(skyOk, float(0.0)), float(1.35));
+    // Sky/stars fully killed inside the shadow (keeps void pure)
+    const skyFade = pow(max(skyOk, float(0.0)), float(1.6));
     const skyW = remaining.mul(skyFade);
 
+    // Disk in front of the hole only — never let secondary/glow fill the void
     const rgb = diskPm.toVar("rgb");
     const outAlpha = diskA.toVar("outAlpha");
 
-    // Soft edge glow only (no plate fill that turned the disk into a white bar)
+    // Soft edge glow only outside deep capture
     const diskEnergy = max(diskPm.x, max(diskPm.y, diskPm.z));
-    const edgeGlow = fwidth(diskEnergy).mul(1.8).min(float(0.28));
+    const edgeGlow = fwidth(diskEnergy)
+      .mul(1.8)
+      .min(float(0.28))
+      .mul(float(1.0).sub(softCapture.mul(0.85)));
     rgb.addAssign(diskPm.mul(edgeGlow.mul(0.9)));
     outAlpha.assign(max(outAlpha, edgeGlow.mul(0.25)));
 
-    // Einstein-ring fill — warm white, not pure blown-out
+    // Einstein-ring fill — thin bright rim outside the void
     const ringCol = vec3(1.0, 0.94, 0.88);
-    const ring = photonMask.mul(float(0.55)).mul(skyOk.add(diskA.mul(0.4)));
+    const ring = photonMask.mul(float(0.55)).mul(skyOk.add(diskA.mul(0.35)));
     rgb.addAssign(ringCol.mul(ring));
-    const caustic = photonMask.mul(photonMask).mul(float(0.2));
+    const caustic = photonMask.mul(photonMask).mul(float(0.18)).mul(skyOk);
     rgb.addAssign(ringCol.mul(caustic));
-    outAlpha.assign(max(outAlpha, photonMask.mul(0.65)));
+    outAlpha.assign(max(outAlpha, photonMask.mul(skyOk).mul(0.65)));
 
     If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
       const n = nebCol.mul(skyW);
@@ -340,7 +351,12 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       );
     });
 
-    // Capture: pure black behind the disk
+    // Capture: pure black *behind* the disk. Wipe any residual light that
+    // leaked into the shadow so the silhouette stays a clean circle from
+    // every viewing angle (no bent lower void).
+    const holeBehind = softCapture.mul(float(1.0).sub(diskA));
+    // Where the hole is empty of disk, force pure black (premultiplied 0, a=1)
+    rgb.assign(mix(rgb, vec3(0.0, 0.0, 0.0), holeBehind));
     outAlpha.assign(max(outAlpha, softCapture));
 
     rgb.assign(clamp(rgb, float(0.0), float(1.05)));
