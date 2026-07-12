@@ -209,16 +209,15 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     const cover = mix(alpha, float(1.0), softCapture);
 
-    // Content only — never paint the void. Discard leaves the clear color
-    // (transparent) so the host shell `bg-background` shows through.
-    // WebGPU canvas uses alphaMode: 'premultiplied' when alpha:true.
-    const finalColor = contentTone.mul(cover).toVar("finalColor");
+    // Disk soft-edge: lit * coverage once (premultiplied contrib).
+    // Stars/nebula are additive. Do NOT multiply rgb by alpha again at the end
+    // (that was cover² and dulled rims/stars after bloom took over).
+    const rgb = contentTone.mul(cover).toVar("rgb");
     const outAlpha = cover.toVar("outAlpha");
 
     If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
       const n = nebCol.mul(float(1.0).sub(alpha)).mul(skyOk);
-      finalColor.addAssign(n);
-      // Coverage from nebula so dim haze is not discarded
+      rgb.addAssign(n);
       const nLuma = max(n.x, max(n.y, n.z));
       outAlpha.assign(max(outAlpha, nLuma.mul(2.0).min(float(1.0))));
     });
@@ -226,19 +225,18 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     If(uniforms.starsEnabled.greaterThan(0.5), () => {
       const starsLit = pow(max(starsCol, vec3(0.0)), vec3(1.0 / 2.2)).mul(3.0);
       const s = starsLit.mul(float(1.0).sub(alpha)).mul(skyOk);
-      finalColor.addAssign(s);
-      // Stars are sparse/dim — boost coverage so Discard + PM don't erase them
+      rgb.addAssign(s);
       const sLuma = max(s.x, max(s.y, s.z));
       outAlpha.assign(max(outAlpha, sLuma.mul(6.0).min(float(1.0))));
     });
 
-    finalColor.assign(clamp(finalColor, float(0.0), float(1.12)));
+    rgb.assign(clamp(rgb, float(0.0), float(1.12)));
     outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
 
-    // Hard void cut (empty sky only). Threshold stays low so dim stars survive.
+    // Empty sky → transparent clear (CSS bg-background).
     Discard(outAlpha.lessThan(0.002));
 
-    // Premultiply once here. Bloom must not multiply by alpha again.
-    return finalColor.mul(outAlpha).toVec4(outAlpha);
+    // rgb is already the buffer color (PM disk + additive stars).
+    return rgb.toVec4(outAlpha);
   })();
 }
