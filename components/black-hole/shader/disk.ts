@@ -1,8 +1,10 @@
 // @ts-nocheck
 // Three.js TSL Fn() callbacks are not accurately typed (NodeBuilder iterable errors).
 
-/** Accretion disk: blackbody, Doppler, turbulence, ink/emissive modes. */
-
+/**
+ * Accretion disk (Interstellar / Gargantua-inspired look):
+ * filamentary Keplerian streamlines, warm peach palette, Doppler + redshift.
+ */
 import type { BlackHoleUniforms } from "../mesh";
 import {
   vec3,
@@ -17,6 +19,7 @@ import {
   cos,
   abs,
   max,
+  log,
   dot,
   mix,
   smoothstep,
@@ -24,79 +27,85 @@ import {
 import { fbm } from "./noise";
 import { blackbodyColor } from "./blackbody";
 
-// Accretion disk color with blackbody temperature, Doppler beaming, and turbulence
 export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
   Fn(([hitR, hitAngle, time, rayDir]) => {
     const innerR = uniforms.diskInnerRadius;
     const outerR = uniforms.diskOuterRadius;
     const normR = clamp(
-      hitR.sub(innerR).div(outerR.sub(innerR)),
+      hitR.sub(innerR).div(max(outerR.sub(innerR), float(1.0e-3))),
       float(0.0),
       float(1.0),
     );
 
-    // Temperature profile: T(r) = T_peak × (r_inner / r)^α
-    // Inner disk is hotter (more gravitational energy released)
-    // Standard thin disk model uses α ≈ 0.75
+    // Blackbody temperature profile
     const peakTempK = uniforms.diskTemperature.mul(1000.0);
     const tempK = peakTempK.mul(
-      pow(innerR.div(hitR), uniforms.temperatureFalloff),
+      pow(innerR.div(max(hitR, float(1.0e-3))), uniforms.temperatureFalloff),
     );
     const diskColor = blackbodyColor(tempK).toVar("diskColor");
 
-    // Site-tuned: blend blackbody toward luminance for monochrome UI harmony
-    const diskLum = dot(diskColor, vec3(0.2126, 0.7152, 0.0722)).toVar(
-      "diskLum",
+    // Keep some blackbody chroma, then push toward warm peach / white-hot
+    const diskLum = dot(diskColor, vec3(0.2126, 0.7152, 0.0722));
+    diskColor.assign(
+      mix(vec3(diskLum, diskLum, diskLum), diskColor, uniforms.diskSaturation),
     );
-    const monoDisk = vec3(diskLum, diskLum, diskLum);
-    diskColor.assign(mix(monoDisk, diskColor, uniforms.diskSaturation));
-
-    // Mild warm shift on the inner disk (hotter gas), keeps outer cooler tone
-    const warmInner = mix(
-      vec3(1.0, 0.92, 0.86),
-      vec3(1.0, 1.0, 1.0),
-      smoothstep(float(0.0), float(0.55), normR),
+    // Reference palette: cream core → coral/peach mid → dusty outer
+    const palette = mix(
+      vec3(1.0, 0.94, 0.9),
+      mix(vec3(1.05, 0.72, 0.55), vec3(0.85, 0.55, 0.42), normR),
+      smoothstep(float(0.0), float(0.85), normR),
     );
-    diskColor.mulAssign(warmInner);
+    diskColor.mulAssign(palette);
+    // Hot inner white-pink
+    diskColor.assign(
+      mix(
+        diskColor,
+        vec3(1.05, 0.98, 0.96),
+        float(1.0)
+          .sub(smoothstep(float(0.0), float(0.28), normR))
+          .mul(0.55),
+      ),
+    );
 
-    // Gravitational redshift (approx): dim + cool as r → rs (hit on equator ⇒ r ≈ hitR)
+    // Gravitational redshift (dim + cool near rs)
     const rs = uniforms.blackHoleMass.mul(2.0);
     const rSafe = max(hitR, rs.mul(1.05));
     const gRedshift = sqrt(max(float(1.0).sub(rs.div(rSafe)), float(0.12)));
-    diskColor.mulAssign(mix(float(0.62), float(1.0), gRedshift));
+    diskColor.mulAssign(mix(float(0.55), float(1.0), gRedshift));
     diskColor.assign(
-      mix(diskColor.mul(vec3(1.06, 0.78, 0.58)), diskColor, gRedshift),
+      mix(diskColor.mul(vec3(1.08, 0.72, 0.5)), diskColor, gRedshift),
     );
 
-    // Doppler beaming: D = 1/(1 - β·cos(θ)), brightness ∝ D³
+    // Doppler beaming
     const rotationSign = sign(uniforms.diskRotationSpeed);
     const velocityDir = vec3(
       sin(hitAngle).negate().mul(rotationSign),
       float(0.0),
       cos(hitAngle).mul(rotationSign),
     );
-    const velocityMagnitude = float(1.0).div(sqrt(hitR.div(innerR)));
-    const beta = velocityMagnitude.mul(0.3);
+    const velocityMagnitude = float(1.0).div(
+      sqrt(max(hitR.div(innerR), float(0.2))),
+    );
+    const beta = velocityMagnitude.mul(0.32);
     const cosTheta = dot(velocityDir, rayDir);
     const dopplerFactor = float(1.0).div(float(1.0).sub(beta.mul(cosTheta)));
     const dopplerBoost = pow(
       dopplerFactor,
-      float(2.2).mul(uniforms.dopplerStrength),
+      float(2.4).mul(uniforms.dopplerStrength),
     );
-    // Narrower range → less harsh bright/dark split around the disk
-    const dopplerClamped = clamp(dopplerBoost, float(0.55), float(1.85));
+    const dopplerClamped = clamp(dopplerBoost, float(0.42), float(2.15));
     diskColor.mulAssign(dopplerClamped);
-    // Subtle chroma: approaching side cooler, receding warmer
+    // Approaching cooler-white, receding warmer peach
     const dSide = clamp(
-      dopplerClamped.sub(float(1.0)).mul(0.55).add(float(0.5)),
+      dopplerClamped.sub(float(1.0)).mul(0.5).add(float(0.5)),
       float(0.0),
       float(1.0),
     );
     diskColor.mulAssign(
-      mix(vec3(1.08, 0.9, 0.82), vec3(0.9, 0.95, 1.08), dSide),
+      mix(vec3(1.12, 0.82, 0.68), vec3(0.95, 0.96, 1.05), dSide),
     );
 
-    // Edge falloff
+    // Radial edges
     const edgeFalloff = smoothstep(
       float(0.0),
       uniforms.diskEdgeSoftnessInner,
@@ -109,81 +118,113 @@ export const createAccretionDiskColor = (uniforms: BlackHoleUniforms) =>
       ),
     );
 
-    // Viewing-angle limb: slightly denser when edge-on (banner camera is below)
     const limb = mix(
-      float(0.88),
-      float(1.12),
-      float(1.0).sub(abs(rayDir.y).mul(0.9).min(float(1.0))),
+      float(0.9),
+      float(1.15),
+      float(1.0).sub(abs(rayDir.y).mul(0.85).min(float(1.0))),
     );
 
-    // Turbulent ring pattern with cyclic time to prevent winding artifacts
-    const ringOpacity = float(1.0).toVar("ringOpacity");
+    // ── Filamentary Keplerian streamlines (reference look) ─────────────────
     const cycleLength = uniforms.turbulenceCycleTime;
     const cyclicTime = time.mod(cycleLength);
     const blendFactor = cyclicTime.div(cycleLength);
 
-    // Keplerian rotation: inner regions rotate faster (ω ∝ r^-1.5)
-    const keplerianPhase1 = cyclicTime
+    const kepler1 = cyclicTime
       .mul(uniforms.diskRotationSpeed)
-      .div(pow(hitR, float(1.5)));
-    const keplerianPhase2 = cyclicTime
+      .div(pow(max(hitR, float(0.5)), float(1.5)));
+    const kepler2 = cyclicTime
       .add(cycleLength)
       .mul(uniforms.diskRotationSpeed)
-      .div(pow(hitR, float(1.5)));
-    const rotatedAngle1 = hitAngle.add(keplerianPhase1);
-    const rotatedAngle2 = hitAngle.add(keplerianPhase2);
+      .div(pow(max(hitR, float(0.5)), float(1.5)));
+    const ang1 = hitAngle.add(kepler1);
+    const ang2 = hitAngle.add(kepler2);
 
-    // Anisotropic noise sampling: radial creates rings, azimuthal creates arcs
+    // Strong azimuthal stretch → long orbital streamlines
+    const stretch = max(uniforms.turbulenceStretch, float(0.1));
     const noiseCoord1 = vec3(
       hitR.mul(uniforms.turbulenceScale),
-      cos(rotatedAngle1).div(uniforms.turbulenceStretch.max(0.1)),
-      sin(rotatedAngle1).div(uniforms.turbulenceStretch.max(0.1)),
+      cos(ang1).div(stretch),
+      sin(ang1).div(stretch),
     );
     const noiseCoord2 = vec3(
       hitR.mul(uniforms.turbulenceScale),
-      cos(rotatedAngle2).div(uniforms.turbulenceStretch.max(0.1)),
-      sin(rotatedAngle2).div(uniforms.turbulenceStretch.max(0.1)),
+      cos(ang2).div(stretch),
+      sin(ang2).div(stretch),
     );
 
-    const turbulence1 = fbm(
+    const turb1 = fbm(
       noiseCoord1,
       uniforms.turbulenceLacunarity,
       uniforms.turbulencePersistence,
     );
-    const turbulence2 = fbm(
+    const turb2 = fbm(
       noiseCoord2,
       uniforms.turbulenceLacunarity,
       uniforms.turbulencePersistence,
     );
-    const turbulence = mix(turbulence2, turbulence1, blendFactor);
-    // Soft structure on a high floor — disk should read solid / filled, not sparse
-    const turb01 = clamp(turbulence, float(0.0), float(1.0));
-    const turbShaped = pow(turb01, uniforms.turbulenceSharpness);
-    // High base (~0.86) + light modulation so wisps sit on a filled ring
-    ringOpacity.assign(mix(float(0.86), float(1.0), turbShaped.mul(0.5)));
+    const turb = mix(turb2, turb1, blendFactor);
+    const turb01 = clamp(turb, float(0.0), float(1.0));
 
-    // Denser near the void (inner edge); slightly airier only at outer rim
-    const innerFill = mix(
-      float(1.2),
-      float(0.95),
-      smoothstep(float(0.0), float(0.65), normR),
+    // Log-spiral arms + fine streaks (flow lines)
+    const logR = log(max(hitR.div(innerR), float(1.0e-2)));
+    const spiralBase1 = ang1.mul(2.2).add(logR.mul(3.4));
+    const spiralBase2 = ang2.mul(2.2).add(logR.mul(3.4));
+    const spiralBase = mix(spiralBase2, spiralBase1, blendFactor);
+
+    // Broad bright lanes
+    const lane = pow(abs(sin(spiralBase)).mul(0.5).add(0.5), float(2.8));
+    // Fine filament striations
+    const fine = pow(
+      abs(sin(spiralBase.mul(5.5).add(turb01.mul(6.28318))))
+        .mul(0.5)
+        .add(0.5),
+      float(6.5),
     );
+    // FBM modulates which lanes light up
+    const turbShaped = pow(turb01, uniforms.turbulenceSharpness);
+    const filaments = clamp(
+      lane
+        .mul(0.55)
+        .add(fine.mul(0.85))
+        .mul(mix(float(0.55), float(1.25), turbShaped))
+        .add(turbShaped.mul(0.2)),
+      float(0.0),
+      float(1.5),
+    );
+
+    // Structure-heavy opacity: dark gaps + bright streamlines (not a solid plate)
+    const ringOpacity = mix(
+      float(0.12),
+      float(1.0),
+      filaments.mul(0.75).min(float(1.0)),
+    );
+
+    // Brighter emission on dense filaments (streaks of light)
+    diskColor.mulAssign(
+      mix(float(0.35), float(1.45), filaments.min(float(1.0))),
+    );
+
+    // Denser / hotter near the void
+    const innerFill = mix(
+      float(1.35),
+      float(0.85),
+      smoothstep(float(0.0), float(0.55), normR),
+    );
+
     const finalOpacity = clamp(
       ringOpacity.mul(edgeFalloff).mul(innerFill).mul(limb),
       float(0.0),
       float(1.0),
     );
 
-    // Emissive (dark UI) vs ink stamp (light UI)
-    // ink: solid dark tint; structure comes from opacity only
     const diskTintRgb = uniforms.diskTint.xyz.mul(uniforms.diskTint.w);
-    // Mild soft-knee: keep punch, avoid pure white blowout
     const emissiveRaw = diskColor.mul(diskTintRgb).mul(uniforms.diskBrightness);
-    const emissiveSoft = emissiveRaw.div(emissiveRaw.add(vec3(1.0))).mul(1.35);
-    const emissiveCol = mix(emissiveRaw, emissiveSoft, float(0.55));
+    const emissiveSoft = emissiveRaw.div(emissiveRaw.add(vec3(0.85))).mul(1.4);
+    const emissiveCol = mix(emissiveRaw, emissiveSoft, float(0.45));
     const inkCol = diskTintRgb;
     const finalColor = mix(emissiveCol, inkCol, uniforms.diskInkMode);
     const inkBoost = mix(float(1.0), float(1.45), uniforms.diskInkMode);
+
     return vec4(
       finalColor,
       clamp(finalOpacity.mul(inkBoost), float(0.0), float(1.0)),

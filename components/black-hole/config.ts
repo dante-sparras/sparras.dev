@@ -99,31 +99,32 @@ const VOID = "#050505";
 
 export const defaultBlackHoleConfig = {
   blackHoleMass: 0.4,
-  gravitationalLensing: 3.05,
-  dopplerStrength: 0.62,
+  gravitationalLensing: 3.45,
+  dopplerStrength: 0.78,
 
-  diskInnerRadius: 4.0,
-  diskOuterRadius: 14.5,
-  diskBrightness: 4.8,
-  diskTemperature: 52,
-  temperatureFalloff: 0.48,
-  diskEdgeSoftnessInner: 0.48,
-  diskEdgeSoftnessOuter: 0.72,
-  diskSaturation: 1.0,
-  diskScaleHeight: 0.32,
+  diskInnerRadius: 3.6,
+  diskOuterRadius: 15.5,
+  diskBrightness: 5.6,
+  diskTemperature: 58,
+  temperatureFalloff: 0.55,
+  diskEdgeSoftnessInner: 0.35,
+  diskEdgeSoftnessOuter: 0.85,
+  diskSaturation: 0.85,
+  diskScaleHeight: 0.48,
 
-  turbulenceScale: 1.15,
-  turbulenceStretch: 6.0,
-  turbulenceSharpness: 1.2,
-  diskRotationSpeed: -8.7,
-  turbulenceCycleTime: 5,
-  turbulenceLacunarity: 2.1,
-  turbulencePersistence: 0.55,
+  // Strong azimuthal stretch → Interstellar-style streamlines
+  turbulenceScale: 1.85,
+  turbulenceStretch: 16.0,
+  turbulenceSharpness: 1.65,
+  diskRotationSpeed: -9.5,
+  turbulenceCycleTime: 6,
+  turbulenceLacunarity: 2.25,
+  turbulencePersistence: 0.48,
 
   starsEnabled: true,
-  starDensity: 0.05,
-  starSize: 1.3,
-  starBrightness: 0.14,
+  starDensity: 0.04,
+  starSize: 1.25,
+  starBrightness: 0.12,
 
   nebulaEnabled: false,
   nebula1Scale: 2,
@@ -135,14 +136,15 @@ export const defaultBlackHoleConfig = {
   bloomRadius: 0.32,
   bloomThreshold: 0.36,
 
-  stepSize: 0.7,
+  stepSize: 0.65,
   diskInkMode: 0,
 
   starBackgroundColor: VOID,
   nebula1Color: "#000000",
   nebula2Color: "#121212",
   starTint: "#b0b4c0",
-  diskTint: "#fafafa",
+  // Warm cream tint (matches reference peach/white disk)
+  diskTint: "#ffe8dc",
 } as const satisfies BlackHoleConfig;
 
 // ── Theme colors ────────────────────────────────────────────────────────────

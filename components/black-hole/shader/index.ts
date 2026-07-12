@@ -114,9 +114,9 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
         float(0.0),
         float(1.0),
       );
-      // Mild flare: thinner near ISCO, thicker outer rim
+      // Mild flare + taller mid for the “dome” over the hole
       const scaleH = uniforms.diskScaleHeight.mul(
-        mix(float(0.55), float(1.55), pow(normR, float(0.65))),
+        mix(float(0.65), float(1.85), pow(normR, float(0.55))),
       );
       const absY = abs(rayPos.y);
       // Soft radial gate (0–1 floats — no boolean .toFloat())
@@ -161,16 +161,16 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
           float(1.0),
         );
         const mH = uniforms.diskScaleHeight.mul(
-          mix(float(0.55), float(1.55), pow(mNorm, float(0.65))),
+          mix(float(0.65), float(1.85), pow(mNorm, float(0.55))),
         );
         const mAbsY = abs(mid.y);
-        // Gaussian vertical profile (puffed torus-like slab)
+        // Gaussian vertical profile — taller = more volume dome
         const yOverH = mAbsY.div(max(mH, float(1.0e-4)));
         const vert = exp(yOverH.mul(yOverH).negate());
         const inVol = mR
           .greaterThan(innerR)
           .and(mR.lessThan(outerR))
-          .and(vert.greaterThan(0.012));
+          .and(vert.greaterThan(0.008));
 
         If(inVol, () => {
           const hitAngle = atan(mid.z, mid.x);
@@ -181,15 +181,12 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
             rayDir,
           );
 
-          // Beer–Lambert: optical depth ∝ density × structure opacity × path
-          // ~2.6 tunes integrated optical depth close to the old thin-disk look
-          // while reading as volume when viewed edge-on.
-          const dens = vert.mul(diskResult.w).mul(float(2.65));
+          // Slightly lower bulk density so filaments read through volume
+          const dens = vert.mul(diskResult.w).mul(float(2.2));
           const optical = dens.mul(dt);
           const stepA = float(1.0).sub(exp(optical.negate())).min(float(1.0));
 
           const remainingAlpha = float(1.0).sub(alpha);
-          // Emission: disk color already includes brightness; weight by step alpha
           color.addAssign(diskResult.xyz.mul(stepA).mul(remainingAlpha));
           alpha.addAssign(remainingAlpha.mul(stepA));
         });
@@ -244,21 +241,17 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       float(0.28),
     ).toVar("toned");
 
-    // Photon sphere / Einstein ring
+    // Photon sphere / Einstein ring — thin bright rim like the reference
     const photonR = rs.mul(1.5);
     const distPhoton = minR.sub(photonR).abs();
-    const photonAa = max(fwidth(minR).mul(2.8), rs.mul(0.04));
+    const photonAa = max(fwidth(minR).mul(2.2), rs.mul(0.028));
     const photonMask = float(1.0)
-      .sub(smoothstep(float(0.0), photonAa.add(rs.mul(0.1)), distPhoton))
+      .sub(smoothstep(float(0.0), photonAa.add(rs.mul(0.05)), distPhoton))
       .toVar("photonMask");
-    // Boost disk on the critical curve
-    toned.assign(mix(toned, toned.mul(1.22), photonMask));
+    // Hot disk boost on critical curve
+    toned.assign(mix(toned, toned.mul(1.35), photonMask));
     toned.assign(
-      mix(
-        toned,
-        toned.div(toned.add(vec3(0.85))).mul(1.06),
-        photonMask.mul(0.28),
-      ),
+      mix(toned, toned.div(toned.add(vec3(0.7))).mul(1.1), photonMask.mul(0.4)),
     );
 
     const diskPm = toned.mul(diskA).toVar("diskPm");
@@ -277,14 +270,14 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     rgb.addAssign(diskPm.mul(float(0.12)));
     outAlpha.assign(max(outAlpha, edgeGlow.mul(0.35)));
 
-    // Einstein-ring fill light (visible even with thin disk alpha)
-    const ringCol = vec3(1.0, 0.96, 0.9);
-    const ring = photonMask.mul(float(0.5)).mul(skyOk.add(diskA.mul(0.4)));
+    // Einstein-ring fill — crisp white-hot rim
+    const ringCol = vec3(1.05, 0.98, 0.94);
+    const ring = photonMask.mul(float(0.72)).mul(skyOk.add(diskA.mul(0.5)));
     rgb.addAssign(ringCol.mul(ring));
-    // Thin outer caustic
-    const caustic = photonMask.mul(photonMask).mul(float(0.18));
+    // Thin outer caustic (second bright filament of the critical curve)
+    const caustic = photonMask.mul(photonMask).mul(float(0.28));
     rgb.addAssign(ringCol.mul(caustic));
-    outAlpha.assign(max(outAlpha, photonMask.mul(0.6)));
+    outAlpha.assign(max(outAlpha, photonMask.mul(0.75)));
 
     If(uniforms.nebulaEnabled.greaterThan(0.5), () => {
       const n = nebCol.mul(skyW);
