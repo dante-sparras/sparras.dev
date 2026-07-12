@@ -195,72 +195,99 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       });
     });
 
-    // Soft horizon AA — silhouette is nearly circular (Schwarzschild shadow).
-    // Keep the outer edge near ~1.35 rs (not 1.55) so soft capture doesn't
-    // swallow the lower secondary ring into a second bent void.
+    // Soft horizon — circular Schwarzschild shadow.
+    // hardBlack = deep interior only (one continuous void core).
+    // softCapture = broader for opacity / sky kill.
     const aaW = max(fwidth(minR).mul(2.0), rs.mul(0.02));
     const softCapture = float(1.0)
-      .sub(smoothstep(rs.mul(0.9).sub(aaW), rs.mul(1.35).add(aaW), minR))
+      .sub(smoothstep(rs.mul(0.9).sub(aaW), rs.mul(1.4).add(aaW), minR))
       .toVar("softCapture");
     If(captured.greaterThan(0.5), () => {
       softCapture.assign(1.0);
     });
+    // Deep core only — pure black. Soft fringe can hold secondary wrap light.
+    const hardBlack = smoothstep(float(0.62), float(0.94), softCapture).toVar(
+      "hardBlack",
+    );
 
-    // ── Lensed secondary disk (bright ring only — never a second dark hole) ─
-    // Higher-order images live in a thin annulus around the photon sphere.
-    // Gate hard by softCapture so nothing paints *into* the event-horizon void
-    // (that was bending the lower silhouette from elevated views).
+    // ── Lensed secondary / higher-order disk ───────────────────────────────
+    // Interstellar look: ONE black void core + bright disk wrap that fills the
+    // lower half so the silhouette is not split into two empty black pieces.
     const photonR = rs.mul(1.5);
     const distPhoton = minR.sub(photonR).abs();
-    // Thin annulus around photon sphere; zero inside the shadow
+    // Photon-sphere annulus
     const ringAnnulus = float(1.0)
-      .sub(smoothstep(float(0.0), rs.mul(0.28), distPhoton))
+      .sub(smoothstep(float(0.0), rs.mul(0.42), distPhoton))
       .toVar("ringAnnulus");
-    const outsideShadow = float(1.0)
-      .sub(smoothstep(float(0.15), float(0.55), softCapture))
-      .toVar("outsideShadow");
-    const secondaryBand = ringAnnulus.mul(outsideShadow).toVar("secondaryBand");
+    // Soft near-hole band (not deep core) — where secondary wrap lives
+    const softFringe = softCapture
+      .mul(float(1.0).sub(hardBlack))
+      .toVar("softFringe");
+    // View-stable lower half of the BH on screen (fills the lower wrap)
+    const lowerHalf = smoothstep(float(0.2), float(-0.45), screenPos.y).toVar(
+      "lowerHalf",
+    );
 
-    // Accumulate secondary as *emission only* into a separate buffer so we
-    // never create an opaque dark blob under the hole.
+    // Allow secondary on photon ring + soft fringe; never in hard black core
+    const secondaryBand = float(1.0)
+      .sub(hardBlack)
+      .mul(max(ringAnnulus, softFringe.mul(0.9)))
+      .toVar("secondaryBand");
+
     const secEmit = vec3(0.0, 0.0, 0.0).toVar("secEmit");
     const secAlpha = float(0.0).toVar("secAlpha");
 
-    If(secondaryBand.greaterThan(0.05).and(alpha.lessThan(0.97)), () => {
+    If(secondaryBand.greaterThan(0.03).and(alpha.lessThan(0.98)), () => {
       const secR = mix(
-        innerR.mul(1.05),
-        outerR.mul(0.55),
-        clamp(minR.sub(rs.mul(1.2)).div(rs.mul(1.2)), float(0.0), float(1.0)),
+        innerR.mul(1.02),
+        outerR.mul(0.7),
+        clamp(minR.sub(rs.mul(1.05)).div(rs.mul(1.6)), float(0.0), float(1.0)),
       );
-      // World-space azimuth from bent ray (not screen-space — angle-stable)
       const a0 = atan(rayDir.z, rayDir.x);
       const a1 = a0.add(float(Math.PI));
       const secA = accretionDiskColor(secR, a0, uniforms.time, rayDir);
       const secB = accretionDiskColor(secR, a1, uniforms.time, rayDir);
+      // Prefer the brighter of two sides (lensed near/far)
       const secMix = mix(secA, secB, float(0.5));
+      const brightSide = mix(secA, secB, step(secA.w, secB.w));
 
-      // Emission weight: bright filaments, little solid opacity
-      const w = secondaryBand.mul(float(0.85)).mul(float(1.0).sub(alpha));
-      secEmit.addAssign(secMix.xyz.mul(secMix.w).mul(w).mul(1.35));
-      secAlpha.addAssign(secMix.w.mul(w).mul(float(0.35)));
+      // Lower half of the silhouette gets a strong filled disk wrap
+      // (so the void stays ONE core, not two empty black lobes).
+      const lobeBoost = mix(float(0.55), float(1.85), lowerHalf);
+      const w = secondaryBand
+        .mul(lobeBoost)
+        .mul(float(1.0).sub(alpha))
+        .mul(float(0.95));
 
-      // Far-side lower wrap — still emission-only, weaker
+      secEmit.addAssign(
+        mix(secMix.xyz, brightSide.xyz, float(0.45))
+          .mul(mix(secMix.w, brightSide.w, float(0.45)))
+          .mul(w)
+          .mul(1.5),
+      );
+      secAlpha.addAssign(
+        mix(secMix.w, brightSide.w, float(0.45)).mul(w).mul(float(0.55)),
+      );
+
+      // Extra underside / far-side sample for the lower wrap
       const secLow = accretionDiskColor(
-        mix(innerR.mul(1.1), outerR.mul(0.45), float(0.35)),
-        a0.add(float(1.15)),
+        mix(innerR.mul(1.08), outerR.mul(0.55), float(0.4)),
+        a0.add(float(1.0)),
         uniforms.time,
         rayDir,
       );
-      const lowW = secondaryBand.mul(float(0.4)).mul(float(1.0).sub(alpha));
-      secEmit.addAssign(secLow.xyz.mul(secLow.w).mul(lowW));
-      secAlpha.addAssign(secLow.w.mul(lowW).mul(float(0.25)));
+      const lowW = secondaryBand
+        .mul(mix(float(0.25), float(1.1), lowerHalf))
+        .mul(float(1.0).sub(alpha));
+      secEmit.addAssign(secLow.xyz.mul(secLow.w).mul(lowW).mul(1.25));
+      secAlpha.addAssign(secLow.w.mul(lowW).mul(float(0.45)));
     });
 
-    // Merge secondary emission into march buffer (behind primary only)
+    // Merge secondary behind primary disk
     {
       const rem = float(1.0).sub(alpha);
       color.addAssign(secEmit.mul(rem));
-      alpha.addAssign(rem.mul(secAlpha).min(float(0.45)));
+      alpha.addAssign(rem.mul(secAlpha).min(float(0.72)));
     }
 
     const skyOk = float(1.0).sub(softCapture);
@@ -351,13 +378,17 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       );
     });
 
-    // Capture: pure black *behind* the disk. Wipe any residual light that
-    // leaked into the shadow so the silhouette stays a clean circle from
-    // every viewing angle (no bent lower void).
-    const holeBehind = softCapture.mul(float(1.0).sub(diskA));
-    // Where the hole is empty of disk, force pure black (premultiplied 0, a=1)
+    // Capture: pure black only in the *deep* core, behind primary disk.
+    // Soft fringe keeps secondary wrap light so the lower lobe is filled disk
+    // (one void core) instead of a second empty black oval.
+    const holeBehind = hardBlack.mul(float(1.0).sub(diskA));
     rgb.assign(mix(rgb, vec3(0.0, 0.0, 0.0), holeBehind));
-    outAlpha.assign(max(outAlpha, softCapture));
+    // Opacity: deep core always opaque; soft fringe only if no bright wrap
+    const wrapLuma = max(rgb.x, max(rgb.y, rgb.z));
+    const softHoleA = softCapture.mul(
+      float(1.0).sub(smoothstep(float(0.02), float(0.12), wrapLuma)),
+    );
+    outAlpha.assign(max(outAlpha, max(hardBlack, softHoleA)));
 
     rgb.assign(clamp(rgb, float(0.0), float(1.05)));
     outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
