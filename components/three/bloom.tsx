@@ -3,9 +3,9 @@
 /**
  * TSL bloom via RenderPipeline — optional glow only.
  *
- * Scene shader already writes *premultiplied* RGBA (WebGPU canvas is
- * alphaMode:'premultiplied'). Bloom must ADD glow and must NOT multiply
- * scene.rgb by alpha again (that double-PM blacks disk rims and kills stars).
+ * Black-hole shader writes a buffer that is already correct for a
+ * premultiplied WebGPU canvas (disk = lit*coverage, stars additive).
+ * Bloom must only ADD glow — never re-scale scene.rgb by alpha.
  *
  * If setup fails, bloom is skipped; the scene still renders normally.
  */
@@ -108,12 +108,19 @@ export function Bloom({
         gl.setClearAlpha(0);
 
         const post = new Ctor(gl) as Pipeline;
+        // No extra tone-map / color-space pass — matches direct canvas path.
         post.outputColorTransform = false;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const scenePass: any = pass(scene, camera);
         scenePass.transparent = true;
         scenePass.opaque = true;
+
+        // Display-referred values in the RT — do not treat as sRGB textures.
+        if (scenePass.renderTarget?.texture) {
+          scenePass.renderTarget.texture.colorSpace = THREE.NoColorSpace;
+        }
+
         const sceneColor = scenePass.getTextureNode();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,23 +132,20 @@ export function Bloom({
           initial.current.threshold,
         );
 
-        // sceneColor is already premultiplied (rgb*a, a) from the black-hole shader.
-        // Bloom glow is additive. Do NOT mul scene by alpha again.
+        // scene.rgb is already the final buffer color (PM disk + additive stars).
+        // Bloom is additive only — do not multiply by alpha.
         const bloomRgb = node.rgb;
-        const sceneRgb = sceneColor.rgb;
         const bloomLuma = max(bloomRgb.r, max(bloomRgb.g, bloomRgb.b));
-        // Only lift alpha where bloom is actually visible (keep void transparent).
         const bloomA = bloomLuma
           .sub(float(0.02))
           .max(float(0.0))
           .mul(float(1.1))
           .min(float(1.0));
         const outA = max(sceneColor.a, bloomA);
-        // Additive composite; preserve premultiplied scene rgb.
-        post.outputNode = sceneRgb.add(bloomRgb).toVec4(outA);
+        post.outputNode = sceneColor.rgb.add(bloomRgb).toVec4(outA);
         post.needsUpdate = true;
 
-        // Compose quad must blend (default NodeMaterial is opaque).
+        // Compose quad must blend so a=0 void stays transparent.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle -- three.js private API
         const quad = (post as any)._quadMesh;
         if (quad?.material) {
