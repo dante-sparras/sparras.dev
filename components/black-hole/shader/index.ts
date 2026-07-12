@@ -222,7 +222,7 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
       );
       // Two opposite azimuths = near-side + far-side contribution
       const a0 = atan(rayDir.z, rayDir.x);
-      const a1 = a0.add(float(3.14159265));
+      const a1 = a0.add(float(Math.PI));
       const secA = accretionDiskColor(secR, a0, uniforms.time, rayDir);
       const secB = accretionDiskColor(secR, a1, uniforms.time, rayDir);
       // Bias lower screen half slightly (classic secondary ring below)
