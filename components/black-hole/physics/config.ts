@@ -82,7 +82,7 @@ export type PhysicsParams = Partial<{
 
   /**
    * Secondary mass **M₂** in **geometric units** (G = c = 1) — **not** solar masses.
-   * Independent of M₁ (unlike the old mass ratio). Larger → bigger secondary.
+   * Independent of M₁. Larger → bigger secondary.
    * - Clamped ≥ {@link PHYSICS_LIMITS.massMin}
    * @defaultValue 0.75
    */
@@ -189,15 +189,13 @@ export type BlackHoleConfig = {
   primaryMass: number;
   secondaryMass: number;
   totalMass: number;
-  /** Derived convenience: q = M₂ / M₁ (not a public knob). */
+  /** Derived: q = M₂ / M₁ (not a public knob). */
   massRatio: number;
   separation: number;
   /** Ω = √(M_tot / d³) */
   orbitalFrequency: number;
 
   spin: number;
-  /** Primary dimensional spin a = χ M₁ */
-  primarySpinA: number;
   eventHorizonPrimary: number;
   eventHorizonSecondary: number;
   photonSpherePrimary: number;
@@ -226,10 +224,7 @@ export type BlackHoleConfig = {
 
 /**
  * Site physics defaults for the hero banner.
- * Edit here for production look, or pass partials at call sites.
- *
- * Masses are geometric (G=c=1), not solar masses. Defaults match the old
- * M₁=0.5, q=1.5 → M₂=0.75 look.
+ * Masses are geometric (G=c=1), not solar masses. M₁=0.5, M₂=0.75 (old q=1.5).
  */
 export const defaultPhysics = {
   primaryMass: 0.5,
@@ -264,16 +259,6 @@ function clamp(n: number, lo: number, hi = Number.POSITIVE_INFINITY): number {
   return Math.min(hi, Math.max(lo, n));
 }
 
-function scaleHeightFromAspect(
-  aspect: number,
-  isco: number,
-  mass: number,
-  diskOuterRadiusM: number,
-): number {
-  const charR = 0.5 * (isco + diskOuterRadiusM * mass);
-  return Math.max(PHYSICS_LIMITS.scaleHeightFloor, aspect * charR);
-}
-
 function resolveHole(
   mass: number,
   spin: number,
@@ -281,18 +266,16 @@ function resolveHole(
   diskOuterRadiusM: number,
 ) {
   const scales = kerrScales(mass, spin);
+  const charR = 0.5 * (scales.iscoPrograde + diskOuterRadiusM * scales.mass);
   return {
     mass: scales.mass,
     eventHorizon: scales.eventHorizon,
     photonSphere: scales.photonSphere,
     isco: scales.iscoPrograde,
-    diskScaleHeight: scaleHeightFromAspect(
-      diskAspectRatio,
-      scales.iscoPrograde,
-      scales.mass,
-      diskOuterRadiusM,
+    diskScaleHeight: Math.max(
+      PHYSICS_LIMITS.scaleHeightFloor,
+      diskAspectRatio * charR,
     ),
-    a: scales.a,
   };
 }
 
@@ -307,8 +290,6 @@ export function buildBlackHoleConfig(
 
   const primaryMass = clamp(p.primaryMass, L.massMin);
   const secondaryMass = clamp(p.secondaryMass, L.massMin);
-  const totalMass = primaryMass + secondaryMass;
-  const massRatio = secondaryMass / primaryMass;
   const separation = clamp(p.separation, L.separationMin);
   const spin = clampSpin(p.spin);
   const inclination = clampInclinationDegrees(p.inclination);
@@ -339,16 +320,16 @@ export function buildBlackHoleConfig(
     diskAspectRatio,
     diskOuterRadiusM,
   );
+  const totalMass = primary.mass + secondary.mass;
 
   return {
     primaryMass: primary.mass,
     secondaryMass: secondary.mass,
     totalMass,
-    massRatio,
+    massRatio: secondary.mass / primary.mass,
     separation,
     orbitalFrequency: binaryOrbitalOmega(totalMass, separation),
     spin,
-    primarySpinA: primary.a,
     eventHorizonPrimary: primary.eventHorizon,
     eventHorizonSecondary: secondary.eventHorizon,
     photonSpherePrimary: primary.photonSphere,
@@ -364,9 +345,6 @@ export function buildBlackHoleConfig(
     peakTemperature,
     temperatureIndex,
     accretionRate,
-    stepSize: defaultRender.stepSize,
-    pixelSize: defaultRender.pixelSize,
-    ditherStrength: defaultRender.ditherStrength,
-    colorLevels: defaultRender.colorLevels,
+    ...defaultRender,
   };
 }

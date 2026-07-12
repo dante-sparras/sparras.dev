@@ -129,7 +129,7 @@ describe("buildBlackHoleConfig", () => {
     const s = kerrScales(c.secondaryMass, c.spin);
     expect(c.eventHorizonPrimary).toBeCloseTo(p.eventHorizon, 8);
     expect(c.iscoPrimary).toBeCloseTo(p.iscoPrograde, 8);
-    expect(c.primarySpinA).toBeCloseTo(p.a, 8);
+    expect(c.photonSpherePrimary).toBeCloseTo(p.photonSphere, 8);
     expect(c.eventHorizonSecondary).toBeCloseTo(s.eventHorizon, 8);
   });
 

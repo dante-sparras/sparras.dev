@@ -3,7 +3,7 @@
 
 /**
  * Absolute Kelvin → Interstellar peach RGB (never pure white).
- * Stops/limits aligned with components/black-hole/blackbody.ts + limits.ts.
+ * Stops/limits aligned with physics/blackbody.ts + limits.ts.
  */
 
 import { vec3, float, Fn, max, log, pow, mix, clamp } from "three/tsl";
@@ -16,7 +16,11 @@ import {
   COOL_RUST,
 } from "../physics/blackbody";
 import { PALETTE_LIMITS } from "../physics/limits";
-import { unitRange } from "./unit-range";
+
+/** Remap x from [a, b] → [0, 1] with hard clamp. */
+const unitRange = Fn(([x, a, b]) => {
+  return clamp(x.sub(a).div(max(b.sub(a), float(1e-3))), float(0), float(1));
+});
 
 function rgb(v) {
   return vec3(v[0], v[1], v[2]);

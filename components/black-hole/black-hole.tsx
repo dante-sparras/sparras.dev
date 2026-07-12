@@ -6,7 +6,7 @@
  * @example
  * ```tsx
  * <BlackHole spin={0.8} inclination={135} />
- * <BlackHole separation={16} accretionRate={3} />
+ * <BlackHole primaryMass={0.5} secondaryMass={0.75} />
  * ```
  */
 
@@ -20,13 +20,7 @@ import {
   useState,
 } from "react";
 import * as THREE from "three/webgpu";
-import {
-  Bloom,
-  CameraLookAt,
-  IdleOrbit,
-  WebGPUCanvas,
-  type BloomProps,
-} from "@/components/three";
+import { CameraLookAt, IdleOrbit, WebGPUCanvas } from "@/components/three";
 import { cn } from "@/lib/utils";
 import {
   binaryVisualExtent,
@@ -51,32 +45,43 @@ import {
 export const SHELL_CLASS =
   "relative min-h-[7.5rem] h-full w-full flex-1 bg-background sm:min-h-[9rem] md:min-h-[11rem]";
 
-/** Shown while hydrating or if WebGPU fails. */
-export const FALLBACK_CLASS =
+const FALLBACK_CLASS =
   "absolute inset-0 bg-[repeating-linear-gradient(45deg,var(--border)_0_1px,transparent_1px_10px)]";
 
-export const ARIA_LABEL =
+const ARIA_LABEL =
   "Interactive binary black hole — drag to orbit, scroll to zoom";
 
 const MAX_DT = 1 / 30;
-const SKY_SCALE: [number, number, number] = [-1, 1, 1];
 const SKY_SEGMENTS = 24;
-const DEFAULT_BLOOM: BloomProps = {
-  strength: 0.35,
-  radius: 0.25,
-  threshold: 0.4,
-};
+const SKY_SCALE: [number, number, number] = [-1, 1, 1];
+const PIXEL_STYLE = { imageRendering: "pixelated" as const };
+const GL_NO_AA = { antialias: false as const };
+const Hatch = <div className={FALLBACK_CLASS} aria-hidden />;
 
-type MeshProps = {
+type SceneProps = {
   config: BlackHoleConfig;
+  interactive: boolean;
+  autoRotate: boolean;
   skyRadius: number;
+  orbitMin: number;
+  orbitMax: number;
   simActive: boolean;
 };
 
-function BlackHoleMesh({ config, skyRadius, simActive }: MeshProps) {
-  const { camera, size, invalidate } = useThree();
+/**
+ * R3F scene: transparent clear, observer pose, skydome mesh, idle orbit.
+ */
+function Scene({
+  config,
+  interactive,
+  autoRotate,
+  skyRadius,
+  orbitMin,
+  orbitMax,
+  simActive,
+}: SceneProps) {
+  const { camera, controls, gl, scene, size, invalidate } = useThree();
   const axes = useRef(createCameraAxes());
-
   const uniformsRef = useRef<BlackHoleUniforms | null>(null);
   if (!uniformsRef.current) {
     uniformsRef.current = createUniforms(config);
@@ -87,6 +92,40 @@ function BlackHoleMesh({ config, skyRadius, simActive }: MeshProps) {
     () => createBlackHoleShader(uniforms),
     [uniforms],
   );
+
+  // Transparent canvas clear
+  useLayoutEffect(() => {
+    scene.background = null;
+    gl.setClearColor(0x000000, 0);
+    gl.setClearAlpha(0);
+  }, [gl, scene]);
+
+  // Observer pose when inclination / D change
+  useLayoutEffect(() => {
+    const [x, y, z] = cameraPositionFromObserver(
+      config.inclination,
+      config.cameraDistance,
+    );
+    camera.position.set(x, y, z);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+    if ("updateProjectionMatrix" in camera) {
+      (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+    }
+    if (
+      controls &&
+      typeof controls === "object" &&
+      "target" in controls &&
+      "update" in controls
+    ) {
+      const orbit = controls as {
+        target: THREE.Vector3;
+        update: () => void;
+      };
+      orbit.target.set(0, 0, 0);
+      orbit.update();
+    }
+  }, [camera, controls, config.inclination, config.cameraDistance]);
 
   useLayoutEffect(() => {
     applyConfig(uniforms, config);
@@ -121,129 +160,20 @@ function BlackHoleMesh({ config, skyRadius, simActive }: MeshProps) {
   );
 
   return (
-    <mesh frustumCulled={false} scale={SKY_SCALE}>
-      <sphereGeometry args={geoArgs} />
-      <meshBasicNodeMaterial
-        fragmentNode={fragmentNode}
-        transparent
-        premultipliedAlpha
-        depthWrite={false}
-        depthTest={false}
-        side={THREE.DoubleSide}
-        toneMapped={false}
-      />
-    </mesh>
-  );
-}
-
-type HostProps = {
-  className?: string;
-  /** Drag-orbit / scroll-zoom. @defaultValue true */
-  interactive?: boolean;
-  /** Slow auto-rotate when idle. @defaultValue true */
-  autoRotate?: boolean;
-  /**
-   * Optional TSL bloom. Pass `true` for gentle defaults, or BloomProps.
-   */
-  bloom?: boolean | BloomProps;
-  "aria-label"?: string;
-};
-
-/** Host flags + optional raw physics knobs (flat). */
-export type BlackHoleProps = HostProps & PhysicsParams;
-
-const Hatch = <div className={FALLBACK_CLASS} aria-hidden />;
-const PIXEL_STYLE = { imageRendering: "pixelated" as const };
-const GL_NO_AA = { antialias: false as const };
-
-function TransparentClear() {
-  const { gl, scene } = useThree();
-  useLayoutEffect(() => {
-    scene.background = null;
-    gl.setClearColor(0x000000, 0);
-    gl.setClearAlpha(0);
-  }, [gl, scene]);
-  return null;
-}
-
-/** Apply observer knobs when inclination / D change; reset OrbitControls. */
-function ObserverCamera({
-  inclination,
-  cameraDistance,
-}: {
-  inclination: number;
-  cameraDistance: number;
-}) {
-  const { camera, controls } = useThree();
-
-  useLayoutEffect(() => {
-    const [x, y, z] = cameraPositionFromObserver(inclination, cameraDistance);
-    camera.position.set(x, y, z);
-    camera.lookAt(0, 0, 0);
-    camera.updateMatrixWorld();
-    if ("updateProjectionMatrix" in camera) {
-      (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
-    }
-    if (
-      controls &&
-      typeof controls === "object" &&
-      "target" in controls &&
-      "update" in controls
-    ) {
-      const orbit = controls as {
-        target: THREE.Vector3;
-        update: () => void;
-      };
-      orbit.target.set(0, 0, 0);
-      orbit.update();
-    }
-  }, [camera, controls, inclination, cameraDistance]);
-
-  return null;
-}
-
-type SceneProps = {
-  config: BlackHoleConfig;
-  interactive: boolean;
-  autoRotate: boolean;
-  skyRadius: number;
-  orbitMin: number;
-  orbitMax: number;
-  simActive: boolean;
-  bloom?: boolean | BloomProps;
-};
-
-function Scene({
-  config,
-  interactive,
-  autoRotate,
-  skyRadius,
-  orbitMin,
-  orbitMax,
-  simActive,
-  bloom,
-}: SceneProps) {
-  const bloomProps =
-    bloom === true
-      ? DEFAULT_BLOOM
-      : bloom && typeof bloom === "object"
-        ? bloom
-        : null;
-
-  return (
     <>
-      <TransparentClear />
-      <ObserverCamera
-        inclination={config.inclination}
-        cameraDistance={config.cameraDistance}
-      />
       <CameraLookAt />
-      <BlackHoleMesh
-        config={config}
-        skyRadius={skyRadius}
-        simActive={simActive}
-      />
-      {bloomProps ? <Bloom {...bloomProps} /> : null}
+      <mesh frustumCulled={false} scale={SKY_SCALE}>
+        <sphereGeometry args={geoArgs} />
+        <meshBasicNodeMaterial
+          fragmentNode={fragmentNode}
+          transparent
+          premultipliedAlpha
+          depthWrite={false}
+          depthTest={false}
+          side={THREE.DoubleSide}
+          toneMapped={false}
+        />
+      </mesh>
       <IdleOrbit
         interactive={interactive}
         autoRotate={autoRotate && simActive}
@@ -254,6 +184,16 @@ function Scene({
   );
 }
 
+/** Host chrome + optional raw physics knobs (flat). */
+export type BlackHoleProps = PhysicsParams & {
+  className?: string;
+  /** Drag-orbit / scroll-zoom. @defaultValue true */
+  interactive?: boolean;
+  /** Slow auto-rotate when idle. @defaultValue true */
+  autoRotate?: boolean;
+  "aria-label"?: string;
+};
+
 /**
  * Client-only black-hole surface.
  * In RSC trees use `HeroBanner` from `@/components/hero-section`.
@@ -262,7 +202,6 @@ export function BlackHole({
   className,
   interactive = true,
   autoRotate = true,
-  bloom = false,
   "aria-label": ariaLabel = ARIA_LABEL,
   ...rest
 }: BlackHoleProps) {
@@ -274,9 +213,7 @@ export function BlackHole({
     const el = shellRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
-      ([entry]) => {
-        setInView(entry?.isIntersecting ?? true);
-      },
+      ([entry]) => setInView(entry?.isIntersecting ?? true),
       { root: null, threshold: 0.01 },
     );
     io.observe(el);
@@ -287,6 +224,8 @@ export function BlackHole({
   const extent = binaryVisualExtent(config);
   const orbit = orbitDistanceLimits(config.cameraDistance, extent);
   const skyRadius = skyDomeRadius(orbit.max);
+  const dpr = Math.min(1, Math.max(0.2, 1 / Math.max(2, config.pixelSize)));
+  const onFailed = useCallback(() => setFailed(true), []);
 
   const camera = useMemo(
     () => ({
@@ -300,15 +239,6 @@ export function BlackHole({
     }),
     [config.inclination, config.cameraDistance, skyRadius],
   );
-
-  const dpr = useMemo(() => {
-    const cell = Math.max(2, config.pixelSize);
-    return Math.min(1, Math.max(0.2, 1 / cell));
-  }, [config.pixelSize]);
-
-  const onFailed = useCallback(() => setFailed(true), []);
-  const simActive = inView;
-  const frameloop = simActive ? "always" : "demand";
 
   return (
     <div
@@ -325,7 +255,7 @@ export function BlackHole({
         fallback={Hatch}
         onFailed={onFailed}
         glProps={GL_NO_AA}
-        frameloop={frameloop}
+        frameloop={inView ? "always" : "demand"}
       >
         <Scene
           config={config}
@@ -334,8 +264,7 @@ export function BlackHole({
           skyRadius={skyRadius}
           orbitMin={orbit.min}
           orbitMax={orbit.max}
-          simActive={simActive}
-          bloom={bloom}
+          simActive={inView}
         />
       </WebGPUCanvas>
     </div>
