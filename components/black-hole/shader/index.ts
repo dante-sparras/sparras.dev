@@ -27,6 +27,7 @@ import {
   Loop,
   Break,
   If,
+  Discard,
   screenUV,
   fwidth,
 } from "three/tsl";
@@ -209,8 +210,9 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
 
     const cover = mix(alpha, float(1.0), softCapture);
 
-    // RGB is content + sky only — no void fill.
-    // Void pixels stay transparent so the host shell `bg-background` (#050505) shows through.
+    // Content only — never paint the void. Discard leaves the clear color
+    // (transparent) so the host shell `bg-background` shows through.
+    // WebGPU canvas uses alphaMode: 'premultiplied' when alpha:true.
     const finalColor = contentTone.mul(cover).toVar("finalColor");
     const outAlpha = cover.toVar("outAlpha");
 
@@ -230,6 +232,10 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     finalColor.assign(clamp(finalColor, float(0.0), float(1.12)));
     outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
 
-    return vec4(finalColor, outAlpha);
+    // Hard void cut — more reliable than alpha blend alone (bloom/post often force a=1).
+    Discard(outAlpha.lessThan(0.004));
+
+    // Premultiplied RGB for WebGPU canvas (alphaMode: 'premultiplied').
+    return vec4(finalColor.mul(outAlpha), outAlpha);
   })();
 }

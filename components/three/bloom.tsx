@@ -1,14 +1,13 @@
 "use client";
 
 /**
- * TSL bloom via RenderPipeline.
+ * TSL bloom via RenderPipeline — optional glow only.
  *
- * R3F ends each frame with `gl.render(scene, camera)`. We replace the top-level
- * call with `post.render()`. Nested pipeline renders must hit the real renderer —
- * the depth guard prevents infinite recursion / stack overflow.
+ * IMPORTANT: post.output must preserve transparent void (a=0). WebGPU canvas
+ * uses alphaMode 'premultiplied' when renderer.alpha is true.
  *
- * Alpha is preserved from the scene pass so void (a=0) stays transparent over
- * CSS `bg-background`. Bloom glow raises alpha only where bloom is bright.
+ * If setup fails, bloom is skipped and the scene renders normally (void still
+ * transparent via fragment discard).
  */
 import { useThree } from "@react-three/fiber";
 import { useLayoutEffect, useRef } from "react";
@@ -24,6 +23,7 @@ type Pipeline = {
   render: () => void;
   outputNode: unknown;
   outputColorTransform?: boolean;
+  needsUpdate?: boolean;
 };
 type BloomNode = {
   threshold: { value: number };
@@ -36,6 +36,7 @@ type RendererLike = {
   setClearColor: (color: number, alpha?: number) => void;
   setClearAlpha: (alpha: number) => void;
   autoClear: boolean;
+  alpha: boolean;
 };
 
 function applyBloomParams(
@@ -62,7 +63,6 @@ function installRenderHook(
     if (depth > 0 || !postRef.current) return real(...args);
     depth += 1;
     try {
-      // Transparent clear every frame so void composites over CSS.
       gl.setClearColor(0x000000, 0);
       gl.setClearAlpha(0);
       postRef.current.render();
@@ -110,13 +110,12 @@ export function Bloom({
         gl.setClearAlpha(0);
 
         const post = new Ctor(gl) as Pipeline;
-        // Keep display-referred output; do not sRGB-encode (lifts void/grays).
         post.outputColorTransform = false;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const scenePass: any = pass(scene, camera);
         scenePass.transparent = true;
-        scenePass.opaque = true; // still draw opaque list if any
+        scenePass.opaque = true;
         const sceneColor = scenePass.getTextureNode();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -128,27 +127,32 @@ export function Bloom({
           initial.current.threshold,
         );
 
-        // Keep void a=0; only raise alpha where bloom is actually visible.
+        // Premultiplied composite for WebGPU canvas alphaMode.
+        // void: scene a≈0, bloom≈0 → (0,0,0,0) transparent
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const bloomLuma = max(node.r, max(node.g, node.b)) as any;
-        // Soft knee so tiny bloom noise doesn't paint the whole sky opaque black.
         const bloomA = bloomLuma
-          .sub(float(0.02))
+          .sub(float(0.04))
           .max(float(0.0))
-          .mul(float(1.15));
-        post.outputNode = vec4(
-          sceneColor.rgb.add(node),
-          max(sceneColor.a, bloomA).min(float(1.0)),
-        );
+          .mul(float(1.2));
+        const outA = max(sceneColor.a, bloomA).min(float(1.0));
+        const outRgb = sceneColor.rgb.add(node);
+        // Premultiply for canvas; zero rgb when a is ~0 so we never flash black.
+        post.outputNode = vec4(outRgb.mul(outA), outA);
+        post.needsUpdate = true;
 
-        // Full-screen compose quad must blend alpha (default NodeMaterial is opaque → a forced 1).
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const quadMat = (post as any)._quadMesh?.material;
-        if (quadMat) {
-          quadMat.transparent = true;
-          quadMat.depthWrite = false;
-          quadMat.depthTest = false;
-          quadMat.toneMapped = false;
+        // Compose quad must blend (default NodeMaterial is opaque).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle -- three.js private API
+        const quad = (post as any)._quadMesh;
+        if (quad?.material) {
+          const mat = quad.material;
+          mat.transparent = true;
+          mat.premultipliedAlpha = true;
+          mat.depthWrite = false;
+          mat.depthTest = false;
+          mat.toneMapped = false;
+          mat.blending = THREE.NormalBlending;
+          mat.needsUpdate = true;
         }
 
         if (cancelled) return;
@@ -161,7 +165,7 @@ export function Bloom({
           restoreRef,
         );
       } catch (err) {
-        console.warn("[Bloom] skipped:", err);
+        console.warn("[Bloom] skipped (scene still renders):", err);
       }
     })();
 

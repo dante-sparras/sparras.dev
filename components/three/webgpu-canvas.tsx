@@ -98,14 +98,16 @@ const CANVAS_STYLE = {
 async function createWebGPURenderer(props: unknown) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- R3F passes a props bag typed for WebGL
   const bag = { ...(props as object) } as Record<string, unknown>;
+  // WebGPUBackend: alpha:true → canvas alphaMode 'premultiplied' (not configurable).
   const renderer = new THREE.WebGPURenderer({
     ...bag,
     alpha: true,
-    // Straight alpha so a=0 void reveals CSS behind the canvas.
-    premultipliedAlpha: false,
+    antialias: bag.antialias ?? true,
+    powerPreference: bag.powerPreference ?? "high-performance",
   } as any);
   await renderer.init();
   renderer.toneMapping = THREE.NoToneMapping;
+  // Linear output — shader does its own display γ; void is discarded (CSS bg).
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.setClearColor(0x000000, 0);
   renderer.setClearAlpha(0);

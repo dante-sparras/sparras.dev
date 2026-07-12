@@ -184,12 +184,14 @@ export function BlackHoleMesh({ config }: { config: BlackHoleConfig }) {
     <mesh frustumCulled={false} scale={SCALE}>
       <sphereGeometry args={GEO} />
       {/*
-        fragmentNode (not colorNode): full RGBA control.
-        colorNode's alpha is easy to lose; void must write a=0 for CSS bg.
+        fragmentNode: full RGBA. Void pixels are Discard()'d in the shader so
+        the transparent clear shows CSS `bg-background` behind the canvas.
+        WebGPU canvas is always premultiplied when alpha:true.
       */}
       <meshBasicNodeMaterial
         fragmentNode={colorNode}
         transparent
+        premultipliedAlpha
         depthWrite={false}
         depthTest={false}
         side={THREE.DoubleSide}
