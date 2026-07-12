@@ -233,6 +233,12 @@ export function createBlackHoleShader(uniforms: BlackHoleUniforms) {
     rgb.assign(clamp(rgb, float(0.0), float(1.12)));
     outAlpha.assign(clamp(outAlpha, float(0.0), float(1.0)));
 
+    // Event horizon must stay pure black (no residual tone / CSS bleed).
+    If(softCapture.greaterThan(0.97), () => {
+      rgb.assign(vec3(0.0, 0.0, 0.0));
+      outAlpha.assign(1.0);
+    });
+
     // Empty sky → transparent clear (CSS bg-background).
     Discard(outAlpha.lessThan(0.002));
 

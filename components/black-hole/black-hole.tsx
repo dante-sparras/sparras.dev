@@ -3,13 +3,15 @@
 /**
  * WebGPU Schwarzschild black hole (dgreenheck port) on React Three Fiber.
  *
- * Void color is NOT painted by the GPU — the host shell uses `bg-background`
- * (#050505 in dark) and the canvas is transparent there. That avoids every
- * Three color-management / bloom path fighting CSS.
+ * Void sky is transparent — host shell `bg-background` (#050505) shows through.
+ * Event horizon is forced pure black in the shader.
+ *
+ * No post-process bloom: the async RenderPipeline path was dulling the disk/stars
+ * and lifting the horizon off #000 after the first frame. Disk punch stays in-shader.
  *
  * @example
  * <BlackHole className="h-40 w-full" />
- * <BlackHole overrides={{ diskBrightness: 6, bloomStrength: 0.7 }} />
+ * <BlackHole overrides={{ diskBrightness: 6, starsEnabled: true }} />
  *
  * From Server Components use `HeroBanner` via `@/components/hero-section`.
  */
@@ -21,12 +23,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import {
-  Bloom,
-  CameraLookAt,
-  IdleOrbit,
-  WebGPUCanvas,
-} from "@/components/three";
+import { CameraLookAt, IdleOrbit, WebGPUCanvas } from "@/components/three";
 import { useTheme } from "next-themes";
 import { useCssTokens } from "@/hooks";
 import { cn } from "@/lib/utils";
@@ -48,7 +45,7 @@ export type BlackHoleProps = {
   autoRotate?: boolean;
   /** Pull colors from CSS theme tokens. Default true. */
   themeColors?: boolean;
-  /** Stable advanced knobs (brightness, bloom, stars on/off, …). */
+  /** Stable advanced knobs (brightness, stars on/off, …). */
   overrides?: BlackHoleOverrides;
   "aria-label"?: string;
 };
@@ -61,14 +58,13 @@ type SceneProps = {
   autoRotate: boolean;
 };
 
-/** Transparent clear so shell `bg-background` is the void. */
+/** Transparent clear so shell `bg-background` is the sky void. */
 function TransparentClear() {
   const { gl, scene } = useThree();
   useLayoutEffect(() => {
     scene.background = null;
     gl.setClearColor(0x000000, 0);
     gl.setClearAlpha(0);
-    // R3F may restore clears — re-assert every time the canvas is (re)created.
     const canvas = gl.domElement as HTMLCanvasElement | undefined;
     if (canvas?.style) {
       canvas.style.background = "transparent";
@@ -85,11 +81,6 @@ function Scene({ config, interactive, autoRotate }: SceneProps) {
       <CameraLookAt />
       <BlackHoleMesh config={config} />
       <IdleOrbit interactive={interactive} autoRotate={autoRotate} />
-      <Bloom
-        strength={config.bloomStrength}
-        radius={config.bloomRadius}
-        threshold={config.bloomThreshold}
-      />
     </>
   );
 }
