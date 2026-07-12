@@ -91,20 +91,24 @@ const CANVAS_STYLE = {
   height: "100%",
   display: "block",
   touchAction: "none" as const,
+  background: "transparent",
+  backgroundColor: "transparent",
 } as const;
 
 async function createWebGPURenderer(props: unknown) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- R3F passes a props bag typed for WebGL
+  const bag = { ...(props as object) } as Record<string, unknown>;
   const renderer = new THREE.WebGPURenderer({
-    ...(props as object),
+    ...bag,
     alpha: true,
+    // Straight alpha so a=0 void reveals CSS behind the canvas.
     premultipliedAlpha: false,
   } as any);
   await renderer.init();
   renderer.toneMapping = THREE.NoToneMapping;
-  // Display-referred content; void is CSS (transparent canvas), not GPU-filled.
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.setClearColor(0x000000, 0);
+  renderer.setClearAlpha(0);
   return renderer;
 }
 

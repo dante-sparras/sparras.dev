@@ -183,12 +183,17 @@ export function BlackHoleMesh({ config }: { config: BlackHoleConfig }) {
   return (
     <mesh frustumCulled={false} scale={SCALE}>
       <sphereGeometry args={GEO} />
+      {/*
+        fragmentNode (not colorNode): full RGBA control.
+        colorNode's alpha is easy to lose; void must write a=0 for CSS bg.
+      */}
       <meshBasicNodeMaterial
-        colorNode={colorNode}
-        side={THREE.DoubleSide}
-        depthWrite={false}
+        fragmentNode={colorNode}
         transparent
-        // Premultiply not set — output is straight alpha (void a=0 → CSS bg).
+        depthWrite={false}
+        depthTest={false}
+        side={THREE.DoubleSide}
+        toneMapped={false}
       />
     </mesh>
   );

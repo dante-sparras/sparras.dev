@@ -7,8 +7,8 @@
  * call with `post.render()`. Nested pipeline renders must hit the real renderer —
  * the depth guard prevents infinite recursion / stack overflow.
  *
- * Alpha is preserved so transparent void pixels (CSS `bg-background`) stay open.
- * Bloom glow lifts `a` where the bloom is bright so the halo still composites.
+ * Alpha is preserved from the scene pass so void (a=0) stays transparent over
+ * CSS `bg-background`. Bloom glow raises alpha only where bloom is bright.
  */
 import { useThree } from "@react-three/fiber";
 import { useLayoutEffect, useRef } from "react";
@@ -31,7 +31,12 @@ type BloomNode = {
   radius: { value: number };
 };
 type RenderFn = (...args: never[]) => void;
-type RendererLike = { render: RenderFn };
+type RendererLike = {
+  render: RenderFn;
+  setClearColor: (color: number, alpha?: number) => void;
+  setClearAlpha: (alpha: number) => void;
+  autoClear: boolean;
+};
 
 function applyBloomParams(
   node: BloomNode,
@@ -57,6 +62,9 @@ function installRenderHook(
     if (depth > 0 || !postRef.current) return real(...args);
     depth += 1;
     try {
+      // Transparent clear every frame so void composites over CSS.
+      gl.setClearColor(0x000000, 0);
+      gl.setClearAlpha(0);
       postRef.current.render();
     } finally {
       depth -= 1;
@@ -80,7 +88,6 @@ export function Bloom({
   const postRef = useRef<Pipeline | null>(null);
   const bloomRef = useRef<BloomNode | null>(null);
   const restoreRef = useRef<RenderFn | null>(null);
-  // Seed values captured once for async setup; live updates go through the 2nd effect.
   const initial = useRef({ strength, radius, threshold });
 
   useLayoutEffect(() => {
@@ -98,15 +105,20 @@ export function Bloom({
           (THREE as any).RenderPipeline ?? (THREE as any).PostProcessing;
         if (!Ctor) return;
 
-        // Ensure scene pass clears transparent (void → CSS bg).
-        gl.setClearColor(0x000000, 0);
         scene.background = null;
+        gl.setClearColor(0x000000, 0);
+        gl.setClearAlpha(0);
 
         const post = new Ctor(gl) as Pipeline;
-        // Display-referred sim — don't sRGB-encode on the way out (lifts grays).
+        // Keep display-referred output; do not sRGB-encode (lifts void/grays).
         post.outputColorTransform = false;
 
-        const sceneColor = pass(scene, camera).getTextureNode();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const scenePass: any = pass(scene, camera);
+        scenePass.transparent = true;
+        scenePass.opaque = true; // still draw opaque list if any
+        const sceneColor = scenePass.getTextureNode();
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const node: any = bloom(sceneColor);
         applyBloomParams(
@@ -116,14 +128,28 @@ export function Bloom({
           initial.current.threshold,
         );
 
-        // rgb += bloom; alpha = max(scene.a, bloom luma) so void stays open
-        // unless the bloom halo itself is visible.
+        // Keep void a=0; only raise alpha where bloom is actually visible.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const bloomLuma = max(node.r, max(node.g, node.b)) as any;
+        // Soft knee so tiny bloom noise doesn't paint the whole sky opaque black.
+        const bloomA = bloomLuma
+          .sub(float(0.02))
+          .max(float(0.0))
+          .mul(float(1.15));
         post.outputNode = vec4(
           sceneColor.rgb.add(node),
-          max(sceneColor.a, bloomLuma.mul(float(0.85))),
+          max(sceneColor.a, bloomA).min(float(1.0)),
         );
+
+        // Full-screen compose quad must blend alpha (default NodeMaterial is opaque → a forced 1).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const quadMat = (post as any)._quadMesh?.material;
+        if (quadMat) {
+          quadMat.transparent = true;
+          quadMat.depthWrite = false;
+          quadMat.depthTest = false;
+          quadMat.toneMapped = false;
+        }
 
         if (cancelled) return;
 

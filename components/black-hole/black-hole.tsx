@@ -67,6 +67,13 @@ function TransparentClear() {
   useLayoutEffect(() => {
     scene.background = null;
     gl.setClearColor(0x000000, 0);
+    gl.setClearAlpha(0);
+    // R3F may restore clears — re-assert every time the canvas is (re)created.
+    const canvas = gl.domElement as HTMLCanvasElement | undefined;
+    if (canvas?.style) {
+      canvas.style.background = "transparent";
+      canvas.style.backgroundColor = "transparent";
+    }
   }, [gl, scene]);
   return null;
 }
