@@ -155,13 +155,12 @@ function PlanetBody({
         r={bodyR}
       />
       {greatSpot ? (
-        /* Slight SE offset — GRS-like oval on the disk. */
-        <ellipse
+        /* Slight SE offset — GRS mark on the disk. */
+        <circle
           className="solar-system__great-spot"
           cx={bodyR * 0.28}
           cy={bodyR * 0.32}
-          rx={bodyR * 0.38}
-          ry={bodyR * 0.2}
+          r={bodyR * 0.22}
         />
       ) : null}
       {saturnRing ? (
