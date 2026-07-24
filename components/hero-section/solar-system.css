@@ -10,13 +10,16 @@
   fill: none;
   stroke: var(--border);
   stroke-width: 0.55;
-  opacity: 0.85;
+  opacity: 1;
 }
 
-/* Mid-tone sun: darker than border, lighter than background in dark
- * (`--card` = #171717 vs border #232323 / bg #050505). Light: card ≈ surface. */
+/*
+ * Sun: between border and background.
+ * Dark: #232323 → mix → #050505  ⇒ slightly darker than border.
+ * Light: #e5e5e5 → mix → #fff     ⇒ soft edge (bg is lighter than border).
+ */
 .solar-system__sun {
-  fill: var(--card);
+  fill: color-mix(in oklab, var(--border) 58%, var(--background));
 }
 
 .solar-system__planet {
