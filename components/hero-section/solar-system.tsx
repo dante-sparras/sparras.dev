@@ -40,6 +40,7 @@ type Planet = {
 };
 
 type Asteroid = {
+  id: string;
   /** Semi-major radius within the belt band. */
   r: number;
   bodyR: number;
@@ -85,7 +86,12 @@ const ASTEROIDS: Asteroid[] = (() => {
     const r = BELT.rMin + u * (BELT.rMax - BELT.rMin);
     const bodyR = 0.28 + rnd() * 0.55;
     const periodS = BELT.periodS * (0.88 + rnd() * 0.28);
-    out.push({ r, bodyR, periodS });
+    out.push({
+      id: `a${i}`,
+      r,
+      bodyR,
+      periodS,
+    });
   }
   return out;
 })();
@@ -274,7 +280,7 @@ export function SolarSystem({ className }: SolarSystemProps) {
 
         {/* FAR asteroids — under the sun */}
         {ASTEROIDS.map((a, i) => (
-          <g key={`rock-far-${i}`} data-rock-far={i} opacity={0}>
+          <g key={`far-${a.id}`} data-rock-far={i} opacity={0}>
             <circle
               className="solar-system__asteroid"
               cx={0}
@@ -304,7 +310,7 @@ export function SolarSystem({ className }: SolarSystemProps) {
 
         {/* NEAR asteroids — over the sun */}
         {ASTEROIDS.map((a, i) => (
-          <g key={`rock-near-${i}`} data-rock-near={i} opacity={0}>
+          <g key={`near-${a.id}`} data-rock-near={i} opacity={0}>
             <circle
               className="solar-system__asteroid"
               cx={0}
