@@ -8,7 +8,7 @@
 
 .solar-system__orbit-ring {
   fill: none;
-  stroke: var(--border);
+  stroke: color-mix(in oklab, var(--border) 62%, var(--background));
   stroke-width: 0.55;
   stroke-dasharray: 2.8 2.6;
   stroke-linecap: round;
