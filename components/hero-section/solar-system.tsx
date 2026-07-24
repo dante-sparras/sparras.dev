@@ -7,11 +7,10 @@ import { cn } from "@/lib/utils";
  * Banner-aware framing (reference composition, monochrome):
  * - Sun large on the RIGHT, half cropped out of frame
  * - Orbits as nested ellipses (side-tilted, not top-down)
- * - Asteroid belt between Mars and Jupiter (speckled band)
- * - Depth: continuous full orbits
- *   - upper/far half (orbits + bodies) drawn UNDER the sun
- *   - lower/near half (orbits + bodies) drawn OVER the sun
- *   - no pop: only z-order swaps at the left/right nodes
+ * - Asteroid belt between Mars and Jupiter
+ * - Earth moon on a tight local loop
+ * - Depth: far under sun / near over sun
+ * - Pause when tab hidden or banner off-screen
  * - Start phase: random per body on each page load
  */
 const VIEW = { w: 280, h: 140 } as const;
@@ -26,8 +25,14 @@ const BELT = {
   rMin: 116,
   rMax: 132,
   count: 140,
-  /** Mean period — between Mars (22s) and Jupiter (36s). */
   periodS: 28,
+} as const;
+
+/** Tight companion around Earth (art-scaled). */
+const MOON = {
+  orbitR: 5.8,
+  bodyR: 0.75,
+  periodS: 2.6,
 } as const;
 
 type Planet = {
@@ -37,20 +42,17 @@ type Planet = {
   periodS: number;
   dim?: boolean;
   saturnRing?: boolean;
-  /** Great Red Spot — monochrome oval on the disk. */
+  /** Great Red Spot — monochrome mark on the disk. */
   greatSpot?: boolean;
 };
 
 type Asteroid = {
   id: string;
-  /** Semi-major radius within the belt band. */
   r: number;
   bodyR: number;
-  /** Slight period jitter so the belt isn’t a rigid ring. */
   periodS: number;
 };
 
-/** Art-scaled radii (not real AU). Phase offsets are rolled on mount. */
 const PLANETS: Planet[] = [
   { name: "mercury", orbitR: 52, bodyR: 1.8, periodS: 8, dim: true },
   { name: "venus", orbitR: 70, bodyR: 2.4, periodS: 12 },
@@ -68,7 +70,8 @@ const PLANETS: Planet[] = [
   { name: "neptune", orbitR: 228, bodyR: 2.9, periodS: 80, dim: true },
 ];
 
-/** Deterministic layout so SSR/client mark-up match; phases stay random. */
+const EARTH_INDEX = PLANETS.findIndex((p) => p.name === "earth");
+
 function mulberry32(seed: number) {
   return () => {
     seed |= 0;
@@ -83,17 +86,11 @@ const ASTEROIDS: Asteroid[] = (() => {
   const rnd = mulberry32(0xa57e201d);
   const out: Asteroid[] = [];
   for (let i = 0; i < BELT.count; i++) {
-    // Bias slightly toward the middle of the band.
     const u = (rnd() + rnd()) / 2;
     const r = BELT.rMin + u * (BELT.rMax - BELT.rMin);
     const bodyR = 0.28 + rnd() * 0.55;
     const periodS = BELT.periodS * (0.88 + rnd() * 0.28);
-    out.push({
-      id: `a${i}`,
-      r,
-      bodyR,
-      periodS,
-    });
+    out.push({ id: `a${i}`, r, bodyR, periodS });
   }
   return out;
 })();
@@ -107,11 +104,6 @@ function ellipsePoint(rx: number, deg: number) {
   };
 }
 
-/**
- * Half-ellipse stroke path from the right apex to the left apex.
- * `near` = lower arc (in front of sun); `!near` = upper arc (behind sun).
- * SVG sweep: 1 → clockwise through bottom; 0 → through top (Y-down).
- */
 function orbitHalfPath(rx: number, near: boolean): string {
   const ry = rx * TILT;
   const x0 = SUN.x + rx;
@@ -121,14 +113,27 @@ function orbitHalfPath(rx: number, near: boolean): string {
   return `M ${x0} ${y} A ${rx} ${ry} 0 0 ${sweep} ${x1} ${y}`;
 }
 
-/**
- * Near vs far side of the tilted orbit.
- * SVG Y-down: lower arc (sin > 0) = nearer / in front of the sun (drawn over);
- * upper arc (sin < 0) = farther / behind the sun (drawn under → occulted on disk).
- * Nodes (sin ≈ 0) count as near so bodies sit above orbit strokes at the apices.
- */
+/** Lower arc + nodes = near (in front of sun). */
 function isNearSide(deg: number): boolean {
   return Math.sin((deg * Math.PI) / 180) >= 0;
+}
+
+function setLayer(
+  farEl: SVGGElement | null,
+  nearEl: SVGGElement | null,
+  x: number,
+  y: number,
+  near: boolean,
+) {
+  const tf = `translate(${x} ${y})`;
+  if (farEl) {
+    farEl.setAttribute("transform", tf);
+    farEl.setAttribute("opacity", near ? "0" : "1");
+  }
+  if (nearEl) {
+    nearEl.setAttribute("transform", tf);
+    nearEl.setAttribute("opacity", near ? "1" : "0");
+  }
 }
 
 function PlanetBody({
@@ -155,7 +160,6 @@ function PlanetBody({
         r={bodyR}
       />
       {greatSpot ? (
-        /* Slight SE offset — GRS mark on the disk. */
         <circle
           className="solar-system__great-spot"
           cx={bodyR * 0.28}
@@ -164,13 +168,23 @@ function PlanetBody({
         />
       ) : null}
       {saturnRing ? (
-        <ellipse
-          className="solar-system__saturn-ring"
-          cx={0}
-          cy={0}
-          rx={bodyR * 2.2}
-          ry={bodyR * 0.65}
-        />
+        /* Slight view tilt; dual thin rings in the orbital plane. */
+        <g className="solar-system__saturn-rings" transform="rotate(-12)">
+          <ellipse
+            className="solar-system__saturn-ring solar-system__saturn-ring--outer"
+            cx={0}
+            cy={0}
+            rx={bodyR * 2.4}
+            ry={bodyR * 0.34}
+          />
+          <ellipse
+            className="solar-system__saturn-ring"
+            cx={0}
+            cy={0}
+            rx={bodyR * 1.95}
+            ry={bodyR * 0.28}
+          />
+        </g>
       ) : null}
     </>
   );
@@ -182,16 +196,18 @@ export type SolarSystemProps = {
 
 /**
  * Layout-agnostic solar system (decorative SVG).
- * Client rAF: full continuous orbits with under/over sun depth layers.
- * Orbital start phases are randomized once per mount (each refresh).
+ * Client rAF orbits + depth; pauses when hidden or off-screen.
  */
 export function SolarSystem({ className }: SolarSystemProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const sunClipId = useId().replace(/:/g, "");
+  const sunGradId = useId().replace(/:/g, "");
 
   useEffect(() => {
+    const root = rootRef.current;
     const svg = svgRef.current;
-    if (!svg) return;
+    if (!root || !svg) return;
 
     const farPlanets = PLANETS.map((_, i) =>
       svg.querySelector<SVGGElement>(`[data-planet-far="${i}"]`),
@@ -205,65 +221,124 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const nearRocks = ASTEROIDS.map((_, i) =>
       svg.querySelector<SVGGElement>(`[data-rock-near="${i}"]`),
     );
+    const farMoon = svg.querySelector<SVGGElement>("[data-moon-far]");
+    const nearMoon = svg.querySelector<SVGGElement>("[data-moon-near]");
 
     const planetPhase0 = PLANETS.map(() => Math.random() * 360);
     const rockPhase0 = ASTEROIDS.map(() => Math.random() * 360);
+    const moonPhase0 = Math.random() * 360;
 
     const reduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
-    const placeBody = (
-      farEl: SVGGElement | null,
-      nearEl: SVGGElement | null,
-      rx: number,
-      deg: number,
-    ) => {
-      const { x, y } = ellipsePoint(rx, deg);
-      const tf = `translate(${x} ${y})`;
-      const near = isNearSide(deg);
-      if (farEl) {
-        farEl.setAttribute("transform", tf);
-        farEl.setAttribute("opacity", near ? "0" : "1");
-      }
-      if (nearEl) {
-        nearEl.setAttribute("transform", tf);
-        nearEl.setAttribute("opacity", near ? "1" : "0");
-      }
-    };
-
     const place = (elapsedS: number) => {
+      let earthX = 0;
+      let earthY = 0;
+      let earthNear = true;
+
       for (let i = 0; i < PLANETS.length; i++) {
         const p = PLANETS[i]!;
         const deg = reduced
           ? planetPhase0[i]!
           : planetPhase0[i]! + (360 * elapsedS) / p.periodS;
-        placeBody(farPlanets[i]!, nearPlanets[i]!, p.orbitR, deg);
+        const { x, y } = ellipsePoint(p.orbitR, deg);
+        const near = isNearSide(deg);
+        setLayer(farPlanets[i]!, nearPlanets[i]!, x, y, near);
+        if (i === EARTH_INDEX) {
+          earthX = x;
+          earthY = y;
+          earthNear = near;
+        }
       }
+
+      // Moon shares Earth's sun-depth so the pair doesn't split across layers.
+      const moonDeg = reduced
+        ? moonPhase0
+        : moonPhase0 + (360 * elapsedS) / MOON.periodS;
+      const ma = (moonDeg * Math.PI) / 180;
+      const mx = earthX + MOON.orbitR * Math.cos(ma);
+      const my = earthY + MOON.orbitR * TILT * Math.sin(ma);
+      setLayer(farMoon, nearMoon, mx, my, earthNear);
+
       for (let i = 0; i < ASTEROIDS.length; i++) {
         const a = ASTEROIDS[i]!;
         const deg = reduced
           ? rockPhase0[i]!
           : rockPhase0[i]! + (360 * elapsedS) / a.periodS;
-        placeBody(farRocks[i]!, nearRocks[i]!, a.r, deg);
+        const { x, y } = ellipsePoint(a.r, deg);
+        setLayer(farRocks[i]!, nearRocks[i]!, x, y, isNearSide(deg));
       }
     };
 
     place(0);
     if (reduced) return;
 
-    const t0 = performance.now();
     let raf = 0;
-    const tick = (now: number) => {
-      place((now - t0) / 1000);
-      raf = requestAnimationFrame(tick);
+    let t0 = performance.now();
+    let pausedAt = 0;
+    let pauseTotal = 0;
+    let visible = !document.hidden;
+    let onScreen = true;
+
+    const elapsed = (now: number) => (now - t0 - pauseTotal) / 1000;
+
+    const stop = () => {
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+      if (!pausedAt) pausedAt = performance.now();
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+
+    const start = () => {
+      if (pausedAt) {
+        pauseTotal += performance.now() - pausedAt;
+        pausedAt = 0;
+      }
+      if (!raf && visible && onScreen) {
+        raf = requestAnimationFrame(tick);
+      }
+    };
+
+    const tick = (now: number) => {
+      place(elapsed(now));
+      if (visible && onScreen) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        raf = 0;
+      }
+    };
+
+    const onVisibility = () => {
+      visible = !document.hidden;
+      if (visible) start();
+      else stop();
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry?.isIntersecting ?? true;
+        if (onScreen) start();
+        else stop();
+      },
+      { threshold: 0.05, rootMargin: "32px" },
+    );
+    io.observe(root);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    start();
+
+    return () => {
+      stop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   return (
     <div
+      ref={rootRef}
       className={cn(
         "solar-system pointer-events-none relative h-full w-full min-h-0 overflow-hidden",
         className,
@@ -278,14 +353,33 @@ export function SolarSystem({ className }: SolarSystemProps) {
         focusable="false"
       >
         <defs>
-          {/* Near-side orbit strokes only composite over the sun face —
-              not at the left/right apices where they were covering bodies. */}
           <clipPath id={sunClipId}>
             <circle cx={SUN.x} cy={SUN.y} r={SUN_R} />
           </clipPath>
+          {/* Soft limb: core → mid fill → fade toward background at the edge. */}
+          <radialGradient
+            id={sunGradId}
+            cx="50%"
+            cy="50%"
+            r="50%"
+            fx="42%"
+            fy="42%"
+          >
+            <stop
+              offset="0%"
+              stopColor="color-mix(in oklab, var(--border) 42%, var(--foreground))"
+            />
+            <stop
+              offset="72%"
+              stopColor="color-mix(in oklab, var(--border) 50%, var(--foreground))"
+            />
+            <stop
+              offset="100%"
+              stopColor="color-mix(in oklab, var(--border) 35%, var(--background))"
+            />
+          </radialGradient>
         </defs>
 
-        {/* Full rings under everything — bodies always paint above their orbit. */}
         {PLANETS.map((p) => (
           <ellipse
             key={`orbit-${p.name}`}
@@ -297,7 +391,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
           />
         ))}
 
-        {/* FAR planets — under the sun */}
         {PLANETS.map((p, i) => (
           <g key={`far-${p.name}`} data-planet-far={i} opacity={0}>
             <PlanetBody
@@ -309,7 +402,10 @@ export function SolarSystem({ className }: SolarSystemProps) {
           </g>
         ))}
 
-        {/* FAR asteroids — under the sun */}
+        <g data-moon-far opacity={0}>
+          <circle className="solar-system__moon" cx={0} cy={0} r={MOON.bodyR} />
+        </g>
+
         {ASTEROIDS.map((a, i) => (
           <g key={`far-${a.id}`} data-rock-far={i} opacity={0}>
             <circle
@@ -321,9 +417,21 @@ export function SolarSystem({ className }: SolarSystemProps) {
           </g>
         ))}
 
-        <circle className="solar-system__sun" cx={SUN.x} cy={SUN.y} r={SUN_R} />
+        <circle
+          className="solar-system__sun"
+          cx={SUN.x}
+          cy={SUN.y}
+          r={SUN_R}
+          fill={`url(#${sunGradId})`}
+        />
+        {/* Hairline limb so the crop against the banner edge feels intentional. */}
+        <circle
+          className="solar-system__sun-limb"
+          cx={SUN.x}
+          cy={SUN.y}
+          r={SUN_R - 0.4}
+        />
 
-        {/* Near orbit arcs only where they cross the sun (in front of the disk). */}
         <g clipPath={`url(#${sunClipId})`}>
           {PLANETS.map((p) => (
             <path
@@ -334,7 +442,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
           ))}
         </g>
 
-        {/* NEAR planets — over the sun */}
         {PLANETS.map((p, i) => (
           <g key={`near-${p.name}`} data-planet-near={i} opacity={0}>
             <PlanetBody
@@ -346,7 +453,10 @@ export function SolarSystem({ className }: SolarSystemProps) {
           </g>
         ))}
 
-        {/* NEAR asteroids — over the sun */}
+        <g data-moon-near opacity={0}>
+          <circle className="solar-system__moon" cx={0} cy={0} r={MOON.bodyR} />
+        </g>
+
         {ASTEROIDS.map((a, i) => (
           <g key={`near-${a.id}`} data-rock-near={i} opacity={0}>
             <circle

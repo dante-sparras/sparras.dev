@@ -10,18 +10,17 @@
   fill: none;
   stroke: color-mix(in oklab, var(--border) 50%, var(--background));
   stroke-width: 0.55;
-  stroke-dasharray: 2.8 2.6;
+  stroke-dasharray: 2.8 3.2;
   stroke-linecap: round;
   opacity: 1;
 }
 
-/*
- * Sun: between border and background.
- * Dark: #232323 → mix → #050505  ⇒ slightly darker than border.
- * Light: #e5e5e5 → mix → #fff     ⇒ soft edge (bg is lighter than border).
- */
-.solar-system__sun {
-  fill: color-mix(in oklab, var(--border) 50%, var(--foreground));
+/* Core fill comes from the SVG radialGradient (soft limb). */
+.solar-system__sun-limb {
+  fill: none;
+  stroke: color-mix(in oklab, var(--border) 40%, var(--background));
+  stroke-width: 1.25;
+  opacity: 0.55;
 }
 
 .solar-system__planet {
@@ -40,13 +39,34 @@
   paint-order: stroke fill;
 }
 
+.solar-system__moon {
+  fill: var(--muted-foreground);
+  stroke: var(--background);
+  stroke-width: 0.55;
+  paint-order: stroke fill;
+  opacity: 0.95;
+}
+
+/* Dual thin rings; dimmer when Saturn is on the far (under-sun) layer. */
 .solar-system__saturn-ring {
   fill: none;
   stroke: currentColor;
-  stroke-width: 0.45;
-  opacity: 0.85;
+  stroke-width: 0.32;
+  opacity: 0.8;
   paint-order: stroke fill;
-  filter: drop-shadow(0 0 0.4px var(--background));
+}
+
+.solar-system__saturn-ring--outer {
+  stroke-width: 0.22;
+  opacity: 0.45;
+}
+
+[data-planet-far] .solar-system__saturn-ring {
+  opacity: 0.42;
+}
+
+[data-planet-far] .solar-system__saturn-ring--outer {
+  opacity: 0.22;
 }
 
 /* Jupiter Great Red Spot — quiet mark on the disk. */
