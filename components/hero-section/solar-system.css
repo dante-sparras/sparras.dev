@@ -6,6 +6,11 @@
   color: var(--foreground);
 }
 
+.solar-system__precess {
+  transform-box: fill-box;
+  will-change: transform;
+}
+
 .solar-system__orbit-ring {
   fill: none;
   stroke: color-mix(in oklab, var(--border) 50%, var(--background));
@@ -79,4 +84,30 @@
 .solar-system__asteroid {
   fill: var(--muted-foreground);
   opacity: 0.7;
+}
+
+/* ── Light mode: dashes / belt / limb need more contrast on white ─────── */
+html:not(.dark) .solar-system__orbit-ring {
+  stroke: color-mix(in oklab, var(--border) 70%, var(--foreground) 18%);
+  opacity: 0.9;
+}
+
+html:not(.dark) .solar-system__sun-limb {
+  stroke: color-mix(in oklab, var(--border) 55%, var(--foreground) 20%);
+  opacity: 0.65;
+}
+
+html:not(.dark) .solar-system__planet--dim,
+html:not(.dark) .solar-system__moon,
+html:not(.dark) .solar-system__asteroid {
+  fill: color-mix(in oklab, var(--muted-foreground) 55%, var(--foreground));
+}
+
+html:not(.dark) .solar-system__asteroid {
+  opacity: 0.55;
+}
+
+html:not(.dark) .solar-system__great-spot {
+  fill: color-mix(in oklab, var(--background) 40%, var(--muted-foreground));
+  opacity: 0.9;
 }

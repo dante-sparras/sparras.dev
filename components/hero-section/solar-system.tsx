@@ -7,33 +7,57 @@ import { cn } from "@/lib/utils";
  * Banner-aware framing (reference composition, monochrome):
  * - Sun large on the RIGHT, half cropped out of frame
  * - Orbits as nested ellipses (side-tilted, not top-down)
- * - Asteroid belt between Mars and Jupiter
- * - Earth moon on a tight local loop
- * - Depth: far under sun / near over sun
+ * - Asteroid belt · Earth moon · Saturn rings · GRS
+ * - Depth: far under sun / near over sun; moon local depth vs Earth
+ * - Kepler-ish periods (T ∝ a^{3/2}), slow scene precession
+ * - Phase seed: ?seed=N | ?seed=day | random each load
  * - Pause when tab hidden or banner off-screen
- * - Start phase: random per body on each page load
+ * - prefers-reduced-motion: composed still “hero pose”
  */
 const VIEW = { w: 280, h: 140 } as const;
-/** Right edge, vertically centered on the banner strip / side border. */
 const SUN = { x: VIEW.w - 4, y: VIEW.h / 2 } as const;
-/** ry / rx — lower = more edge-on / side view. */
 const TILT = 0.22;
 const SUN_R = 36;
 
-/** Belt sits between Mars (110) and Jupiter (138). */
+/** Full-scene precession period (seconds) — nearly subliminal. */
+const PRECESS_PERIOD_S = 1800;
+
+/**
+ * Kepler scaling: T ∝ a^{3/2}, normalized so Earth (a=90) ≈ 16s.
+ * Gives outer bodies a heavier feel than linear period picks.
+ */
+const KEPLER_K = 16 / 90 ** 1.5;
+function keplerPeriodS(semiMajor: number): number {
+  return KEPLER_K * semiMajor ** 1.5;
+}
+
 const BELT = {
   rMin: 116,
   rMax: 132,
   count: 140,
-  periodS: 28,
 } as const;
 
-/** Tight companion around Earth (art-scaled). */
 const MOON = {
   orbitR: 5.8,
   bodyR: 0.75,
   periodS: 2.6,
 } as const;
+
+/**
+ * Reduced-motion still frame — fan on the open left, Jupiter readable,
+ * moon slightly in front of Earth.
+ */
+const HERO_POSE: Record<string, number> = {
+  mercury: 205,
+  venus: 238,
+  earth: 218,
+  mars: 255,
+  jupiter: 228,
+  saturn: 248,
+  uranus: 198,
+  neptune: 262,
+};
+const HERO_MOON_DEG = 55;
 
 type Planet = {
   name: string;
@@ -42,7 +66,6 @@ type Planet = {
   periodS: number;
   dim?: boolean;
   saturnRing?: boolean;
-  /** Great Red Spot — monochrome mark on the disk. */
   greatSpot?: boolean;
 };
 
@@ -54,20 +77,50 @@ type Asteroid = {
 };
 
 const PLANETS: Planet[] = [
-  { name: "mercury", orbitR: 52, bodyR: 1.8, periodS: 8, dim: true },
-  { name: "venus", orbitR: 70, bodyR: 2.4, periodS: 12 },
-  { name: "earth", orbitR: 90, bodyR: 2.6, periodS: 16 },
-  { name: "mars", orbitR: 110, bodyR: 2.1, periodS: 22, dim: true },
-  { name: "jupiter", orbitR: 138, bodyR: 5.0, periodS: 36, greatSpot: true },
+  {
+    name: "mercury",
+    orbitR: 52,
+    bodyR: 1.8,
+    periodS: keplerPeriodS(52),
+    dim: true,
+  },
+  { name: "venus", orbitR: 70, bodyR: 2.4, periodS: keplerPeriodS(70) },
+  { name: "earth", orbitR: 90, bodyR: 2.6, periodS: keplerPeriodS(90) },
+  {
+    name: "mars",
+    orbitR: 110,
+    bodyR: 2.1,
+    periodS: keplerPeriodS(110),
+    dim: true,
+  },
+  {
+    name: "jupiter",
+    orbitR: 138,
+    bodyR: 5.0,
+    periodS: keplerPeriodS(138),
+    greatSpot: true,
+  },
   {
     name: "saturn",
     orbitR: 168,
     bodyR: 4.0,
-    periodS: 48,
+    periodS: keplerPeriodS(168),
     saturnRing: true,
   },
-  { name: "uranus", orbitR: 198, bodyR: 3.0, periodS: 64, dim: true },
-  { name: "neptune", orbitR: 228, bodyR: 2.9, periodS: 80, dim: true },
+  {
+    name: "uranus",
+    orbitR: 198,
+    bodyR: 3.0,
+    periodS: keplerPeriodS(198),
+    dim: true,
+  },
+  {
+    name: "neptune",
+    orbitR: 228,
+    bodyR: 2.9,
+    periodS: keplerPeriodS(228),
+    dim: true,
+  },
 ];
 
 const EARTH_INDEX = PLANETS.findIndex((p) => p.name === "earth");
@@ -82,6 +135,28 @@ function mulberry32(seed: number) {
   };
 }
 
+/** ?seed=123 stable · ?seed=day calendar · else fresh random. */
+function resolvePhaseSeed(): number {
+  try {
+    const raw = new URLSearchParams(window.location.search).get("seed");
+    if (raw === "day") {
+      const d = new Date();
+      return (
+        (d.getUTCFullYear() * 10000 +
+          (d.getUTCMonth() + 1) * 100 +
+          d.getUTCDate()) >>>
+        0
+      );
+    }
+    if (raw != null && raw !== "" && Number.isFinite(Number(raw))) {
+      return Number(raw) >>> 0;
+    }
+  } catch {
+    /* ignore */
+  }
+  return (Math.random() * 0xffffffff) >>> 0;
+}
+
 const ASTEROIDS: Asteroid[] = (() => {
   const rnd = mulberry32(0xa57e201d);
   const out: Asteroid[] = [];
@@ -89,7 +164,7 @@ const ASTEROIDS: Asteroid[] = (() => {
     const u = (rnd() + rnd()) / 2;
     const r = BELT.rMin + u * (BELT.rMax - BELT.rMin);
     const bodyR = 0.28 + rnd() * 0.55;
-    const periodS = BELT.periodS * (0.88 + rnd() * 0.28);
+    const periodS = keplerPeriodS(r) * (0.92 + rnd() * 0.16);
     out.push({ id: `a${i}`, r, bodyR, periodS });
   }
   return out;
@@ -113,7 +188,6 @@ function orbitHalfPath(rx: number, near: boolean): string {
   return `M ${x0} ${y} A ${rx} ${ry} 0 0 ${sweep} ${x1} ${y}`;
 }
 
-/** Lower arc + nodes = near (in front of sun). */
 function isNearSide(deg: number): boolean {
   return Math.sin((deg * Math.PI) / 180) >= 0;
 }
@@ -168,7 +242,6 @@ function PlanetBody({
         />
       ) : null}
       {saturnRing ? (
-        /* Slight view tilt; dual thin rings in the orbital plane. */
         <g className="solar-system__saturn-rings" transform="rotate(-12)">
           <ellipse
             className="solar-system__saturn-ring solar-system__saturn-ring--outer"
@@ -209,6 +282,7 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const svg = svgRef.current;
     if (!root || !svg) return;
 
+    const precessEl = svg.querySelector<SVGGElement>("[data-precess]");
     const farPlanets = PLANETS.map((_, i) =>
       svg.querySelector<SVGGElement>(`[data-planet-far="${i}"]`),
     );
@@ -234,13 +308,23 @@ export function SolarSystem({ className }: SolarSystemProps) {
       "[data-moon-near-front]",
     );
 
-    const planetPhase0 = PLANETS.map(() => Math.random() * 360);
-    const rockPhase0 = ASTEROIDS.map(() => Math.random() * 360);
-    const moonPhase0 = Math.random() * 360;
-
     const reduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+
+    const seed = resolvePhaseSeed();
+    const rnd = mulberry32(seed);
+
+    const planetPhase0 = PLANETS.map((p) =>
+      reduced ? (HERO_POSE[p.name] ?? 210) : rnd() * 360,
+    );
+    const rockPhase0 = ASTEROIDS.map(() =>
+      reduced ? 200 + rnd() * 80 : rnd() * 360,
+    );
+    const moonPhase0 = reduced ? HERO_MOON_DEG : rnd() * 360;
+
+    // Expose seed for debugging / sharing (non-reactive).
+    root.dataset.phaseSeed = String(seed);
 
     const placeMoon = (
       x: number,
@@ -260,7 +344,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
         el.setAttribute("transform", tf);
         el.setAttribute("opacity", "0");
       }
-      // Only one moon copy active: correct sun depth × Earth depth.
       const active = earthNear
         ? moonBehindEarth
           ? nearMoonBehind
@@ -272,6 +355,14 @@ export function SolarSystem({ className }: SolarSystemProps) {
     };
 
     const place = (elapsedS: number) => {
+      if (precessEl && !reduced) {
+        const precessDeg = (360 * elapsedS) / PRECESS_PERIOD_S;
+        precessEl.setAttribute(
+          "transform",
+          `rotate(${precessDeg} ${SUN.x} ${SUN.y})`,
+        );
+      }
+
       let earthX = 0;
       let earthY = 0;
       let earthNear = true;
@@ -291,14 +382,12 @@ export function SolarSystem({ className }: SolarSystemProps) {
         }
       }
 
-      // Local moon orbit: upper arc = behind Earth, lower = in front (same camera).
       const moonDeg = reduced
         ? moonPhase0
         : moonPhase0 + (360 * elapsedS) / MOON.periodS;
       const ma = (moonDeg * Math.PI) / 180;
       const mx = earthX + MOON.orbitR * Math.cos(ma);
       const my = earthY + MOON.orbitR * TILT * Math.sin(ma);
-      // sin < 0 → upper → farther from camera → behind Earth.
       const moonBehindEarth = Math.sin(ma) < 0;
       placeMoon(mx, my, earthNear, moonBehindEarth);
 
@@ -384,8 +473,8 @@ export function SolarSystem({ className }: SolarSystemProps) {
         "solar-system pointer-events-none relative h-full w-full min-h-0 overflow-hidden",
         className,
       )}
-      aria-hidden
     >
+      <span className="sr-only">Decorative animated solar system</span>
       <svg
         ref={svgRef}
         className="absolute inset-0 h-full w-full"
@@ -397,7 +486,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
           <clipPath id={sunClipId}>
             <circle cx={SUN.x} cy={SUN.y} r={SUN_R} />
           </clipPath>
-          {/* Soft limb: core → mid fill → fade toward background at the edge. */}
           <radialGradient
             id={sunGradId}
             cx="50%"
@@ -421,129 +509,131 @@ export function SolarSystem({ className }: SolarSystemProps) {
           </radialGradient>
         </defs>
 
-        {PLANETS.map((p) => (
-          <ellipse
-            key={`orbit-${p.name}`}
-            className="solar-system__orbit-ring"
-            cx={SUN.x}
-            cy={SUN.y}
-            rx={p.orbitR}
-            ry={p.orbitR * TILT}
-          />
-        ))}
-
-        {PLANETS.map((p, i) => (
-          <g key={`far-wrap-${p.name}`}>
-            {p.name === "earth" ? (
-              <g data-moon-far-behind opacity={0}>
-                <circle
-                  className="solar-system__moon"
-                  cx={0}
-                  cy={0}
-                  r={MOON.bodyR}
-                />
-              </g>
-            ) : null}
-            <g data-planet-far={i} opacity={0}>
-              <PlanetBody
-                dim={p.dim}
-                bodyR={p.bodyR}
-                saturnRing={p.saturnRing}
-                greatSpot={p.greatSpot}
-              />
-            </g>
-            {p.name === "earth" ? (
-              <g data-moon-far-front opacity={0}>
-                <circle
-                  className="solar-system__moon"
-                  cx={0}
-                  cy={0}
-                  r={MOON.bodyR}
-                />
-              </g>
-            ) : null}
-          </g>
-        ))}
-
-        {ASTEROIDS.map((a, i) => (
-          <g key={`far-${a.id}`} data-rock-far={i} opacity={0}>
-            <circle
-              className="solar-system__asteroid"
-              cx={0}
-              cy={0}
-              r={a.bodyR}
-            />
-          </g>
-        ))}
-
-        <circle
-          className="solar-system__sun"
-          cx={SUN.x}
-          cy={SUN.y}
-          r={SUN_R}
-          fill={`url(#${sunGradId})`}
-        />
-        {/* Hairline limb so the crop against the banner edge feels intentional. */}
-        <circle
-          className="solar-system__sun-limb"
-          cx={SUN.x}
-          cy={SUN.y}
-          r={SUN_R - 0.4}
-        />
-
-        <g clipPath={`url(#${sunClipId})`}>
+        {/* Slow precession around the sun (skipped under reduced motion). */}
+        <g data-precess className="solar-system__precess">
           {PLANETS.map((p) => (
-            <path
-              key={`orbit-near-${p.name}`}
+            <ellipse
+              key={`orbit-${p.name}`}
               className="solar-system__orbit-ring"
-              d={orbitHalfPath(p.orbitR, true)}
+              cx={SUN.x}
+              cy={SUN.y}
+              rx={p.orbitR}
+              ry={p.orbitR * TILT}
             />
           ))}
-        </g>
 
-        {PLANETS.map((p, i) => (
-          <g key={`near-wrap-${p.name}`}>
-            {p.name === "earth" ? (
-              <g data-moon-near-behind opacity={0}>
-                <circle
-                  className="solar-system__moon"
-                  cx={0}
-                  cy={0}
-                  r={MOON.bodyR}
+          {PLANETS.map((p, i) => (
+            <g key={`far-wrap-${p.name}`}>
+              {p.name === "earth" ? (
+                <g data-moon-far-behind opacity={0}>
+                  <circle
+                    className="solar-system__moon"
+                    cx={0}
+                    cy={0}
+                    r={MOON.bodyR}
+                  />
+                </g>
+              ) : null}
+              <g data-planet-far={i} opacity={0}>
+                <PlanetBody
+                  dim={p.dim}
+                  bodyR={p.bodyR}
+                  saturnRing={p.saturnRing}
+                  greatSpot={p.greatSpot}
                 />
               </g>
-            ) : null}
-            <g data-planet-near={i} opacity={0}>
-              <PlanetBody
-                dim={p.dim}
-                bodyR={p.bodyR}
-                saturnRing={p.saturnRing}
-                greatSpot={p.greatSpot}
+              {p.name === "earth" ? (
+                <g data-moon-far-front opacity={0}>
+                  <circle
+                    className="solar-system__moon"
+                    cx={0}
+                    cy={0}
+                    r={MOON.bodyR}
+                  />
+                </g>
+              ) : null}
+            </g>
+          ))}
+
+          {ASTEROIDS.map((a, i) => (
+            <g key={`far-${a.id}`} data-rock-far={i} opacity={0}>
+              <circle
+                className="solar-system__asteroid"
+                cx={0}
+                cy={0}
+                r={a.bodyR}
               />
             </g>
-            {p.name === "earth" ? (
-              <g data-moon-near-front opacity={0}>
-                <circle
-                  className="solar-system__moon"
-                  cx={0}
-                  cy={0}
-                  r={MOON.bodyR}
+          ))}
+
+          <circle
+            className="solar-system__sun"
+            cx={SUN.x}
+            cy={SUN.y}
+            r={SUN_R}
+            fill={`url(#${sunGradId})`}
+          />
+          <circle
+            className="solar-system__sun-limb"
+            cx={SUN.x}
+            cy={SUN.y}
+            r={SUN_R - 0.4}
+          />
+
+          <g clipPath={`url(#${sunClipId})`}>
+            {PLANETS.map((p) => (
+              <path
+                key={`orbit-near-${p.name}`}
+                className="solar-system__orbit-ring"
+                d={orbitHalfPath(p.orbitR, true)}
+              />
+            ))}
+          </g>
+
+          {PLANETS.map((p, i) => (
+            <g key={`near-wrap-${p.name}`}>
+              {p.name === "earth" ? (
+                <g data-moon-near-behind opacity={0}>
+                  <circle
+                    className="solar-system__moon"
+                    cx={0}
+                    cy={0}
+                    r={MOON.bodyR}
+                  />
+                </g>
+              ) : null}
+              <g data-planet-near={i} opacity={0}>
+                <PlanetBody
+                  dim={p.dim}
+                  bodyR={p.bodyR}
+                  saturnRing={p.saturnRing}
+                  greatSpot={p.greatSpot}
                 />
               </g>
-            ) : null}
-          </g>
-        ))}
+              {p.name === "earth" ? (
+                <g data-moon-near-front opacity={0}>
+                  <circle
+                    className="solar-system__moon"
+                    cx={0}
+                    cy={0}
+                    r={MOON.bodyR}
+                  />
+                </g>
+              ) : null}
+            </g>
+          ))}
 
-        {ASTEROIDS.map((a, i) => (
-          <g key={`near-${a.id}`} data-rock-near={i} opacity={0}>
-            <circle
-              className="solar-system__asteroid"
-              cx={0}
-              cy={0}
-              r={a.bodyR}
-            />
-          </g>
-        ))}
+          {ASTEROIDS.map((a, i) => (
+            <g key={`near-${a.id}`} data-rock-near={i} opacity={0}>
+              <circle
+                className="solar-system__asteroid"
+                cx={0}
+                cy={0}
+                r={a.bodyR}
+              />
+            </g>
+          ))}
+        </g>
       </svg>
     </div>
   );
