@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * - Orbits as nested ellipses (side-tilted, not top-down)
  * - Asteroid belt · Earth moon · Saturn rings · GRS
  * - Depth: far under sun / near over sun; moon local depth vs Earth
- * - Kepler-ish periods (T ∝ a^{3/2})
+ * - Kepler-ish periods (T ∝ a^{3/2}); axial spin (GRS drifts on Jupiter)
  * - Phase seed: ?seed=N | ?seed=day | random each load
  * - Pause when tab hidden or banner off-screen
  * - prefers-reduced-motion: composed still “hero pose”
@@ -61,6 +61,8 @@ type Planet = {
   orbitR: number;
   bodyR: number;
   periodS: number;
+  /** Axial spin period (seconds). Jupiter fast so the GRS drifts visibly. */
+  spinS: number;
   dim?: boolean;
   saturnRing?: boolean;
   greatSpot?: boolean;
@@ -79,15 +81,29 @@ const PLANETS: Planet[] = [
     orbitR: 52,
     bodyR: 1.8,
     periodS: keplerPeriodS(52),
+    spinS: 18,
     dim: true,
   },
-  { name: "venus", orbitR: 70, bodyR: 2.4, periodS: keplerPeriodS(70) },
-  { name: "earth", orbitR: 90, bodyR: 2.6, periodS: keplerPeriodS(90) },
+  {
+    name: "venus",
+    orbitR: 70,
+    bodyR: 2.4,
+    periodS: keplerPeriodS(70),
+    spinS: 28,
+  },
+  {
+    name: "earth",
+    orbitR: 90,
+    bodyR: 2.6,
+    periodS: keplerPeriodS(90),
+    spinS: 10,
+  },
   {
     name: "mars",
     orbitR: 110,
     bodyR: 2.1,
     periodS: keplerPeriodS(110),
+    spinS: 11,
     dim: true,
   },
   {
@@ -95,6 +111,8 @@ const PLANETS: Planet[] = [
     orbitR: 138,
     bodyR: 5.0,
     periodS: keplerPeriodS(138),
+    /** Fast gas-giant day — GRS crawls around the disk. */
+    spinS: 5.5,
     greatSpot: true,
   },
   {
@@ -102,6 +120,7 @@ const PLANETS: Planet[] = [
     orbitR: 168,
     bodyR: 4.0,
     periodS: keplerPeriodS(168),
+    spinS: 6.5,
     saturnRing: true,
   },
   {
@@ -109,6 +128,7 @@ const PLANETS: Planet[] = [
     orbitR: 198,
     bodyR: 3.0,
     periodS: keplerPeriodS(198),
+    spinS: 9,
     dim: true,
   },
   {
@@ -116,6 +136,7 @@ const PLANETS: Planet[] = [
     orbitR: 228,
     bodyR: 2.9,
     periodS: keplerPeriodS(228),
+    spinS: 8,
     dim: true,
   },
 ];
@@ -195,16 +216,19 @@ function setLayer(
   x: number,
   y: number,
   near: boolean,
+  spinDeg = 0,
 ) {
+  // Outer group: position + depth; inner [data-spin] rotates the disc (GRS).
   const tf = `translate(${x} ${y})`;
-  if (farEl) {
-    farEl.setAttribute("transform", tf);
-    farEl.setAttribute("opacity", near ? "0" : "1");
-  }
-  if (nearEl) {
-    nearEl.setAttribute("transform", tf);
-    nearEl.setAttribute("opacity", near ? "1" : "0");
-  }
+  const apply = (el: SVGGElement | null, show: boolean) => {
+    if (!el) return;
+    el.setAttribute("transform", tf);
+    el.setAttribute("opacity", show ? "1" : "0");
+    const spin = el.querySelector<SVGGElement>("[data-spin]");
+    if (spin) spin.setAttribute("transform", `rotate(${spinDeg})`);
+  };
+  apply(farEl, !near);
+  apply(nearEl, near);
 }
 
 function PlanetBody({
@@ -220,24 +244,27 @@ function PlanetBody({
 }) {
   return (
     <>
-      <circle
-        className={
-          dim
-            ? "solar-system__planet solar-system__planet--dim"
-            : "solar-system__planet"
-        }
-        cx={0}
-        cy={0}
-        r={bodyR}
-      />
-      {greatSpot ? (
+      {/* Disc (+ GRS) spins; rings stay fixed in the orbital plane. */}
+      <g data-spin>
         <circle
-          className="solar-system__great-spot"
-          cx={bodyR * 0.28}
-          cy={bodyR * 0.32}
-          r={bodyR * 0.22}
+          className={
+            dim
+              ? "solar-system__planet solar-system__planet--dim"
+              : "solar-system__planet"
+          }
+          cx={0}
+          cy={0}
+          r={bodyR}
         />
-      ) : null}
+        {greatSpot ? (
+          <circle
+            className="solar-system__great-spot"
+            cx={bodyR * 0.28}
+            cy={bodyR * 0.32}
+            r={bodyR * 0.22}
+          />
+        ) : null}
+      </g>
       {saturnRing ? (
         <g className="solar-system__saturn-rings" transform="rotate(-12)">
           <ellipse
@@ -319,6 +346,8 @@ export function SolarSystem({ className }: SolarSystemProps) {
     );
     const moonPhase0 = reduced ? HERO_MOON_DEG : rnd() * 360;
 
+    const planetSpin0 = PLANETS.map(() => (reduced ? 0 : rnd() * 360));
+
     // Expose seed for debugging / sharing (non-reactive).
     root.dataset.phaseSeed = String(seed);
 
@@ -360,9 +389,12 @@ export function SolarSystem({ className }: SolarSystemProps) {
         const deg = reduced
           ? planetPhase0[i]!
           : planetPhase0[i]! + (360 * elapsedS) / p.periodS;
+        const spinDeg = reduced
+          ? planetSpin0[i]!
+          : planetSpin0[i]! + (360 * elapsedS) / p.spinS;
         const { x, y } = ellipsePoint(p.orbitR, deg);
         const near = isNearSide(deg);
-        setLayer(farPlanets[i]!, nearPlanets[i]!, x, y, near);
+        setLayer(farPlanets[i]!, nearPlanets[i]!, x, y, near, spinDeg);
         if (i === EARTH_INDEX) {
           earthX = x;
           earthY = y;
