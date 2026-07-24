@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
  * Banner-aware framing (reference composition, monochrome):
  * - Sun large on the RIGHT, half cropped out of frame
  * - Orbits as nested ellipses (side-tilted, not top-down)
- * - Asteroid belt · Earth moon · Saturn rings · GRS
+ * - Asteroid belt · Earth moon · Saturn rings
  * - Depth: far under sun / near over sun; moon local depth vs Earth
- * - Kepler-ish periods (T ∝ a^{3/2}); axial spin (GRS drifts on Jupiter)
+ * - Kepler-ish periods (T ∝ a^{3/2}); axial spin
  * - Phase seed: ?seed=N | ?seed=day | random each load
  * - Pause when tab hidden or banner off-screen
  * - prefers-reduced-motion: composed still “hero pose”
@@ -61,11 +61,10 @@ type Planet = {
   orbitR: number;
   bodyR: number;
   periodS: number;
-  /** Axial spin period (seconds). Jupiter fast so the GRS drifts visibly. */
+  /** Axial spin period (seconds). */
   spinS: number;
   dim?: boolean;
   saturnRing?: boolean;
-  greatSpot?: boolean;
 };
 
 type Asteroid = {
@@ -111,9 +110,7 @@ const PLANETS: Planet[] = [
     orbitR: 138,
     bodyR: 5.0,
     periodS: keplerPeriodS(138),
-    /** Fast gas-giant day — GRS crawls around the disk. */
     spinS: 5.5,
-    greatSpot: true,
   },
   {
     name: "saturn",
@@ -235,16 +232,14 @@ function PlanetBody({
   dim,
   bodyR,
   saturnRing,
-  greatSpot,
 }: {
   dim?: boolean;
   bodyR: number;
   saturnRing?: boolean;
-  greatSpot?: boolean;
 }) {
   return (
     <>
-      {/* Disc (+ GRS) spins; rings stay fixed in the orbital plane. */}
+      {/* Disc spins; rings stay fixed in the orbital plane. */}
       <g data-spin>
         <circle
           className={
@@ -256,14 +251,6 @@ function PlanetBody({
           cy={0}
           r={bodyR}
         />
-        {greatSpot ? (
-          <circle
-            className="solar-system__great-spot"
-            cx={bodyR * 0.28}
-            cy={bodyR * 0.32}
-            r={bodyR * 0.22}
-          />
-        ) : null}
       </g>
       {saturnRing ? (
         <g className="solar-system__saturn-rings" transform="rotate(-12)">
@@ -559,7 +546,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
                   dim={p.dim}
                   bodyR={p.bodyR}
                   saturnRing={p.saturnRing}
-                  greatSpot={p.greatSpot}
                 />
               </g>
               {p.name === "earth" ? (
@@ -627,7 +613,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
                   dim={p.dim}
                   bodyR={p.bodyR}
                   saturnRing={p.saturnRing}
-                  greatSpot={p.greatSpot}
                 />
               </g>
               {p.name === "earth" ? (

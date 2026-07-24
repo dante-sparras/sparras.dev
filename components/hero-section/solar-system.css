@@ -61,12 +61,6 @@
   opacity: 0.45;
 }
 
-/* Jupiter Great Red Spot — quiet mark on the disk. */
-.solar-system__great-spot {
-  fill: var(--background);
-  opacity: 0.85;
-}
-
 /* Speckled belt between Mars and Jupiter — quieter than planets. */
 .solar-system__asteroid {
   fill: var(--muted-foreground);
@@ -92,9 +86,4 @@ html:not(.dark) .solar-system__asteroid {
 
 html:not(.dark) .solar-system__asteroid {
   opacity: 0.55;
-}
-
-html:not(.dark) .solar-system__great-spot {
-  fill: color-mix(in oklab, var(--background) 40%, var(--muted-foreground));
-  opacity: 0.9;
 }
