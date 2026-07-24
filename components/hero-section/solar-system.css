@@ -47,24 +47,40 @@
   opacity: 0.95;
 }
 
-/* Dual thin rings; dimmer when Saturn is on the far (under-sun) layer. */
+/* Dual thin rings with a clear Cassini-style gap. */
 .solar-system__saturn-ring {
   fill: none;
   stroke: currentColor;
-  stroke-width: 0.32;
+  stroke-width: 0.34;
   opacity: 0.8;
   paint-order: stroke fill;
 }
 
 .solar-system__saturn-ring--outer {
-  stroke-width: 0.22;
-  opacity: 0.45;
+  stroke-width: 0.24;
+  opacity: 0.48;
 }
 
 /* Speckled belt between Mars and Jupiter — quieter than planets. */
 .solar-system__asteroid {
   fill: var(--muted-foreground);
   opacity: 0.7;
+}
+
+/* Long-period comet — quiet head, fading anti-sunward tail. */
+.solar-system__comet-head {
+  fill: currentColor;
+  stroke: var(--background);
+  stroke-width: 0.55;
+  paint-order: stroke fill;
+  opacity: 0.9;
+}
+
+.solar-system__comet-tail {
+  stroke: currentColor;
+  stroke-width: 0.7;
+  stroke-linecap: round;
+  opacity: 0.35;
 }
 
 /* ── Light mode: dashes / belt / limb need more contrast on white ─────── */

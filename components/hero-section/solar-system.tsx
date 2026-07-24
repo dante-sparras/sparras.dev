@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * Banner-aware framing (reference composition, monochrome):
  * - Sun large on the RIGHT, half cropped out of frame
  * - Orbits as nested ellipses (side-tilted, not top-down)
- * - Asteroid belt · Earth moon · Saturn rings
+ * - Asteroid belt · Earth moon · Saturn rings (Cassini gap) · rare comet
  * - Depth: far under sun / near over sun; moon local depth vs Earth
  * - Kepler-ish periods (T ∝ a^{3/2}); axial spin
  * - Phase seed: ?seed=N | ?seed=day | random each load
@@ -38,6 +38,21 @@ const MOON = {
   orbitR: 5.8,
   bodyR: 0.75,
   periodS: 2.6,
+} as const;
+
+/**
+ * Long-period eccentric comet — rare flyby feel via high e + slow period.
+ * Tail points away from the sun; longer near perihelion.
+ */
+const COMET = {
+  a: 158,
+  e: 0.84,
+  periodS: 68,
+  bodyR: 1.05,
+  tailMin: 10,
+  tailMax: 26,
+  /** Argument of periapsis (deg) — opens toward the left of the banner. */
+  argPeriDeg: 200,
 } as const;
 
 /**
@@ -207,6 +222,31 @@ function isNearSide(deg: number): boolean {
   return Math.sin((deg * Math.PI) / 180) >= 0;
 }
 
+/** Polar equation of ellipse with focus at sun: r = a(1−e²)/(1+e cos ν). */
+function cometState(trueAnomalyDeg: number) {
+  const nu = (trueAnomalyDeg * Math.PI) / 180;
+  const a = COMET.a;
+  const e = COMET.e;
+  const r = (a * (1 - e * e)) / (1 + e * Math.cos(nu));
+  const arg = ((trueAnomalyDeg + COMET.argPeriDeg) * Math.PI) / 180;
+  const x = SUN.x + r * Math.cos(arg);
+  const y = SUN.y + r * TILT * Math.sin(arg);
+  // Longer tail near perihelion (small r).
+  const rMin = a * (1 - e);
+  const rMax = a * (1 + e);
+  const nearSun = 1 - (r - rMin) / (rMax - rMin || 1);
+  const tailLen = COMET.tailMin + (COMET.tailMax - COMET.tailMin) * nearSun;
+  const awayDeg = (Math.atan2(y - SUN.y, x - SUN.x) * 180) / Math.PI;
+  return {
+    x,
+    y,
+    r,
+    tailLen,
+    awayDeg,
+    near: isNearSide(trueAnomalyDeg + COMET.argPeriDeg),
+  };
+}
+
 function setLayer(
   farEl: SVGGElement | null,
   nearEl: SVGGElement | null,
@@ -253,20 +293,21 @@ function PlanetBody({
         />
       </g>
       {saturnRing ? (
+        /* Dual rings with a clear Cassini-style gap between them. */
         <g className="solar-system__saturn-rings" transform="rotate(-12)">
           <ellipse
             className="solar-system__saturn-ring solar-system__saturn-ring--outer"
             cx={0}
             cy={0}
-            rx={bodyR * 2.4}
-            ry={bodyR * 0.34}
+            rx={bodyR * 2.55}
+            ry={bodyR * 0.36}
           />
           <ellipse
             className="solar-system__saturn-ring"
             cx={0}
             cy={0}
-            rx={bodyR * 1.95}
-            ry={bodyR * 0.28}
+            rx={bodyR * 1.7}
+            ry={bodyR * 0.24}
           />
         </g>
       ) : null}
@@ -317,6 +358,12 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const nearMoonFront = svg.querySelector<SVGGElement>(
       "[data-moon-near-front]",
     );
+    const farComet = svg.querySelector<SVGGElement>("[data-comet-far]");
+    const nearComet = svg.querySelector<SVGGElement>("[data-comet-near]");
+    const farCometTail =
+      farComet?.querySelector<SVGLineElement>("[data-comet-tail]");
+    const nearCometTail =
+      nearComet?.querySelector<SVGLineElement>("[data-comet-tail]");
 
     const reduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -334,9 +381,28 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const moonPhase0 = reduced ? HERO_MOON_DEG : rnd() * 360;
 
     const planetSpin0 = PLANETS.map(() => (reduced ? 0 : rnd() * 360));
+    /** Start far from perihelion so first flyby isn’t immediate noise. */
+    const cometPhase0 = reduced ? 130 : 80 + rnd() * 200;
 
     // Expose seed for debugging / sharing (non-reactive).
     root.dataset.phaseSeed = String(seed);
+
+    const placeComet = (trueAnomalyDeg: number) => {
+      const { x, y, tailLen, awayDeg, near } = cometState(trueAnomalyDeg);
+      const tf = `translate(${x} ${y}) rotate(${awayDeg})`;
+      const apply = (
+        el: SVGGElement | null,
+        tail: SVGLineElement | null | undefined,
+        show: boolean,
+      ) => {
+        if (!el) return;
+        el.setAttribute("transform", tf);
+        el.setAttribute("opacity", show ? "1" : "0");
+        if (tail) tail.setAttribute("x2", String(tailLen));
+      };
+      apply(farComet, farCometTail, !near);
+      apply(nearComet, nearCometTail, near);
+    };
 
     const placeMoon = (
       x: number,
@@ -406,6 +472,11 @@ export function SolarSystem({ className }: SolarSystemProps) {
         const { x, y } = ellipsePoint(a.r, deg);
         setLayer(farRocks[i]!, nearRocks[i]!, x, y, isNearSide(deg));
       }
+
+      const cometDeg = reduced
+        ? cometPhase0
+        : cometPhase0 + (360 * elapsedS) / COMET.periodS;
+      placeComet(cometDeg);
     };
 
     place(0);
@@ -572,6 +643,24 @@ export function SolarSystem({ className }: SolarSystemProps) {
             </g>
           ))}
 
+          {/* Comet: head + tail (+x = away from sun after rotate). */}
+          <g data-comet-far opacity={0}>
+            <line
+              data-comet-tail
+              className="solar-system__comet-tail"
+              x1={0}
+              y1={0}
+              x2={COMET.tailMin}
+              y2={0}
+            />
+            <circle
+              className="solar-system__comet-head"
+              cx={0}
+              cy={0}
+              r={COMET.bodyR}
+            />
+          </g>
+
           <circle
             className="solar-system__sun"
             cx={SUN.x}
@@ -638,6 +727,23 @@ export function SolarSystem({ className }: SolarSystemProps) {
               />
             </g>
           ))}
+
+          <g data-comet-near opacity={0}>
+            <line
+              data-comet-tail
+              className="solar-system__comet-tail"
+              x1={0}
+              y1={0}
+              x2={COMET.tailMin}
+              y2={0}
+            />
+            <circle
+              className="solar-system__comet-head"
+              cx={0}
+              cy={0}
+              r={COMET.bodyR}
+            />
+          </g>
         </g>
       </svg>
     </div>
