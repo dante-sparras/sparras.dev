@@ -13,9 +13,10 @@
   opacity: 0.85;
 }
 
-/* Border-toned sun so it meets the frame edge cleanly. */
+/* Mid-tone sun: darker than border, lighter than background in dark
+ * (`--card` = #171717 vs border #232323 / bg #050505). Light: card ≈ surface. */
 .solar-system__sun {
-  fill: var(--border);
+  fill: var(--card);
 }
 
 .solar-system__planet {

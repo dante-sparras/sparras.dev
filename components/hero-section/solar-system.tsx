@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
  *   - no pop: only z-order swaps at the left/right nodes
  */
 const VIEW = { w: 280, h: 140 } as const;
-const SUN = { x: VIEW.w - 4, y: 78 } as const;
+/** Right edge, vertically centered on the banner strip / side border. */
+const SUN = { x: VIEW.w - 4, y: VIEW.h / 2 } as const;
 /** ry / rx — lower = more edge-on / side view. */
 const TILT = 0.22;
 const SUN_R = 36;
