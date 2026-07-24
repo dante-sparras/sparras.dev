@@ -10,7 +10,7 @@
   fill: none;
   stroke: var(--border);
   stroke-width: 0.55;
-  stroke-dasharray: 1.6 1.4;
+  stroke-dasharray: 2.8 1.6;
   stroke-linecap: round;
   opacity: 1;
 }
