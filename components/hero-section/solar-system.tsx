@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
  * - Sun large on the RIGHT, half cropped out of frame
  * - Orbits as nested ellipses (side-tilted, not top-down)
  * - Depth: continuous full orbits
- *   - upper/far half drawn UNDER the sun (hidden while crossing the disk)
- *   - lower/near half drawn OVER the sun (visible transit)
+ *   - upper/far half (orbits + planets) drawn UNDER the sun
+ *   - lower/near half (orbits + planets) drawn OVER the sun
  *   - no pop: only z-order swaps at the left/right nodes
  * - Start phase: random per planet on each page load
  */
@@ -54,6 +54,20 @@ function ellipsePoint(rx: number, deg: number) {
     x: SUN.x + rx * Math.cos(a),
     y: SUN.y + ry * Math.sin(a),
   };
+}
+
+/**
+ * Half-ellipse stroke path from the right apex to the left apex.
+ * `near` = lower arc (in front of sun); `!near` = upper arc (behind sun).
+ * SVG sweep: 1 → clockwise through bottom; 0 → through top (Y-down).
+ */
+function orbitHalfPath(rx: number, near: boolean): string {
+  const ry = rx * TILT;
+  const x0 = SUN.x + rx;
+  const x1 = SUN.x - rx;
+  const y = SUN.y;
+  const sweep = near ? 1 : 0;
+  return `M ${x0} ${y} A ${rx} ${ry} 0 0 ${sweep} ${x1} ${y}`;
 }
 
 /**
@@ -183,18 +197,16 @@ export function SolarSystem({ className }: SolarSystemProps) {
         preserveAspectRatio="xMaxYMid slice"
         focusable="false"
       >
+        {/* FAR orbit halves — under the sun */}
         {PLANETS.map((p) => (
-          <ellipse
-            key={`orbit-${p.name}`}
+          <path
+            key={`orbit-far-${p.name}`}
             className="solar-system__orbit-ring"
-            cx={SUN.x}
-            cy={SUN.y}
-            rx={p.orbitR}
-            ry={p.orbitR * TILT}
+            d={orbitHalfPath(p.orbitR, false)}
           />
         ))}
 
-        {/* FAR layer — under the sun (occulted while crossing the disk). */}
+        {/* FAR planets — under the sun (occulted on the disk) */}
         {PLANETS.map((p, i) => (
           <g
             key={`far-${p.name}`}
@@ -208,7 +220,16 @@ export function SolarSystem({ className }: SolarSystemProps) {
 
         <circle className="solar-system__sun" cx={SUN.x} cy={SUN.y} r={SUN_R} />
 
-        {/* NEAR layer — over the sun (visible transit). */}
+        {/* NEAR orbit halves — over the sun (arcs read in front) */}
+        {PLANETS.map((p) => (
+          <path
+            key={`orbit-near-${p.name}`}
+            className="solar-system__orbit-ring"
+            d={orbitHalfPath(p.orbitR, true)}
+          />
+        ))}
+
+        {/* NEAR planets — over the sun (visible transit) */}
         {PLANETS.map((p, i) => (
           <g key={`near-${p.name}`} data-planet-near={i} opacity={0}>
             <PlanetBody dim={p.dim} bodyR={p.bodyR} saturnRing={p.saturnRing} />
