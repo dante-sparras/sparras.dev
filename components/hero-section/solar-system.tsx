@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -123,9 +123,10 @@ function orbitHalfPath(rx: number, near: boolean): string {
  * Near vs far side of the tilted orbit.
  * SVG Y-down: lower arc (sin > 0) = nearer / in front of the sun (drawn over);
  * upper arc (sin < 0) = farther / behind the sun (drawn under → occulted on disk).
+ * Nodes (sin ≈ 0) count as near so bodies sit above orbit strokes at the apices.
  */
 function isNearSide(deg: number): boolean {
-  return Math.sin((deg * Math.PI) / 180) > 0;
+  return Math.sin((deg * Math.PI) / 180) >= 0;
 }
 
 function PlanetBody({
@@ -173,6 +174,7 @@ export type SolarSystemProps = {
  */
 export function SolarSystem({ className }: SolarSystemProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const sunClipId = useId().replace(/:/g, "");
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -262,12 +264,23 @@ export function SolarSystem({ className }: SolarSystemProps) {
         preserveAspectRatio="xMaxYMid slice"
         focusable="false"
       >
-        {/* FAR orbit halves — under the sun */}
+        <defs>
+          {/* Near-side orbit strokes only composite over the sun face —
+              not at the left/right apices where they were covering bodies. */}
+          <clipPath id={sunClipId}>
+            <circle cx={SUN.x} cy={SUN.y} r={SUN_R} />
+          </clipPath>
+        </defs>
+
+        {/* Full rings under everything — bodies always paint above their orbit. */}
         {PLANETS.map((p) => (
-          <path
-            key={`orbit-far-${p.name}`}
+          <ellipse
+            key={`orbit-${p.name}`}
             className="solar-system__orbit-ring"
-            d={orbitHalfPath(p.orbitR, false)}
+            cx={SUN.x}
+            cy={SUN.y}
+            rx={p.orbitR}
+            ry={p.orbitR * TILT}
           />
         ))}
 
@@ -292,14 +305,16 @@ export function SolarSystem({ className }: SolarSystemProps) {
 
         <circle className="solar-system__sun" cx={SUN.x} cy={SUN.y} r={SUN_R} />
 
-        {/* NEAR orbit halves — over the sun */}
-        {PLANETS.map((p) => (
-          <path
-            key={`orbit-near-${p.name}`}
-            className="solar-system__orbit-ring"
-            d={orbitHalfPath(p.orbitR, true)}
-          />
-        ))}
+        {/* Near orbit arcs only where they cross the sun (in front of the disk). */}
+        <g clipPath={`url(#${sunClipId})`}>
+          {PLANETS.map((p) => (
+            <path
+              key={`orbit-near-${p.name}`}
+              className="solar-system__orbit-ring"
+              d={orbitHalfPath(p.orbitR, true)}
+            />
+          ))}
+        </g>
 
         {/* NEAR planets — over the sun */}
         {PLANETS.map((p, i) => (
