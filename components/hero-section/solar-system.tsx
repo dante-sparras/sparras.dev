@@ -25,7 +25,7 @@ const SUN_R = 36;
 const BELT = {
   rMin: 116,
   rMax: 132,
-  count: 52,
+  count: 140,
   /** Mean period — between Mars (22s) and Jupiter (36s). */
   periodS: 28,
 } as const;
