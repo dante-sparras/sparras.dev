@@ -29,7 +29,7 @@ bun run build   # production build
 | -------------------------------- | -------------------------------------------------------------------- |
 | `app/`                           | Routes, layouts, `globals.css`                                       |
 | `components/navbar/`             | Header, menu, theme + language switchers                             |
-| `components/hero-section/`       | Home hero (`HeroSection`) — portrait / title / role                  |
+| `components/hero-section/`       | Home hero (`HeroSection`) — portrait / solar banner / title / role   |
 | `components/profile-details.tsx` | Home bio/contact facts under the hero                                |
 | `components/providers/`          | Theme provider                                                       |
 | `components/ui/`                 | shadcn primitives                                                    |

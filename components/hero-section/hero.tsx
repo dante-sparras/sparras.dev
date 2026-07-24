@@ -1,12 +1,13 @@
 import Image from "next/image";
 import type { Dictionary } from "@/lib/i18n";
+import { HeroBanner } from "./hero-banner";
 
 export type HeroSectionProps = {
   hero: Dictionary["home"]["hero"];
 };
 
 /**
- * Home hero: portrait · name + role.
+ * Home hero: portrait · solar system banner · name + role.
  * Contact / bio facts live in `ProfileDetails`.
  */
 export function HeroSection({ hero }: HeroSectionProps) {
@@ -26,8 +27,10 @@ export function HeroSection({ hero }: HeroSectionProps) {
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col justify-center">
-          <div className="shrink-0 p-0">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <HeroBanner />
+
+          <div className="shrink-0 border-t border-border p-0">
             <h1 className="border-b border-border px-2 py-1.5 text-2xl font-semibold tracking-tight sm:px-2.5 sm:text-3xl">
               {hero.name}
             </h1>

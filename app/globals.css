@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "./typeset.css";
+@import "../components/hero-section/solar-system.css";
 
 @custom-variant dark (&:is(.dark *));
 

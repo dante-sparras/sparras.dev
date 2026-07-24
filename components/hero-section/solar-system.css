@@ -1,0 +1,77 @@
+/* Decorative solar system — monochrome via theme tokens */
+
+.solar-system {
+  color: var(--foreground);
+}
+
+.solar-system__orbit-ring {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 0.6;
+  opacity: 0.9;
+}
+
+.solar-system__sun {
+  fill: currentColor;
+}
+
+.solar-system__planet {
+  fill: currentColor;
+}
+
+.solar-system__planet--dim {
+  fill: var(--muted-foreground);
+  opacity: 0.85;
+}
+
+.solar-system__saturn-ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.45;
+  opacity: 0.7;
+}
+
+.solar-system__spin {
+  transform-origin: 100px 100px;
+  transform-box: view-box;
+  animation-name: solar-system-spin;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.solar-system__spin--8s {
+  animation-duration: 8s;
+}
+.solar-system__spin--12s {
+  animation-duration: 12s;
+}
+.solar-system__spin--16s {
+  animation-duration: 16s;
+}
+.solar-system__spin--22s {
+  animation-duration: 22s;
+}
+.solar-system__spin--36s {
+  animation-duration: 36s;
+}
+.solar-system__spin--48s {
+  animation-duration: 48s;
+}
+.solar-system__spin--64s {
+  animation-duration: 64s;
+}
+.solar-system__spin--80s {
+  animation-duration: 80s;
+}
+
+@keyframes solar-system-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solar-system__spin {
+    animation: none !important;
+  }
+}

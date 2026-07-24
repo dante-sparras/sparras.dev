@@ -64,7 +64,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Naming:** short names (`Navbar`, `NavbarMenu`); theme/language triggers **icon-only**; logo initials in **Geist Pixel Square**
 - **Mobile:** `navbar-menu.tsx` — shadcn **Sheet** (`md:hidden`)
 - **Feature folders:** colocate (e.g. `components/navbar/`, `components/providers/`, `components/hero-section/`)
-- **Hero section** (`@/components/hero-section`): portrait + name/role; details = `ProfileDetails`.
+- **Hero section** (`@/components/hero-section`): portrait + solar system banner + name/role; details = `ProfileDetails`.
 
 ## Theme
 

@@ -1,5 +1,5 @@
 /**
- * Home hero — portrait, title + role.
+ * Home hero — portrait, solar system banner, title + role.
  *
  * Public: `HeroSection`.
  */
