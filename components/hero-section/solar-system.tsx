@@ -221,8 +221,18 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const nearRocks = ASTEROIDS.map((_, i) =>
       svg.querySelector<SVGGElement>(`[data-rock-near="${i}"]`),
     );
-    const farMoon = svg.querySelector<SVGGElement>("[data-moon-far]");
-    const nearMoon = svg.querySelector<SVGGElement>("[data-moon-near]");
+    const farMoonBehind = svg.querySelector<SVGGElement>(
+      "[data-moon-far-behind]",
+    );
+    const farMoonFront = svg.querySelector<SVGGElement>(
+      "[data-moon-far-front]",
+    );
+    const nearMoonBehind = svg.querySelector<SVGGElement>(
+      "[data-moon-near-behind]",
+    );
+    const nearMoonFront = svg.querySelector<SVGGElement>(
+      "[data-moon-near-front]",
+    );
 
     const planetPhase0 = PLANETS.map(() => Math.random() * 360);
     const rockPhase0 = ASTEROIDS.map(() => Math.random() * 360);
@@ -231,6 +241,35 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const reduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+
+    const placeMoon = (
+      x: number,
+      y: number,
+      earthNear: boolean,
+      moonBehindEarth: boolean,
+    ) => {
+      const tf = `translate(${x} ${y})`;
+      const nodes = [
+        farMoonBehind,
+        farMoonFront,
+        nearMoonBehind,
+        nearMoonFront,
+      ];
+      for (const el of nodes) {
+        if (!el) continue;
+        el.setAttribute("transform", tf);
+        el.setAttribute("opacity", "0");
+      }
+      // Only one moon copy active: correct sun depth × Earth depth.
+      const active = earthNear
+        ? moonBehindEarth
+          ? nearMoonBehind
+          : nearMoonFront
+        : moonBehindEarth
+          ? farMoonBehind
+          : farMoonFront;
+      if (active) active.setAttribute("opacity", "1");
+    };
 
     const place = (elapsedS: number) => {
       let earthX = 0;
@@ -252,14 +291,16 @@ export function SolarSystem({ className }: SolarSystemProps) {
         }
       }
 
-      // Moon shares Earth's sun-depth so the pair doesn't split across layers.
+      // Local moon orbit: upper arc = behind Earth, lower = in front (same camera).
       const moonDeg = reduced
         ? moonPhase0
         : moonPhase0 + (360 * elapsedS) / MOON.periodS;
       const ma = (moonDeg * Math.PI) / 180;
       const mx = earthX + MOON.orbitR * Math.cos(ma);
       const my = earthY + MOON.orbitR * TILT * Math.sin(ma);
-      setLayer(farMoon, nearMoon, mx, my, earthNear);
+      // sin < 0 → upper → farther from camera → behind Earth.
+      const moonBehindEarth = Math.sin(ma) < 0;
+      placeMoon(mx, my, earthNear, moonBehindEarth);
 
       for (let i = 0; i < ASTEROIDS.length; i++) {
         const a = ASTEROIDS[i]!;
@@ -392,19 +433,37 @@ export function SolarSystem({ className }: SolarSystemProps) {
         ))}
 
         {PLANETS.map((p, i) => (
-          <g key={`far-${p.name}`} data-planet-far={i} opacity={0}>
-            <PlanetBody
-              dim={p.dim}
-              bodyR={p.bodyR}
-              saturnRing={p.saturnRing}
-              greatSpot={p.greatSpot}
-            />
+          <g key={`far-wrap-${p.name}`}>
+            {p.name === "earth" ? (
+              <g data-moon-far-behind opacity={0}>
+                <circle
+                  className="solar-system__moon"
+                  cx={0}
+                  cy={0}
+                  r={MOON.bodyR}
+                />
+              </g>
+            ) : null}
+            <g data-planet-far={i} opacity={0}>
+              <PlanetBody
+                dim={p.dim}
+                bodyR={p.bodyR}
+                saturnRing={p.saturnRing}
+                greatSpot={p.greatSpot}
+              />
+            </g>
+            {p.name === "earth" ? (
+              <g data-moon-far-front opacity={0}>
+                <circle
+                  className="solar-system__moon"
+                  cx={0}
+                  cy={0}
+                  r={MOON.bodyR}
+                />
+              </g>
+            ) : null}
           </g>
         ))}
-
-        <g data-moon-far opacity={0}>
-          <circle className="solar-system__moon" cx={0} cy={0} r={MOON.bodyR} />
-        </g>
 
         {ASTEROIDS.map((a, i) => (
           <g key={`far-${a.id}`} data-rock-far={i} opacity={0}>
@@ -443,19 +502,37 @@ export function SolarSystem({ className }: SolarSystemProps) {
         </g>
 
         {PLANETS.map((p, i) => (
-          <g key={`near-${p.name}`} data-planet-near={i} opacity={0}>
-            <PlanetBody
-              dim={p.dim}
-              bodyR={p.bodyR}
-              saturnRing={p.saturnRing}
-              greatSpot={p.greatSpot}
-            />
+          <g key={`near-wrap-${p.name}`}>
+            {p.name === "earth" ? (
+              <g data-moon-near-behind opacity={0}>
+                <circle
+                  className="solar-system__moon"
+                  cx={0}
+                  cy={0}
+                  r={MOON.bodyR}
+                />
+              </g>
+            ) : null}
+            <g data-planet-near={i} opacity={0}>
+              <PlanetBody
+                dim={p.dim}
+                bodyR={p.bodyR}
+                saturnRing={p.saturnRing}
+                greatSpot={p.greatSpot}
+              />
+            </g>
+            {p.name === "earth" ? (
+              <g data-moon-near-front opacity={0}>
+                <circle
+                  className="solar-system__moon"
+                  cx={0}
+                  cy={0}
+                  r={MOON.bodyR}
+                />
+              </g>
+            ) : null}
           </g>
         ))}
-
-        <g data-moon-near opacity={0}>
-          <circle className="solar-system__moon" cx={0} cy={0} r={MOON.bodyR} />
-        </g>
 
         {ASTEROIDS.map((a, i) => (
           <g key={`near-${a.id}`} data-rock-near={i} opacity={0}>
