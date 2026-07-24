@@ -6,11 +6,6 @@
   color: var(--foreground);
 }
 
-.solar-system__precess {
-  transform-box: fill-box;
-  will-change: transform;
-}
-
 .solar-system__orbit-ring {
   fill: none;
   stroke: color-mix(in oklab, var(--border) 50%, var(--background));

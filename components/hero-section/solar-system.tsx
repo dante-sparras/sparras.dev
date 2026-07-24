@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * - Orbits as nested ellipses (side-tilted, not top-down)
  * - Asteroid belt · Earth moon · Saturn rings · GRS
  * - Depth: far under sun / near over sun; moon local depth vs Earth
- * - Kepler-ish periods (T ∝ a^{3/2}), slow scene precession
+ * - Kepler-ish periods (T ∝ a^{3/2})
  * - Phase seed: ?seed=N | ?seed=day | random each load
  * - Pause when tab hidden or banner off-screen
  * - prefers-reduced-motion: composed still “hero pose”
@@ -18,9 +18,6 @@ const VIEW = { w: 280, h: 140 } as const;
 const SUN = { x: VIEW.w - 4, y: VIEW.h / 2 } as const;
 const TILT = 0.22;
 const SUN_R = 36;
-
-/** Full-scene precession period (seconds) — nearly subliminal. */
-const PRECESS_PERIOD_S = 1800;
 
 /**
  * Kepler scaling: T ∝ a^{3/2}, normalized so Earth (a=90) ≈ 16s.
@@ -282,7 +279,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const svg = svgRef.current;
     if (!root || !svg) return;
 
-    const precessEl = svg.querySelector<SVGGElement>("[data-precess]");
     const farPlanets = PLANETS.map((_, i) =>
       svg.querySelector<SVGGElement>(`[data-planet-far="${i}"]`),
     );
@@ -355,14 +351,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
     };
 
     const place = (elapsedS: number) => {
-      if (precessEl && !reduced) {
-        const precessDeg = (360 * elapsedS) / PRECESS_PERIOD_S;
-        precessEl.setAttribute(
-          "transform",
-          `rotate(${precessDeg} ${SUN.x} ${SUN.y})`,
-        );
-      }
-
       let earthX = 0;
       let earthY = 0;
       let earthNear = true;
@@ -509,8 +497,8 @@ export function SolarSystem({ className }: SolarSystemProps) {
           </radialGradient>
         </defs>
 
-        {/* Slow precession around the sun (skipped under reduced motion). */}
-        <g data-precess className="solar-system__precess">
+        {/* Scene content (orbits, bodies, sun). */}
+        <g>
           {PLANETS.map((p) => (
             <ellipse
               key={`orbit-${p.name}`}
