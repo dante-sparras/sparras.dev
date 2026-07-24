@@ -1,5 +1,5 @@
 /* Decorative solar system — monochrome via theme tokens.
- * Side-tilted elliptical orbits, sun cropped left.
+ * Side-tilted elliptical orbits, sun cropped right.
  * Motion: SVG animateMotion along ellipse paths. */
 
 .solar-system {
@@ -13,24 +13,35 @@
   opacity: 0.85;
 }
 
+/* Border-toned sun so it meets the frame edge cleanly. */
 .solar-system__sun {
-  fill: currentColor;
+  fill: var(--border);
 }
 
 .solar-system__planet {
   fill: currentColor;
+  /* Halo so discs stay readable while crossing the sun. */
+  stroke: var(--background);
+  stroke-width: 0.9;
+  paint-order: stroke fill;
 }
 
 .solar-system__planet--dim {
   fill: var(--muted-foreground);
-  opacity: 0.85;
+  opacity: 1;
+  stroke: var(--background);
+  stroke-width: 0.9;
+  paint-order: stroke fill;
 }
 
 .solar-system__saturn-ring {
   fill: none;
   stroke: currentColor;
-  stroke-width: 0.4;
-  opacity: 0.7;
+  stroke-width: 0.45;
+  opacity: 0.85;
+  /* Soft outer edge so the ring also reads over the sun. */
+  paint-order: stroke fill;
+  filter: drop-shadow(0 0 0.4px var(--background));
 }
 
 /* Default: show motion bodies, hide static duplicates. */

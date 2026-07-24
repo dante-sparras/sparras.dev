@@ -2,14 +2,14 @@ import { cn } from "@/lib/utils";
 
 /**
  * Banner-aware framing (reference composition, monochrome):
- * - Sun large on the LEFT, half cropped out of frame
+ * - Sun large on the RIGHT, half cropped out of frame
  * - Orbits as nested ellipses (side-tilted, not top-down)
- * - Only roughly half the system reads inside the strip
+ * - Only roughly half the system reads inside the strip (opens left)
  */
-const SUN = { x: 4, y: 78 } as const;
+const VIEW = { w: 280, h: 140 } as const;
+const SUN = { x: VIEW.w - 4, y: 78 } as const;
 /** ry / rx — lower = more edge-on. */
 const TILT = 0.34;
-const VIEW = { w: 280, h: 140 } as const;
 const SUN_R = 36;
 
 type Planet = {
@@ -20,7 +20,7 @@ type Planet = {
   periodS: number;
   /**
    * Start phase along the orbit, degrees (0 = right of sun).
-   * Negative ≈ above the major axis in SVG (Y-down).
+   * ~180 ± offsets ≈ left of sun; negative sin ≈ above (SVG Y-down).
    */
   startDeg: number;
   dim?: boolean;
@@ -29,7 +29,7 @@ type Planet = {
 
 /**
  * Art-scaled radii (not real AU). Start angles biased to the visible
- * upper-right arc so the banner reads like the reference crop.
+ * upper-left arc (system opens left of a right-cropped sun).
  */
 const PLANETS: Planet[] = [
   {
@@ -37,7 +37,7 @@ const PLANETS: Planet[] = [
     orbitR: 52,
     bodyR: 1.8,
     periodS: 8,
-    startDeg: -18,
+    startDeg: 198, // flip of -18 → upper-left of right-side sun
     dim: true,
   },
   {
@@ -45,21 +45,21 @@ const PLANETS: Planet[] = [
     orbitR: 70,
     bodyR: 2.4,
     periodS: 12,
-    startDeg: -42,
+    startDeg: 222,
   },
   {
     name: "earth",
     orbitR: 90,
     bodyR: 2.6,
     periodS: 16,
-    startDeg: -28,
+    startDeg: 208,
   },
   {
     name: "mars",
     orbitR: 110,
     bodyR: 2.1,
     periodS: 22,
-    startDeg: -58,
+    startDeg: 238,
     dim: true,
   },
   {
@@ -67,14 +67,14 @@ const PLANETS: Planet[] = [
     orbitR: 138,
     bodyR: 5.0,
     periodS: 36,
-    startDeg: -38,
+    startDeg: 218,
   },
   {
     name: "saturn",
     orbitR: 168,
     bodyR: 4.0,
     periodS: 48,
-    startDeg: -52,
+    startDeg: 232,
     saturnRing: true,
   },
   {
@@ -82,7 +82,7 @@ const PLANETS: Planet[] = [
     orbitR: 198,
     bodyR: 3.0,
     periodS: 64,
-    startDeg: -22,
+    startDeg: 202,
     dim: true,
   },
   {
@@ -90,7 +90,7 @@ const PLANETS: Planet[] = [
     orbitR: 228,
     bodyR: 2.9,
     periodS: 80,
-    startDeg: -68,
+    startDeg: 248,
     dim: true,
   },
 ];
@@ -167,7 +167,7 @@ export function SolarSystem({ className }: SolarSystemProps) {
       <svg
         className="absolute inset-0 h-full w-full"
         viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
-        preserveAspectRatio="xMinYMid slice"
+        preserveAspectRatio="xMaxYMid slice"
         focusable="false"
       >
         {PLANETS.map((p) => (
@@ -181,6 +181,7 @@ export function SolarSystem({ className }: SolarSystemProps) {
           />
         ))}
 
+        {/* Sun under planets so bodies can transit across the disk. */}
         <circle className="solar-system__sun" cx={SUN.x} cy={SUN.y} r={SUN_R} />
 
         {PLANETS.map((p) => {
