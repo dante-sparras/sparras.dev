@@ -1,10 +1,14 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 /**
  * Banner-aware framing (reference composition, monochrome):
  * - Sun large on the RIGHT, half cropped out of frame
  * - Orbits as nested ellipses (side-tilted, not top-down)
- * - Only roughly half the system reads inside the strip (opens left)
+ * - Depth: upper arc = in front of sun (visible, can transit);
+ *   lower arc = behind sun (hidden)
  */
 const VIEW = { w: 280, h: 140 } as const;
 const SUN = { x: VIEW.w - 4, y: 78 } as const;
@@ -29,7 +33,7 @@ type Planet = {
 
 /**
  * Art-scaled radii (not real AU). Start angles biased to the visible
- * upper-left arc (system opens left of a right-cropped sun).
+ * upper-left arc (in front of the sun).
  */
 const PLANETS: Planet[] = [
   {
@@ -37,7 +41,7 @@ const PLANETS: Planet[] = [
     orbitR: 52,
     bodyR: 1.8,
     periodS: 8,
-    startDeg: 198, // flip of -18 → upper-left of right-side sun
+    startDeg: 198,
     dim: true,
   },
   {
@@ -99,17 +103,18 @@ function ellipsePoint(rx: number, deg: number) {
   const a = (deg * Math.PI) / 180;
   const ry = rx * TILT;
   return {
-    x: +(SUN.x + rx * Math.cos(a)).toFixed(3),
-    y: +(SUN.y + ry * Math.sin(a)).toFixed(3),
+    x: SUN.x + rx * Math.cos(a),
+    y: SUN.y + ry * Math.sin(a),
   };
 }
 
-/** Full ellipse path starting at `startDeg` (for animateMotion). */
-function motionPath(rx: number, startDeg: number): string {
-  const a = ellipsePoint(rx, startDeg);
-  const b = ellipsePoint(rx, startDeg + 180);
-  const ry = +(rx * TILT).toFixed(3);
-  return `M ${a.x} ${a.y} A ${rx} ${ry} 0 1 1 ${b.x} ${b.y} A ${rx} ${ry} 0 1 1 ${a.x} ${a.y}`;
+/**
+ * Upper arc (sin < 0 in SVG Y-down) = nearer / in front of the sun.
+ * Lower arc = farther / behind the sun → hidden.
+ */
+function isInFront(deg: number): boolean {
+  const a = (deg * Math.PI) / 180;
+  return Math.sin(a) < 0;
 }
 
 function PlanetBody({
@@ -153,9 +158,52 @@ export type SolarSystemProps = {
 /**
  * Layout-agnostic solar system (decorative SVG).
  * Parent owns size; this fills `h-full w-full` and crops via viewBox.
+ * Client: rAF orbit + depth so planets behind the sun stay hidden.
  * Styles: `solar-system.css` (imported from `app/globals.css`).
  */
 export function SolarSystem({ className }: SolarSystemProps) {
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const nodes = PLANETS.map((_, i) =>
+      svg.querySelector<SVGGElement>(`[data-planet="${i}"]`),
+    );
+
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const place = (elapsedS: number) => {
+      for (let i = 0; i < PLANETS.length; i++) {
+        const p = PLANETS[i]!;
+        const el = nodes[i];
+        if (!el) continue;
+        const deg = reduced
+          ? p.startDeg
+          : p.startDeg + (360 * elapsedS) / p.periodS;
+        const { x, y } = ellipsePoint(p.orbitR, deg);
+        el.setAttribute("transform", `translate(${x} ${y})`);
+        // Only the near (front) half of each orbit is drawn — behind = gone.
+        el.setAttribute("opacity", isInFront(deg) ? "1" : "0");
+      }
+    };
+
+    place(0);
+    if (reduced) return;
+
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      place((now - t0) / 1000);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
     <div
       className={cn(
@@ -165,6 +213,7 @@ export function SolarSystem({ className }: SolarSystemProps) {
       aria-hidden
     >
       <svg
+        ref={svgRef}
         className="absolute inset-0 h-full w-full"
         viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
         preserveAspectRatio="xMaxYMid slice"
@@ -181,40 +230,23 @@ export function SolarSystem({ className }: SolarSystemProps) {
           />
         ))}
 
-        {/* Sun under planets so bodies can transit across the disk. */}
+        {/* Sun under front-side planets so near-side transits stay readable. */}
         <circle className="solar-system__sun" cx={SUN.x} cy={SUN.y} r={SUN_R} />
 
-        {PLANETS.map((p) => {
+        {PLANETS.map((p, i) => {
           const start = ellipsePoint(p.orbitR, p.startDeg);
-          const path = motionPath(p.orbitR, p.startDeg);
           return (
-            <g key={p.name}>
-              {/* Animated along absolute ellipse path (origin follows path). */}
-              <g className="solar-system__body-motion">
-                <animateMotion
-                  className="solar-system__orbit-anim"
-                  path={path}
-                  dur={`${p.periodS}s`}
-                  repeatCount="indefinite"
-                  rotate="0"
-                />
-                <PlanetBody
-                  dim={p.dim}
-                  bodyR={p.bodyR}
-                  saturnRing={p.saturnRing}
-                />
-              </g>
-              {/* Static start pose when SMIL is disabled (reduced motion). */}
-              <g
-                className="solar-system__body-static"
-                transform={`translate(${start.x} ${start.y})`}
-              >
-                <PlanetBody
-                  dim={p.dim}
-                  bodyR={p.bodyR}
-                  saturnRing={p.saturnRing}
-                />
-              </g>
+            <g
+              key={p.name}
+              data-planet={i}
+              transform={`translate(${start.x} ${start.y})`}
+              opacity={isInFront(p.startDeg) ? 1 : 0}
+            >
+              <PlanetBody
+                dim={p.dim}
+                bodyR={p.bodyR}
+                saturnRing={p.saturnRing}
+              />
             </g>
           );
         })}

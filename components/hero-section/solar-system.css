@@ -1,6 +1,6 @@
 /* Decorative solar system — monochrome via theme tokens.
  * Side-tilted elliptical orbits, sun cropped right.
- * Motion: SVG animateMotion along ellipse paths. */
+ * Depth/motion driven in solar-system.tsx (client rAF). */
 
 .solar-system {
   color: var(--foreground);
@@ -20,7 +20,7 @@
 
 .solar-system__planet {
   fill: currentColor;
-  /* Halo so discs stay readable while crossing the sun. */
+  /* Halo so discs stay readable while crossing the sun (front only). */
   stroke: var(--background);
   stroke-width: 0.9;
   paint-order: stroke fill;
@@ -39,26 +39,6 @@
   stroke: currentColor;
   stroke-width: 0.45;
   opacity: 0.85;
-  /* Soft outer edge so the ring also reads over the sun. */
   paint-order: stroke fill;
   filter: drop-shadow(0 0 0.4px var(--background));
-}
-
-/* Default: show motion bodies, hide static duplicates. */
-.solar-system__body-static {
-  display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .solar-system__body-motion {
-    display: none;
-  }
-
-  .solar-system__body-static {
-    display: inline;
-  }
-
-  .solar-system__orbit-anim {
-    display: none;
-  }
 }
