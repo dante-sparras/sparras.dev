@@ -7,8 +7,10 @@ import { cn } from "@/lib/utils";
  * Banner-aware framing (reference composition, monochrome):
  * - Sun large on the RIGHT, half cropped out of frame
  * - Orbits as nested ellipses (side-tilted, not top-down)
- * - Depth: upper arc = in front of sun (visible, can transit);
- *   lower arc = behind sun (hidden)
+ * - Depth: continuous full orbits
+ *   - upper/far half drawn UNDER the sun (hidden while crossing the disk)
+ *   - lower/near half drawn OVER the sun (visible transit)
+ *   - no pop: only z-order swaps at the left/right nodes
  */
 const VIEW = { w: 280, h: 140 } as const;
 const SUN = { x: VIEW.w - 4, y: 78 } as const;
@@ -18,22 +20,19 @@ const SUN_R = 36;
 
 type Planet = {
   name: string;
-  /** Semi-major axis (horizontal). */
   orbitR: number;
   bodyR: number;
   periodS: number;
-  /**
-   * Start phase along the orbit, degrees (0 = right of sun).
-   * ~180 ± offsets ≈ left of sun; negative sin ≈ above (SVG Y-down).
-   */
+  /** Start phase, degrees (0 = right of sun). */
   startDeg: number;
   dim?: boolean;
   saturnRing?: boolean;
 };
 
 /**
- * Art-scaled radii (not real AU). Start angles biased to the visible
- * upper-left arc (in front of the sun).
+ * Art-scaled radii (not real AU). Start angles on the upper-left arc
+ * (behind / far side) so the open composition reads left of the sun;
+ * those bodies sit under the sun and stay occulted while crossing it.
  */
 const PLANETS: Planet[] = [
   {
@@ -109,12 +108,12 @@ function ellipsePoint(rx: number, deg: number) {
 }
 
 /**
- * Upper arc (sin < 0 in SVG Y-down) = nearer / in front of the sun.
- * Lower arc = farther / behind the sun → hidden.
+ * Near vs far side of the tilted orbit.
+ * SVG Y-down: lower arc (sin > 0) = nearer / in front of the sun (drawn over);
+ * upper arc (sin < 0) = farther / behind the sun (drawn under → occulted on disk).
  */
-function isInFront(deg: number): boolean {
-  const a = (deg * Math.PI) / 180;
-  return Math.sin(a) < 0;
+function isNearSide(deg: number): boolean {
+  return Math.sin((deg * Math.PI) / 180) > 0;
 }
 
 function PlanetBody({
@@ -157,9 +156,7 @@ export type SolarSystemProps = {
 
 /**
  * Layout-agnostic solar system (decorative SVG).
- * Parent owns size; this fills `h-full w-full` and crops via viewBox.
- * Client: rAF orbit + depth so planets behind the sun stay hidden.
- * Styles: `solar-system.css` (imported from `app/globals.css`).
+ * Client rAF: full continuous orbits with under/over sun depth layers.
  */
 export function SolarSystem({ className }: SolarSystemProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -168,8 +165,11 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const svg = svgRef.current;
     if (!svg) return;
 
-    const nodes = PLANETS.map((_, i) =>
-      svg.querySelector<SVGGElement>(`[data-planet="${i}"]`),
+    const farNodes = PLANETS.map((_, i) =>
+      svg.querySelector<SVGGElement>(`[data-planet-far="${i}"]`),
+    );
+    const nearNodes = PLANETS.map((_, i) =>
+      svg.querySelector<SVGGElement>(`[data-planet-near="${i}"]`),
     );
 
     const reduced = window.matchMedia(
@@ -179,15 +179,27 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const place = (elapsedS: number) => {
       for (let i = 0; i < PLANETS.length; i++) {
         const p = PLANETS[i]!;
-        const el = nodes[i];
-        if (!el) continue;
         const deg = reduced
           ? p.startDeg
           : p.startDeg + (360 * elapsedS) / p.periodS;
         const { x, y } = ellipsePoint(p.orbitR, deg);
-        el.setAttribute("transform", `translate(${x} ${y})`);
-        // Only the near (front) half of each orbit is drawn — behind = gone.
-        el.setAttribute("opacity", isInFront(deg) ? "1" : "0");
+        const tf = `translate(${x} ${y})`;
+        const near = isNearSide(deg);
+
+        const farEl = farNodes[i];
+        const nearEl = nearNodes[i];
+        // Same position on both layers; only one is active.
+        // Far sits under the sun → disk occludes it on the far pass.
+        // Near sits over the sun → transit is visible on the near pass.
+        // Swap happens at the nodes (left/right apex) so nothing pops mid-arc.
+        if (farEl) {
+          farEl.setAttribute("transform", tf);
+          farEl.setAttribute("opacity", near ? "0" : "1");
+        }
+        if (nearEl) {
+          nearEl.setAttribute("transform", tf);
+          nearEl.setAttribute("opacity", near ? "1" : "0");
+        }
       }
     };
 
@@ -230,17 +242,38 @@ export function SolarSystem({ className }: SolarSystemProps) {
           />
         ))}
 
-        {/* Sun under front-side planets so near-side transits stay readable. */}
-        <circle className="solar-system__sun" cx={SUN.x} cy={SUN.y} r={SUN_R} />
-
+        {/* FAR layer — under the sun (occulted while crossing the disk). */}
         {PLANETS.map((p, i) => {
           const start = ellipsePoint(p.orbitR, p.startDeg);
+          const near0 = isNearSide(p.startDeg);
           return (
             <g
-              key={p.name}
-              data-planet={i}
+              key={`far-${p.name}`}
+              data-planet-far={i}
               transform={`translate(${start.x} ${start.y})`}
-              opacity={isInFront(p.startDeg) ? 1 : 0}
+              opacity={near0 ? 0 : 1}
+            >
+              <PlanetBody
+                dim={p.dim}
+                bodyR={p.bodyR}
+                saturnRing={p.saturnRing}
+              />
+            </g>
+          );
+        })}
+
+        <circle className="solar-system__sun" cx={SUN.x} cy={SUN.y} r={SUN_R} />
+
+        {/* NEAR layer — over the sun (visible transit). */}
+        {PLANETS.map((p, i) => {
+          const start = ellipsePoint(p.orbitR, p.startDeg);
+          const near0 = isNearSide(p.startDeg);
+          return (
+            <g
+              key={`near-${p.name}`}
+              data-planet-near={i}
+              transform={`translate(${start.x} ${start.y})`}
+              opacity={near0 ? 1 : 0}
             >
               <PlanetBody
                 dim={p.dim}
