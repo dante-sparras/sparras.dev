@@ -46,3 +46,9 @@
   paint-order: stroke fill;
   filter: drop-shadow(0 0 0.4px var(--background));
 }
+
+/* Speckled belt between Mars and Jupiter — quieter than planets. */
+.solar-system__asteroid {
+  fill: var(--muted-foreground);
+  opacity: 0.7;
+}
