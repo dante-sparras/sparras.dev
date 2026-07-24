@@ -61,14 +61,6 @@
   opacity: 0.45;
 }
 
-[data-planet-far] .solar-system__saturn-ring {
-  opacity: 0.42;
-}
-
-[data-planet-far] .solar-system__saturn-ring--outer {
-  opacity: 0.22;
-}
-
 /* Jupiter Great Red Spot — quiet mark on the disk. */
 .solar-system__great-spot {
   fill: var(--background);
