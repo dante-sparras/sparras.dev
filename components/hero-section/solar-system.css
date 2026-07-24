@@ -26,14 +26,14 @@
   animation: solar-star-twinkle 4.8s ease-in-out infinite;
 }
 
-/* Stagger twinkle phases */
-.solar-system__stars .solar-system__star--twinkle:nth-child(3n) {
+/* Stagger twinkle phases (outer star wrappers are direct children). */
+.solar-system__stars > g:nth-child(3n) .solar-system__star--twinkle {
   animation-delay: 0.8s;
 }
-.solar-system__stars .solar-system__star--twinkle:nth-child(3n + 1) {
+.solar-system__stars > g:nth-child(3n + 1) .solar-system__star--twinkle {
   animation-delay: 2.1s;
 }
-.solar-system__stars .solar-system__star--twinkle:nth-child(3n + 2) {
+.solar-system__stars > g:nth-child(3n + 2) .solar-system__star--twinkle {
   animation-delay: 3.6s;
 }
 
