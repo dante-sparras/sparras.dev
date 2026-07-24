@@ -6,6 +6,25 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 <!-- END:nextjs-agent-rules -->
 
+**Project-specific rules and preferences belong in this file** (not Hermes MEMORY/USER). Update this file when conventions change.
+
+## Commands
+
+| Command                             | What it does                                 |
+| ----------------------------------- | -------------------------------------------- |
+| `bun install`                       | Install deps (`prepare` → `hooks:enable`)    |
+| `bun run dev`                       | Next.js dev server (enables git hooks first) |
+| `bun run build`                     | Production build (enables hooks first)       |
+| `bun run start`                     | Serve production build                       |
+| `bun run lint` / `bun run lint:fix` | Oxlint                                       |
+| `bun run fmt` / `bun run fmt:check` | Oxfmt format / check                         |
+| `bun run typecheck`                 | `tsc --noEmit`                               |
+| `bun test` / `bun run test`         | `bun test tests`                             |
+| `bun run check`                     | Format check + lint + typecheck (CI-style)   |
+| `bun run precommit`                 | lint-staged + full check                     |
+| `bun run prepush`                   | production build                             |
+| `bun run hooks:enable`              | `git config core.hooksPath githooks`         |
+
 ## Tooling (Oxc)
 
 - **Lint:** `bun run lint` / `bun run lint:fix` — [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) (`.oxlintrc.json`)
@@ -44,7 +63,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Naming:** short names (`Navbar`, `NavbarMenu`); theme/language triggers **icon-only**; logo initials in **Geist Pixel Square**
 - **Mobile:** `navbar-menu.tsx` — shadcn **Sheet** (`md:hidden`)
 - **Feature folders:** colocate (e.g. `components/navbar/`, `components/providers/`, `components/hero-section/`)
-- **Hero section** (`@/components/hero-section`): portrait + `HeroBanner` (binary black hole) + name/role; details = `ProfileDetails`. Black-hole knobs: `defaultPhysics` in `components/black-hole/config.ts` (JSDoc on types).
+- **Hero section** (`@/components/hero-section`): portrait + name/role; details = `ProfileDetails`.
 
 ## Theme
 

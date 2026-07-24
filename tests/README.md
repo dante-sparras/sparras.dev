@@ -6,7 +6,6 @@ Root test suite for sparras.dev.
 
 ```
 tests/
-  black-hole/       pure Kerr / disk / Doppler / config (no WebGPU)
   tsconfig.json     Bun types for this folder (IntelliSense)
 ```
 
@@ -14,12 +13,9 @@ tests/
 
 ```bash
 bun test tests
-bun test tests/black-hole
 # or
-bun run test
+bun run test   # uses --pass-with-no-tests when the suite is empty
 ```
-
-After any physics change: **`bun test tests/black-hole`** first.
 
 ## `bun:test` IntelliSense
 

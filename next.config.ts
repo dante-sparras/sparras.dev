@@ -2,8 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  // three + R3F WebGPU (`@/components/three`) + feature scenes
-  transpilePackages: ["three"],
+  allowedDevOrigins: ["192.168.1.3"],
 };
 
 export default nextConfig;
