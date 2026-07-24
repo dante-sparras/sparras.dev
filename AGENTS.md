@@ -47,7 +47,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Locales:** `en`, `sv` under `app/[locale]/`; default **`en`**
 - **Detection:** `proxy.ts` + `Accept-Language` → `/en` or `/sv` (uses `pathnameHasLocale` / `localeFromAcceptLanguage` from `@/lib/i18n`)
 - **Barrel:** import from `@/lib/i18n`
-  - `locale.ts` — locale set, Accept-Language, path helpers, `requireLocale`, section page helpers
+  - `locale-core.ts` — pure locale set, Accept-Language, path helpers (unit-tested)
+  - `locale.ts` — re-exports core + `requireLocale`, section page helpers (Next-coupled)
   - `dictionary.ts` — `getDictionary` / `getSiteMetadata`
   - `section-page.tsx` — `createSectionPage` (placeholder routes only)
   - `dictionaries/` — en/sv copy
@@ -71,7 +72,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Hook:** `import { useTheme } from "next-themes"` (do not reimplement)
 - **Types:** `ThemeChoice` / `ResolvedTheme` / `THEME_CHOICES` from `@/components/providers`
 - **Switcher:** system / light / dark; labels passed in from server Navbar (not `getDictionary` on the client)
-- **CSS tokens:** `useCssTokens` / `CSS_TOKENS` in `@/hooks` (tokens only — not mode types). Mirrors every custom property on `:root` / `.dark` in `app/globals.css`. Keep the list in sync when globals change.
+- **Theme colors:** CSS custom properties on `:root` / `.dark` in `app/globals.css` only (no JS token hook)
 
 ## Quality checks (no Lefthook / Husky / custom install scripts)
 

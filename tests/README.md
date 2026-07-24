@@ -6,6 +6,7 @@ Root test suite for sparras.dev.
 
 ```
 tests/
+  i18n/             Pure locale + path helpers
   tsconfig.json     Bun types for this folder (IntelliSense)
 ```
 
@@ -14,8 +15,13 @@ tests/
 ```bash
 bun test tests
 # or
-bun run test   # uses --pass-with-no-tests when the suite is empty
+bun run test
 ```
+
+## What belongs here
+
+- Pure modules (no React / no Next request runtime) — e.g. `lib/i18n/locale-core`
+- Prefer asserting external behaviour of a module interface, not internal structure
 
 ## `bun:test` IntelliSense
 
