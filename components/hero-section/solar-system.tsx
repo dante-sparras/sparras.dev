@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * Banner-aware framing (reference composition, monochrome):
  * - Sun large on the RIGHT, half cropped out of frame
  * - Orbits as nested ellipses (side-tilted, not top-down)
- * - Asteroid belt · Earth moon · Saturn rings (Cassini gap) · rare comet
+ * - Asteroid belt · Earth moon · Saturn rings (Cassini gap) · starfield
  * - Depth: far under sun / near over sun; moon local depth vs Earth
  * - Kepler-ish periods (T ∝ a^{3/2}); axial spin
  * - Phase seed: ?seed=N | ?seed=day | random each load
@@ -38,21 +38,6 @@ const MOON = {
   orbitR: 5.8,
   bodyR: 0.75,
   periodS: 2.6,
-} as const;
-
-/**
- * Long-period eccentric comet — rare flyby feel via high e + slow period.
- * Tail points away from the sun; longer near perihelion.
- */
-const COMET = {
-  a: 158,
-  e: 0.84,
-  periodS: 68,
-  bodyR: 1.05,
-  tailMin: 10,
-  tailMax: 26,
-  /** Argument of periapsis (deg) — opens toward the left of the banner. */
-  argPeriDeg: 200,
 } as const;
 
 /**
@@ -87,6 +72,18 @@ type Asteroid = {
   r: number;
   bodyR: number;
   periodS: number;
+};
+
+type Star = {
+  id: string;
+  x: number;
+  y: number;
+  r: number;
+  /** 0–1 base opacity */
+  o: number;
+  /** Soft cross-hair accent (modern tech look) */
+  cross?: boolean;
+  twinkle?: boolean;
 };
 
 const PLANETS: Planet[] = [
@@ -200,6 +197,50 @@ const ASTEROIDS: Asteroid[] = (() => {
   return out;
 })();
 
+/**
+ * Sparse modern starfield behind the system.
+ * Deterministic layout; biased toward open left / away from sun disk.
+ */
+const STARS: Star[] = (() => {
+  const rnd = mulberry32(0x57a45f1d);
+  const out: Star[] = [];
+  let i = 0;
+  let attempts = 0;
+  while (out.length < 56 && attempts < 400) {
+    attempts++;
+    // Bias x left of sun so stars read in the open banner field.
+    const x = rnd() * (VIEW.w * 0.78);
+    const y = rnd() * VIEW.h;
+    const dx = x - SUN.x;
+    const dy = y - SUN.y;
+    // Keep clear of the sun disk so stars aren’t buried under the fill.
+    if (Math.hypot(dx, dy) < SUN_R + 10) continue;
+    const roll = rnd();
+    const bright = roll > 0.88;
+    const mid = roll > 0.62;
+    const r = bright
+      ? 0.55 + rnd() * 0.35
+      : mid
+        ? 0.28 + rnd() * 0.22
+        : 0.12 + rnd() * 0.16;
+    const o = bright
+      ? 0.55 + rnd() * 0.3
+      : mid
+        ? 0.28 + rnd() * 0.28
+        : 0.12 + rnd() * 0.2;
+    out.push({
+      id: `s${i++}`,
+      x,
+      y,
+      r,
+      o,
+      cross: bright && rnd() > 0.35,
+      twinkle: bright || (mid && rnd() > 0.55),
+    });
+  }
+  return out;
+})();
+
 function ellipsePoint(rx: number, deg: number) {
   const a = (deg * Math.PI) / 180;
   const ry = rx * TILT;
@@ -222,31 +263,6 @@ function isNearSide(deg: number): boolean {
   return Math.sin((deg * Math.PI) / 180) >= 0;
 }
 
-/** Polar equation of ellipse with focus at sun: r = a(1−e²)/(1+e cos ν). */
-function cometState(trueAnomalyDeg: number) {
-  const nu = (trueAnomalyDeg * Math.PI) / 180;
-  const a = COMET.a;
-  const e = COMET.e;
-  const r = (a * (1 - e * e)) / (1 + e * Math.cos(nu));
-  const arg = ((trueAnomalyDeg + COMET.argPeriDeg) * Math.PI) / 180;
-  const x = SUN.x + r * Math.cos(arg);
-  const y = SUN.y + r * TILT * Math.sin(arg);
-  // Longer tail near perihelion (small r).
-  const rMin = a * (1 - e);
-  const rMax = a * (1 + e);
-  const nearSun = 1 - (r - rMin) / (rMax - rMin || 1);
-  const tailLen = COMET.tailMin + (COMET.tailMax - COMET.tailMin) * nearSun;
-  const awayDeg = (Math.atan2(y - SUN.y, x - SUN.x) * 180) / Math.PI;
-  return {
-    x,
-    y,
-    r,
-    tailLen,
-    awayDeg,
-    near: isNearSide(trueAnomalyDeg + COMET.argPeriDeg),
-  };
-}
-
 function setLayer(
   farEl: SVGGElement | null,
   nearEl: SVGGElement | null,
@@ -255,7 +271,7 @@ function setLayer(
   near: boolean,
   spinDeg = 0,
 ) {
-  // Outer group: position + depth; inner [data-spin] rotates the disc (GRS).
+  // Outer group: position + depth; inner [data-spin] rotates the disc.
   const tf = `translate(${x} ${y})`;
   const apply = (el: SVGGElement | null, show: boolean) => {
     if (!el) return;
@@ -315,6 +331,42 @@ function PlanetBody({
   );
 }
 
+/** Minimal modern star — soft disc, optional cross-hair for brighter ones. */
+function StarMark({ star }: { star: Star }) {
+  const arm = star.r * 2.4;
+  return (
+    <g opacity={star.o} transform={`translate(${star.x} ${star.y})`}>
+      <g
+        className={
+          star.twinkle
+            ? "solar-system__star solar-system__star--twinkle"
+            : "solar-system__star"
+        }
+      >
+        {star.cross ? (
+          <>
+            <line
+              className="solar-system__star-arm"
+              x1={-arm}
+              y1={0}
+              x2={arm}
+              y2={0}
+            />
+            <line
+              className="solar-system__star-arm"
+              x1={0}
+              y1={-arm}
+              x2={0}
+              y2={arm}
+            />
+          </>
+        ) : null}
+        <circle className="solar-system__star-core" cx={0} cy={0} r={star.r} />
+      </g>
+    </g>
+  );
+}
+
 export type SolarSystemProps = {
   className?: string;
 };
@@ -358,12 +410,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const nearMoonFront = svg.querySelector<SVGGElement>(
       "[data-moon-near-front]",
     );
-    const farComet = svg.querySelector<SVGGElement>("[data-comet-far]");
-    const nearComet = svg.querySelector<SVGGElement>("[data-comet-near]");
-    const farCometTail =
-      farComet?.querySelector<SVGLineElement>("[data-comet-tail]");
-    const nearCometTail =
-      nearComet?.querySelector<SVGLineElement>("[data-comet-tail]");
 
     const reduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -381,28 +427,9 @@ export function SolarSystem({ className }: SolarSystemProps) {
     const moonPhase0 = reduced ? HERO_MOON_DEG : rnd() * 360;
 
     const planetSpin0 = PLANETS.map(() => (reduced ? 0 : rnd() * 360));
-    /** Start far from perihelion so first flyby isn’t immediate noise. */
-    const cometPhase0 = reduced ? 130 : 80 + rnd() * 200;
 
     // Expose seed for debugging / sharing (non-reactive).
     root.dataset.phaseSeed = String(seed);
-
-    const placeComet = (trueAnomalyDeg: number) => {
-      const { x, y, tailLen, awayDeg, near } = cometState(trueAnomalyDeg);
-      const tf = `translate(${x} ${y}) rotate(${awayDeg})`;
-      const apply = (
-        el: SVGGElement | null,
-        tail: SVGLineElement | null | undefined,
-        show: boolean,
-      ) => {
-        if (!el) return;
-        el.setAttribute("transform", tf);
-        el.setAttribute("opacity", show ? "1" : "0");
-        if (tail) tail.setAttribute("x2", String(tailLen));
-      };
-      apply(farComet, farCometTail, !near);
-      apply(nearComet, nearCometTail, near);
-    };
 
     const placeMoon = (
       x: number,
@@ -472,11 +499,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
         const { x, y } = ellipsePoint(a.r, deg);
         setLayer(farRocks[i]!, nearRocks[i]!, x, y, isNearSide(deg));
       }
-
-      const cometDeg = reduced
-        ? cometPhase0
-        : cometPhase0 + (360 * elapsedS) / COMET.periodS;
-      placeComet(cometDeg);
     };
 
     place(0);
@@ -587,8 +609,14 @@ export function SolarSystem({ className }: SolarSystemProps) {
           </radialGradient>
         </defs>
 
-        {/* Scene content (orbits, bodies, sun). */}
+        {/* Scene content: stars behind, then orbits/bodies/sun. */}
         <g>
+          <g className="solar-system__stars" aria-hidden>
+            {STARS.map((s) => (
+              <StarMark key={s.id} star={s} />
+            ))}
+          </g>
+
           {PLANETS.map((p) => (
             <ellipse
               key={`orbit-${p.name}`}
@@ -642,24 +670,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
               />
             </g>
           ))}
-
-          {/* Comet: head + tail (+x = away from sun after rotate). */}
-          <g data-comet-far opacity={0}>
-            <line
-              data-comet-tail
-              className="solar-system__comet-tail"
-              x1={0}
-              y1={0}
-              x2={COMET.tailMin}
-              y2={0}
-            />
-            <circle
-              className="solar-system__comet-head"
-              cx={0}
-              cy={0}
-              r={COMET.bodyR}
-            />
-          </g>
 
           <circle
             className="solar-system__sun"
@@ -727,23 +737,6 @@ export function SolarSystem({ className }: SolarSystemProps) {
               />
             </g>
           ))}
-
-          <g data-comet-near opacity={0}>
-            <line
-              data-comet-tail
-              className="solar-system__comet-tail"
-              x1={0}
-              y1={0}
-              x2={COMET.tailMin}
-              y2={0}
-            />
-            <circle
-              className="solar-system__comet-head"
-              cx={0}
-              cy={0}
-              r={COMET.bodyR}
-            />
-          </g>
         </g>
       </svg>
     </div>

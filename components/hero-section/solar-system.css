@@ -6,6 +6,53 @@
   color: var(--foreground);
 }
 
+/* ── Starfield (behind orbits) ───────────────────────────────────────── */
+.solar-system__stars {
+  color: var(--foreground);
+}
+
+.solar-system__star-core {
+  fill: currentColor;
+}
+
+.solar-system__star-arm {
+  stroke: currentColor;
+  stroke-width: 0.35;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.solar-system__star--twinkle {
+  animation: solar-star-twinkle 4.8s ease-in-out infinite;
+}
+
+/* Stagger twinkle phases */
+.solar-system__stars .solar-system__star--twinkle:nth-child(3n) {
+  animation-delay: 0.8s;
+}
+.solar-system__stars .solar-system__star--twinkle:nth-child(3n + 1) {
+  animation-delay: 2.1s;
+}
+.solar-system__stars .solar-system__star--twinkle:nth-child(3n + 2) {
+  animation-delay: 3.6s;
+}
+
+@keyframes solar-star-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solar-system__star--twinkle {
+    animation: none;
+  }
+}
+
 .solar-system__orbit-ring {
   fill: none;
   stroke: color-mix(in oklab, var(--border) 50%, var(--background));
@@ -67,23 +114,7 @@
   opacity: 0.7;
 }
 
-/* Long-period comet — quiet head, fading anti-sunward tail. */
-.solar-system__comet-head {
-  fill: currentColor;
-  stroke: var(--background);
-  stroke-width: 0.55;
-  paint-order: stroke fill;
-  opacity: 0.9;
-}
-
-.solar-system__comet-tail {
-  stroke: currentColor;
-  stroke-width: 0.7;
-  stroke-linecap: round;
-  opacity: 0.35;
-}
-
-/* ── Light mode: dashes / belt / limb need more contrast on white ─────── */
+/* ── Light mode: dashes / belt / limb / stars need more contrast on white */
 html:not(.dark) .solar-system__orbit-ring {
   stroke: color-mix(in oklab, var(--border) 70%, var(--foreground) 18%);
   opacity: 0.9;
@@ -102,4 +133,8 @@ html:not(.dark) .solar-system__asteroid {
 
 html:not(.dark) .solar-system__asteroid {
   opacity: 0.55;
+}
+
+html:not(.dark) .solar-system__stars {
+  color: color-mix(in oklab, var(--foreground) 70%, var(--muted-foreground));
 }
