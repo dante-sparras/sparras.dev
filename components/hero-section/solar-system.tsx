@@ -37,6 +37,8 @@ type Planet = {
   periodS: number;
   dim?: boolean;
   saturnRing?: boolean;
+  /** Great Red Spot — monochrome oval on the disk. */
+  greatSpot?: boolean;
 };
 
 type Asteroid = {
@@ -54,7 +56,7 @@ const PLANETS: Planet[] = [
   { name: "venus", orbitR: 70, bodyR: 2.4, periodS: 12 },
   { name: "earth", orbitR: 90, bodyR: 2.6, periodS: 16 },
   { name: "mars", orbitR: 110, bodyR: 2.1, periodS: 22, dim: true },
-  { name: "jupiter", orbitR: 138, bodyR: 5.0, periodS: 36 },
+  { name: "jupiter", orbitR: 138, bodyR: 5.0, periodS: 36, greatSpot: true },
   {
     name: "saturn",
     orbitR: 168,
@@ -133,10 +135,12 @@ function PlanetBody({
   dim,
   bodyR,
   saturnRing,
+  greatSpot,
 }: {
   dim?: boolean;
   bodyR: number;
   saturnRing?: boolean;
+  greatSpot?: boolean;
 }) {
   return (
     <>
@@ -150,6 +154,16 @@ function PlanetBody({
         cy={0}
         r={bodyR}
       />
+      {greatSpot ? (
+        /* Slight SE offset — GRS-like oval on the disk. */
+        <ellipse
+          className="solar-system__great-spot"
+          cx={bodyR * 0.28}
+          cy={bodyR * 0.32}
+          rx={bodyR * 0.38}
+          ry={bodyR * 0.2}
+        />
+      ) : null}
       {saturnRing ? (
         <ellipse
           className="solar-system__saturn-ring"
@@ -287,7 +301,12 @@ export function SolarSystem({ className }: SolarSystemProps) {
         {/* FAR planets — under the sun */}
         {PLANETS.map((p, i) => (
           <g key={`far-${p.name}`} data-planet-far={i} opacity={0}>
-            <PlanetBody dim={p.dim} bodyR={p.bodyR} saturnRing={p.saturnRing} />
+            <PlanetBody
+              dim={p.dim}
+              bodyR={p.bodyR}
+              saturnRing={p.saturnRing}
+              greatSpot={p.greatSpot}
+            />
           </g>
         ))}
 
@@ -319,7 +338,12 @@ export function SolarSystem({ className }: SolarSystemProps) {
         {/* NEAR planets — over the sun */}
         {PLANETS.map((p, i) => (
           <g key={`near-${p.name}`} data-planet-near={i} opacity={0}>
-            <PlanetBody dim={p.dim} bodyR={p.bodyR} saturnRing={p.saturnRing} />
+            <PlanetBody
+              dim={p.dim}
+              bodyR={p.bodyR}
+              saturnRing={p.saturnRing}
+              greatSpot={p.greatSpot}
+            />
           </g>
         ))}
 

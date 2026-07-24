@@ -8,7 +8,7 @@
 
 .solar-system__orbit-ring {
   fill: none;
-  stroke: color-mix(in oklab, var(--border) 62%, var(--background));
+  stroke: color-mix(in oklab, var(--border) 50%, var(--background));
   stroke-width: 0.55;
   stroke-dasharray: 2.8 2.6;
   stroke-linecap: round;
@@ -21,7 +21,7 @@
  * Light: #e5e5e5 → mix → #fff     ⇒ soft edge (bg is lighter than border).
  */
 .solar-system__sun {
-  fill: color-mix(in oklab, var(--border) 58%, var(--background));
+  fill: color-mix(in oklab, var(--border) 50%, var(--foreground));
 }
 
 .solar-system__planet {
@@ -47,6 +47,12 @@
   opacity: 0.85;
   paint-order: stroke fill;
   filter: drop-shadow(0 0 0.4px var(--background));
+}
+
+/* Jupiter Great Red Spot — quiet mark on the disk. */
+.solar-system__great-spot {
+  fill: var(--background);
+  opacity: 0.85;
 }
 
 /* Speckled belt between Mars and Jupiter — quieter than planets. */
