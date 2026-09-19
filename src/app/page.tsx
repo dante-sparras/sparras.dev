@@ -157,7 +157,7 @@ export default function Home() {
           alt="Picture of Dante Sparrås"
           width={152}
           height={152}
-          className="-translate-y-3/4 pointer-events-none absolute top-52 left-6 rounded-full border"
+          className="pointer-events-none absolute top-52 left-6 -translate-y-3/4 rounded-full border"
           priority
         />
         <StripedDivider className="h-14" />
