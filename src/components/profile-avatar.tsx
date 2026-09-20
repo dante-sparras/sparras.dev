@@ -1,40 +1,56 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef } from "react";
-import { usePrefersReducedMotion } from "@/components/hover-lens";
+import { type PointerEvent, useCallback, useEffect, useRef } from "react";
+import {
+  pointerPositionInElement,
+  usePrefersReducedMotion,
+} from "@/components/hover-lens";
 import { cn } from "@/lib/utils";
 
 const AVATAR_SIZE_PX = 152;
 const SPLIT_DURATION_MS = 300;
-
-/** Hover rest pose for each channel, in CSS pixels.
- *  +x is right, +y is down. Amount 0–1 eases from the origin. */
-const CHANNEL_OFFSET = {
-  red: { x: -3, y: 0 },
-  green: { x: 0, y: 1 },
-  blue: { x: 3, y: 0 },
-} as const;
+const SPLIT_PX = 3;
+const GREEN_PX = 1;
+/** Ignore tiny center moves so the axis does not flip in place. */
+const DIRECTION_DEADZONE = 0.08;
+/** Higher = the split axis catches the pointer faster. */
+const ANGLE_FOLLOW_SPEED = 10;
+const MAX_FRAME_SECONDS = 0.05;
+const SETTLED_ANGLE = 0.001;
 
 /** Tailwind `ease-out`: fast start, settle at the end. */
 function easeOut(t: number) {
   return 1 - (1 - t) ** 3;
 }
 
-function writeOffset(
-  node: SVGFEOffsetElement | null,
-  offset: { x: number; y: number },
-  amount: number,
-) {
+function exponentialEase(speed: number, dt: number) {
+  return 1 - Math.exp(-speed * dt);
+}
+
+/** Signed delta from `from` to `to` on the shortest arc, in (-π, π]. */
+function shortestAngleDelta(from: number, to: number) {
+  return Math.atan2(Math.sin(to - from), Math.cos(to - from));
+}
+
+function writeOffset(node: SVGFEOffsetElement | null, x: number, y: number) {
   if (!node) {
     return;
   }
-  const x = offset.x * amount;
-  const y = offset.y * amount;
   node.dx.baseVal = x;
   node.dy.baseVal = y;
   node.setAttribute("dx", String(x));
   node.setAttribute("dy", String(y));
+}
+
+function angleFromPointer(event: PointerEvent<HTMLElement>): number | null {
+  const { x, y } = pointerPositionInElement(event);
+  const dx = x - 0.5;
+  const dy = y - 0.5;
+  if (Math.hypot(dx, dy) < DIRECTION_DEADZONE) {
+    return null;
+  }
+  return Math.atan2(dy, dx);
 }
 
 type ProfileAvatarProps = {
@@ -46,17 +62,36 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
   const greenOffsetRef = useRef<SVGFEOffsetElement>(null);
   const blueOffsetRef = useRef<SVGFEOffsetElement>(null);
   const amountRef = useRef(0);
-  const fromRef = useRef(0);
-  const targetRef = useRef(0);
-  const startTimeRef = useRef(0);
+  const amountFromRef = useRef(0);
+  const amountTargetRef = useRef(0);
+  const amountStartRef = useRef(0);
+  const amountAnimatingRef = useRef(false);
+  const angleRef = useRef(0);
+  const angleTargetRef = useRef(0);
+  const lastFrameRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  const applyAmount = useCallback((amount: number) => {
-    amountRef.current = amount;
-    writeOffset(redOffsetRef.current, CHANNEL_OFFSET.red, amount);
-    writeOffset(greenOffsetRef.current, CHANNEL_OFFSET.green, amount);
-    writeOffset(blueOffsetRef.current, CHANNEL_OFFSET.blue, amount);
+  const apply = useCallback(() => {
+    const amount = amountRef.current;
+    const angle = angleRef.current;
+    const x = Math.cos(angle);
+    const y = Math.sin(angle);
+    writeOffset(
+      redOffsetRef.current,
+      x * SPLIT_PX * amount,
+      y * SPLIT_PX * amount,
+    );
+    writeOffset(
+      blueOffsetRef.current,
+      -x * SPLIT_PX * amount,
+      -y * SPLIT_PX * amount,
+    );
+    writeOffset(
+      greenOffsetRef.current,
+      -y * GREEN_PX * amount,
+      x * GREEN_PX * amount,
+    );
   }, []);
 
   const stop = useCallback(() => {
@@ -67,45 +102,102 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
     rafRef.current = null;
   }, []);
 
-  const playTo = useCallback(
-    (target: number) => {
-      stop();
-      fromRef.current = amountRef.current;
-      targetRef.current = target;
-      startTimeRef.current = performance.now();
+  const startLoop = useCallback(() => {
+    if (rafRef.current != null) {
+      return;
+    }
 
-      const tick = (now: number) => {
-        const t = Math.min(1, (now - startTimeRef.current) / SPLIT_DURATION_MS);
-        applyAmount(
-          fromRef.current + (targetRef.current - fromRef.current) * easeOut(t),
+    lastFrameRef.current = performance.now();
+
+    const tick = (now: number) => {
+      if (amountAnimatingRef.current) {
+        const t = Math.min(
+          1,
+          (now - amountStartRef.current) / SPLIT_DURATION_MS,
         );
-        if (t < 1) {
-          rafRef.current = requestAnimationFrame(tick);
-          return;
+        amountRef.current =
+          amountFromRef.current +
+          (amountTargetRef.current - amountFromRef.current) * easeOut(t);
+        if (t >= 1) {
+          amountRef.current = amountTargetRef.current;
+          amountAnimatingRef.current = false;
         }
-        applyAmount(targetRef.current);
+      }
+
+      const dt = Math.min(
+        MAX_FRAME_SECONDS,
+        (now - lastFrameRef.current) / 1000,
+      );
+      lastFrameRef.current = now;
+      const angleDelta = shortestAngleDelta(
+        angleRef.current,
+        angleTargetRef.current,
+      );
+      angleRef.current += angleDelta * exponentialEase(ANGLE_FOLLOW_SPEED, dt);
+
+      apply();
+
+      const angleSettled =
+        Math.abs(shortestAngleDelta(angleRef.current, angleTargetRef.current)) <
+        SETTLED_ANGLE;
+      if (!amountAnimatingRef.current && angleSettled) {
+        angleRef.current = angleTargetRef.current;
+        apply();
         rafRef.current = null;
-      };
+        return;
+      }
 
       rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+  }, [apply]);
+
+  const playAmountTo = useCallback(
+    (target: number) => {
+      amountFromRef.current = amountRef.current;
+      amountTargetRef.current = target;
+      amountStartRef.current = performance.now();
+      amountAnimatingRef.current = true;
+      startLoop();
     },
-    [applyAmount, stop],
+    [startLoop],
   );
 
   useEffect(() => stop, [stop]);
 
-  function handlePointerEnter() {
+  function aimAtPointer(event: PointerEvent<HTMLElement>, snap: boolean) {
+    const next = angleFromPointer(event);
+    if (next == null) {
+      return;
+    }
+    angleTargetRef.current = next;
+    if (snap) {
+      angleRef.current = next;
+    }
+  }
+
+  function handlePointerEnter(event: PointerEvent<HTMLDivElement>) {
     if (prefersReducedMotion) {
       return;
     }
-    playTo(1);
+    aimAtPointer(event, true);
+    playAmountTo(1);
+  }
+
+  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (prefersReducedMotion) {
+      return;
+    }
+    aimAtPointer(event, false);
+    startLoop();
   }
 
   function handlePointerLeave() {
     if (prefersReducedMotion) {
       return;
     }
-    playTo(0);
+    playAmountTo(0);
   }
 
   return (
@@ -115,6 +207,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
         className,
       )}
       onPointerEnter={handlePointerEnter}
+      onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
       <svg aria-hidden className="absolute size-0">
@@ -175,7 +268,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
         fill
         sizes={`${AVATAR_SIZE_PX}px`}
         priority
-        className="object-cover filter-[url(#avatar-rgb-split)]"
+        className="filter-[url(#avatar-rgb-split)] object-cover"
       />
     </div>
   );
