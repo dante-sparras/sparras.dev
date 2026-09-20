@@ -15,13 +15,13 @@ export const REVEAL_ZOOM = 1.05;
 const MASK_SOLID_RATIO = 0.42;
 
 /** Higher = the lens catches up to the pointer faster. */
-const FOLLOW_SPEED = 12;
+export const FOLLOW_SPEED = 12;
 
 /** Cap dt so a long pause (tab backgrounded) does not jump the lens. */
-const MAX_FRAME_SECONDS = 0.05;
+export const MAX_FRAME_SECONDS = 0.05;
 
 /** Close enough to the target that we can stop the animation loop. */
-const SETTLED_DISTANCE = 0.001;
+export const SETTLED_DISTANCE = 0.001;
 
 /** Hide the reveal layer once the fade-out is basically done. */
 export const VISIBLE_SCALE_THRESHOLD = 0.02;
@@ -78,7 +78,7 @@ function isSettled(current: Lens, target: Lens) {
  * `1 - e^(-speed * dt)` always stays in 0–1, so we ease toward the
  * target and never jump past it.
  */
-function exponentialEase(speed: number, dt: number) {
+export function exponentialEase(speed: number, dt: number) {
   return 1 - Math.exp(-speed * dt);
 }
 
