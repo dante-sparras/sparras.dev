@@ -57,6 +57,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
   const angleTargetRef = useRef(0);
   const lastFrameRef = useRef(0);
   const rafRef = useRef<number | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const apply = useCallback(() => {
@@ -140,6 +141,18 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
 
   useEffect(() => stop, [stop]);
 
+  useEffect(() => {
+    const node = rootRef.current;
+    if (!node) {
+      return;
+    }
+    const blockScroll = (event: TouchEvent) => {
+      event.preventDefault();
+    };
+    node.addEventListener("touchmove", blockScroll, { passive: false });
+    return () => node.removeEventListener("touchmove", blockScroll);
+  }, []);
+
   function aimAtPointer(event: PointerEvent<HTMLElement>, snap: boolean) {
     const next = angleFromPointer(event);
     if (next == null) {
@@ -176,8 +189,9 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
 
   return (
     <div
+      ref={rootRef}
       className={cn(
-        "relative size-38 overflow-hidden rounded-full border",
+        "relative size-38 touch-none select-none overflow-hidden rounded-full border",
         className,
       )}
       onPointerEnter={handlePointerEnter}
