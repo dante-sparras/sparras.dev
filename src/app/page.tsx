@@ -142,16 +142,18 @@ export default function Home() {
   return (
     <>
       <header className="relative">
-        <BlackHoleBanner />
-        <Image
-          src="/portrait.webp"
-          alt="Picture of Dante Sparrås"
-          width={152}
-          height={152}
-          className="pointer-events-none mt-6 ml-6 rounded-full border"
-          priority
-        />
-        <StripedDivider className="h-14" />
+        <div className="relative">
+          <BlackHoleBanner />
+          <Image
+            src="/portrait.webp"
+            alt="Picture of Dante Sparrås"
+            width={152}
+            height={152}
+            className="pointer-events-none absolute bottom-0 left-6 z-10 translate-y-1/2 rounded-full border"
+            priority
+          />
+        </div>
+        <StripedDivider className="h-[76px]" />
         <H2 className="border-b py-3 pl-6">{name}</H2>
         <Muted className="py-3 pl-6">{role}</Muted>
       </header>
