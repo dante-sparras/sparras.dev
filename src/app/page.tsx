@@ -147,7 +147,7 @@ export default function Home() {
           <BlackHoleBanner />
           <ProfileAvatar className="absolute bottom-0 left-6 z-10 translate-y-1/2" />
         </div>
-        <StripedDivider className="h-[76px]" />
+        <StripedDivider className="h-19" />
         <H2 className="border-b py-3 pl-6">{name}</H2>
         <Muted className="py-3 pl-6">{role}</Muted>
       </header>
