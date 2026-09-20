@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BlackHoleBanner } from "@/components/black-hole-banner";
 import { BlogSection } from "@/components/blog-section";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProjectsSection } from "@/components/projects-section";
 import { H2 } from "@/components/typography/h2";
 import { H3 } from "@/components/typography/h3";
@@ -144,14 +145,7 @@ export default function Home() {
       <header className="relative">
         <div className="relative">
           <BlackHoleBanner />
-          <Image
-            src="/portrait.webp"
-            alt="Picture of Dante Sparrås"
-            width={152}
-            height={152}
-            className="pointer-events-none absolute bottom-0 left-6 z-10 translate-y-1/2 rounded-full border"
-            priority
-          />
+          <ProfileAvatar className="absolute bottom-0 left-6 z-10 translate-y-1/2" />
         </div>
         <StripedDivider className="h-[76px]" />
         <H2 className="border-b py-3 pl-6">{name}</H2>
