@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BlogSection } from "@/components/blog-section";
-import GameOfLifeCanvas from "@/components/game-of-life";
 import { ProjectsSection } from "@/components/projects-section";
 import { H2 } from "@/components/typography/h2";
 import { H3 } from "@/components/typography/h3";
@@ -142,22 +141,12 @@ export default function Home() {
   return (
     <>
       <header className="relative">
-        <GameOfLifeCanvas
-          speed={100}
-          showGrid
-          targetCellSize={15}
-          backgroundColorVar="--background"
-          cellColorVar="--foreground"
-          fadeIntensity={0.9}
-          stagnationThreshold={5}
-          className="h-52 opacity-25"
-        />
         <Image
           src="/portrait.webp"
           alt="Picture of Dante Sparrås"
           width={152}
           height={152}
-          className="pointer-events-none absolute top-52 left-6 -translate-y-3/4 rounded-full border"
+          className="pointer-events-none mt-6 ml-6 rounded-full border"
           priority
         />
         <StripedDivider className="h-14" />
