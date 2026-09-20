@@ -3,30 +3,20 @@
 import Image from "next/image";
 import { type PointerEvent, useCallback, useEffect, useRef } from "react";
 import {
+  exponentialEase,
+  FOLLOW_SPEED,
+  MAX_FRAME_SECONDS,
   pointerPositionInElement,
+  SETTLED_DISTANCE,
   usePrefersReducedMotion,
 } from "@/components/hover-lens";
 import { cn } from "@/lib/utils";
 
 const AVATAR_SIZE_PX = 152;
-const SPLIT_DURATION_MS = 300;
-const SPLIT_PX = 3;
+const SPLIT_PX = 5;
 const GREEN_PX = 1;
 /** Ignore tiny center moves so the axis does not flip in place. */
 const DIRECTION_DEADZONE = 0.08;
-/** Higher = the split axis catches the pointer faster. */
-const ANGLE_FOLLOW_SPEED = 10;
-const MAX_FRAME_SECONDS = 0.05;
-const SETTLED_ANGLE = 0.001;
-
-/** Tailwind `ease-out`: fast start, settle at the end. */
-function easeOut(t: number) {
-  return 1 - (1 - t) ** 3;
-}
-
-function exponentialEase(speed: number, dt: number) {
-  return 1 - Math.exp(-speed * dt);
-}
 
 /** Signed delta from `from` to `to` on the shortest arc, in (-π, π]. */
 function shortestAngleDelta(from: number, to: number) {
@@ -62,10 +52,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
   const greenOffsetRef = useRef<SVGFEOffsetElement>(null);
   const blueOffsetRef = useRef<SVGFEOffsetElement>(null);
   const amountRef = useRef(0);
-  const amountFromRef = useRef(0);
   const amountTargetRef = useRef(0);
-  const amountStartRef = useRef(0);
-  const amountAnimatingRef = useRef(false);
   const angleRef = useRef(0);
   const angleTargetRef = useRef(0);
   const lastFrameRef = useRef(0);
@@ -110,37 +97,27 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
     lastFrameRef.current = performance.now();
 
     const tick = (now: number) => {
-      if (amountAnimatingRef.current) {
-        const t = Math.min(
-          1,
-          (now - amountStartRef.current) / SPLIT_DURATION_MS,
-        );
-        amountRef.current =
-          amountFromRef.current +
-          (amountTargetRef.current - amountFromRef.current) * easeOut(t);
-        if (t >= 1) {
-          amountRef.current = amountTargetRef.current;
-          amountAnimatingRef.current = false;
-        }
-      }
-
       const dt = Math.min(
         MAX_FRAME_SECONDS,
         (now - lastFrameRef.current) / 1000,
       );
       lastFrameRef.current = now;
-      const angleDelta = shortestAngleDelta(
-        angleRef.current,
-        angleTargetRef.current,
-      );
-      angleRef.current += angleDelta * exponentialEase(ANGLE_FOLLOW_SPEED, dt);
+      const step = exponentialEase(FOLLOW_SPEED, dt);
+
+      amountRef.current += (amountTargetRef.current - amountRef.current) * step;
+      angleRef.current +=
+        shortestAngleDelta(angleRef.current, angleTargetRef.current) * step;
 
       apply();
 
+      const amountSettled =
+        Math.abs(amountRef.current - amountTargetRef.current) <
+        SETTLED_DISTANCE;
       const angleSettled =
         Math.abs(shortestAngleDelta(angleRef.current, angleTargetRef.current)) <
-        SETTLED_ANGLE;
-      if (!amountAnimatingRef.current && angleSettled) {
+        SETTLED_DISTANCE;
+      if (amountSettled && angleSettled) {
+        amountRef.current = amountTargetRef.current;
         angleRef.current = angleTargetRef.current;
         apply();
         rafRef.current = null;
@@ -155,10 +132,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
 
   const playAmountTo = useCallback(
     (target: number) => {
-      amountFromRef.current = amountRef.current;
       amountTargetRef.current = target;
-      amountStartRef.current = performance.now();
-      amountAnimatingRef.current = true;
       startLoop();
     },
     [startLoop],
