@@ -111,7 +111,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
   return (
     <div
       className={cn(
-        "relative size-[152px] overflow-hidden rounded-full border",
+        "relative size-38 overflow-hidden rounded-full border",
         className,
       )}
       onPointerEnter={handlePointerEnter}
@@ -175,7 +175,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
         fill
         sizes={`${AVATAR_SIZE_PX}px`}
         priority
-        className="object-cover [filter:url(#avatar-rgb-split)]"
+        className="object-cover filter-[url(#avatar-rgb-split)]"
       />
     </div>
   );
