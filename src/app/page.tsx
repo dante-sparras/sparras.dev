@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BlackHoleBanner } from "@/components/black-hole-banner";
 import { BlogSection } from "@/components/blog-section";
 import { ProjectsSection } from "@/components/projects-section";
 import { H2 } from "@/components/typography/h2";
@@ -141,6 +142,7 @@ export default function Home() {
   return (
     <>
       <header className="relative">
+        <BlackHoleBanner />
         <Image
           src="/portrait.webp"
           alt="Picture of Dante Sparrås"
