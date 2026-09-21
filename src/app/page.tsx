@@ -1,9 +1,10 @@
-import Image from "next/image";
-import Link from "next/link";
+import type Image from "next/image";
+import type Link from "next/link";
 import { BlackHoleBanner } from "@/components/black-hole-banner";
 import { BlogSection } from "@/components/blog-section";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProjectsSection } from "@/components/projects-section";
+import { SkillTile } from "@/components/skill-tile";
 import { H2 } from "@/components/typography/h2";
 import { H3 } from "@/components/typography/h3";
 import { Muted } from "@/components/typography/muted";
@@ -139,17 +140,43 @@ function StripedDivider({ className }: { className?: string }) {
   return <div className={cn("h-8 border-y bg-stripes", className)} />;
 }
 
+function SkillGrid({ skills: items }: { skills: typeof skills }) {
+  return (
+    <ul className="grid grid-cols-5 gap-4 px-6 py-4 sm:grid-cols-8 md:grid-cols-10">
+      {items.map(({ tooltipContent, src, href }) => (
+        <Tooltip key={tooltipContent}>
+          <TooltipTrigger
+            render={
+              <li>
+                <SkillTile href={href} src={src} label={tooltipContent} />
+              </li>
+            }
+          />
+          <TooltipContent>{tooltipContent}</TooltipContent>
+        </Tooltip>
+      ))}
+    </ul>
+  );
+}
+
 export default function Home() {
   return (
     <>
       <header className="relative">
         <div className="relative">
           <BlackHoleBanner />
-          <ProfileAvatar className="absolute bottom-0 left-6 z-10 translate-y-1/2" />
+          <div className="pointer-events-none absolute bottom-0 left-4 z-10 flex items-end gap-2 pb-3 sm:left-6 sm:gap-4">
+            <ProfileAvatar className="pointer-events-auto size-28 sm:size-38" />
+            <div className="flex min-w-0 flex-col gap-1.5 pb-1">
+              <H2 className="whitespace-nowrap font-normal font-pixel text-xl leading-none sm:text-3xl">
+                {name}
+              </H2>
+              <Muted className="whitespace-nowrap text-xs sm:text-sm">
+                {role}
+              </Muted>
+            </div>
+          </div>
         </div>
-        <StripedDivider className="h-19" />
-        <H2 className="border-b py-3 pl-6">{name}</H2>
-        <Muted className="py-3 pl-6">{role}</Muted>
       </header>
       <StripedDivider />
       <section aria-labelledby="about-heading">
@@ -170,31 +197,7 @@ export default function Home() {
         <H3 id="skills" className="border-b px-6 py-3">
           Skills
         </H3>
-        <ul className="grid grid-cols-5 gap-4 px-6 py-6 sm:grid-cols-8 md:grid-cols-10">
-          {skills.map(({ tooltipContent, src, href }) => (
-            <Tooltip key={tooltipContent}>
-              <TooltipTrigger
-                render={
-                  <li>
-                    <Link
-                      href={href}
-                      className="mx-auto flex size-14 items-center justify-center rounded-md border border-border transition-colors hover:border-blue-500"
-                    >
-                      <Image
-                        src={src}
-                        alt={`${tooltipContent} Icon Logo`}
-                        width={32}
-                        height={32}
-                        className="size-8 object-contain"
-                      />
-                    </Link>
-                  </li>
-                }
-              />
-              <TooltipContent>{tooltipContent}</TooltipContent>
-            </Tooltip>
-          ))}
-        </ul>
+        <SkillGrid skills={skills} />
       </section>
       <StripedDivider />
       <ProjectsSection projects={projects} />

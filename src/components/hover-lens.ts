@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  type PointerEvent,
   type RefObject,
   useCallback,
   useEffect,
@@ -89,7 +88,11 @@ export function exponentialEase(speed: number, dt: number) {
  * values work at any size. `clientX/Y` are viewport pixels;
  * subtracting `rect.left/top` converts them to "pixels inside the box."
  */
-export function pointerPositionInElement(event: PointerEvent<HTMLElement>) {
+export function pointerPositionInElement(event: {
+  currentTarget: Element;
+  clientX: number;
+  clientY: number;
+}) {
   const rect = event.currentTarget.getBoundingClientRect();
 
   return {

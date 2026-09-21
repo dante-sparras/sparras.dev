@@ -2,24 +2,36 @@
 
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
-
+import {
+  pointerPositionInElement,
+  useAnimatedLens,
+  usePrefersReducedMotion,
+} from "@/components/hover-lens";
+import { RgbSplitFilter, useRgbSplitHover } from "@/components/rgb-split";
 import { cn } from "@/lib/utils";
 
+export type ButtonHoverEffect = "rgb" | "parallax";
+
+const HALFTONE_IMAGE = "/halftone-background.png";
+const RGB_SPLIT_PX = 3;
+const RGB_GREEN_PX = 0.6;
+const PARALLAX_SHIFT_PX = 10;
+
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap rounded-md border border-transparent bg-clip-padding font-medium text-xs/relaxed outline-none transition-all focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[2px] aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "group/button relative isolate inline-flex shrink-0 select-none items-center justify-center overflow-hidden whitespace-nowrap rounded-md border border-transparent bg-clip-padding font-medium text-xs/relaxed outline-none transition-all before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-[url('/halftone-background.png')] before:bg-center before:bg-cover before:opacity-0 before:transition-opacity hover:before:opacity-100 focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[2px] aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/80",
         outline:
-          "border-border hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-input/30",
+          "border-border hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-input/30",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 dark:hover:bg-destructive/30",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 before:hidden hover:underline",
       },
       size: {
         default:
@@ -40,18 +52,195 @@ const buttonVariants = cva(
   },
 );
 
+type ButtonProps = ButtonPrimitive.Props &
+  VariantProps<typeof buttonVariants> & {
+    hoverEffect?: ButtonHoverEffect;
+    rgbSplitPx?: number;
+    rgbGreenPx?: number;
+  };
+
+const HALFTONE_LAYER =
+  "pointer-events-none absolute -z-10 bg-center bg-cover opacity-0 transition-opacity group-hover/button:opacity-100 group-focus-visible/button:opacity-100";
+
 function Button({
+  hoverEffect,
+  rgbSplitPx,
+  rgbGreenPx,
   className,
   variant = "default",
   size = "default",
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonProps) {
+  if (hoverEffect === "rgb") {
+    return (
+      <RgbSplitButton
+        className={className}
+        variant={variant}
+        size={size}
+        rgbSplitPx={rgbSplitPx}
+        rgbGreenPx={rgbGreenPx}
+        {...props}
+      />
+    );
+  }
+
+  if (hoverEffect === "parallax") {
+    return (
+      <ParallaxButton
+        className={className}
+        variant={variant}
+        size={size}
+        {...props}
+      />
+    );
+  }
+
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
+  );
+}
+
+function RgbSplitButton({
+  className,
+  variant = "default",
+  size = "default",
+  rgbSplitPx = RGB_SPLIT_PX,
+  rgbGreenPx = RGB_GREEN_PX,
+  children,
+  onPointerEnter,
+  onPointerMove,
+  onPointerLeave,
+  ...props
+}: Omit<ButtonProps, "hoverEffect">) {
+  const rgbSplit = useRgbSplitHover({
+    splitPx: rgbSplitPx,
+    greenPx: rgbGreenPx,
+  });
+
+  const handlePointerEnter: NonNullable<
+    ButtonPrimitive.Props["onPointerEnter"]
+  > = (event) => {
+    rgbSplit.onPointerEnter(event);
+    onPointerEnter?.(event);
+  };
+
+  const handlePointerMove: NonNullable<
+    ButtonPrimitive.Props["onPointerMove"]
+  > = (event) => {
+    rgbSplit.onPointerMove(event);
+    onPointerMove?.(event);
+  };
+
+  const handlePointerLeave: NonNullable<
+    ButtonPrimitive.Props["onPointerLeave"]
+  > = (event) => {
+    rgbSplit.onPointerLeave();
+    onPointerLeave?.(event);
+  };
+
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      data-hover-effect="rgb"
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        "overflow-visible before:hidden",
+      )}
+      {...props}
+      onPointerEnter={handlePointerEnter}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
+      <RgbSplitFilter id={rgbSplit.filterId} offsetRefs={rgbSplit.offsetRefs} />
+      <span
+        className="inline-flex items-center justify-center gap-[inherit]"
+        style={rgbSplit.filterStyle}
+      >
+        {children}
+      </span>
+    </ButtonPrimitive>
+  );
+}
+
+function ParallaxButton({
+  className,
+  variant = "default",
+  size = "default",
+  children,
+  onPointerEnter,
+  onPointerMove,
+  onPointerLeave,
+  ...props
+}: Omit<ButtonProps, "hoverEffect">) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const { lens, moveTo, fadeOut } = useAnimatedLens();
+  const shiftX = (0.5 - lens.x) * PARALLAX_SHIFT_PX * lens.scale;
+  const shiftY = (0.5 - lens.y) * PARALLAX_SHIFT_PX * lens.scale;
+
+  const followPointer = (event: {
+    currentTarget: Element;
+    clientX: number;
+    clientY: number;
+  }) => {
+    if (prefersReducedMotion) {
+      return;
+    }
+    const { x, y } = pointerPositionInElement(event);
+    moveTo({ x, y, scale: 1 });
+  };
+
+  const handlePointerEnter: NonNullable<
+    ButtonPrimitive.Props["onPointerEnter"]
+  > = (event) => {
+    followPointer(event);
+    onPointerEnter?.(event);
+  };
+
+  const handlePointerMove: NonNullable<
+    ButtonPrimitive.Props["onPointerMove"]
+  > = (event) => {
+    followPointer(event);
+    onPointerMove?.(event);
+  };
+
+  const handlePointerLeave: NonNullable<
+    ButtonPrimitive.Props["onPointerLeave"]
+  > = (event) => {
+    if (!prefersReducedMotion) {
+      fadeOut();
+    }
+    onPointerLeave?.(event);
+  };
+
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      data-hover-effect="parallax"
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        "before:hidden",
+      )}
+      {...props}
+      onPointerEnter={handlePointerEnter}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
+      <span
+        aria-hidden
+        className={cn(HALFTONE_LAYER, "-inset-4")}
+        style={{
+          backgroundImage: `url('${HALFTONE_IMAGE}')`,
+          transform: `translate(${shiftX}px, ${shiftY}px)`,
+        }}
+      />
+      <span className="relative z-10 inline-flex items-center justify-center gap-[inherit]">
+        {children}
+      </span>
+    </ButtonPrimitive>
   );
 }
 
