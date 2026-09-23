@@ -1,9 +1,8 @@
 import { Fragment, type ReactNode } from "react";
 import { BlackHoleBanner } from "@/components/black-hole-banner";
-import { BlogSection } from "@/components/blog-section";
+import { LinkCardGrid } from "@/components/link-card-grid";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProfileOverview } from "@/components/profile-overview";
-import { ProjectsSection } from "@/components/projects-section";
 import { ReferencesMarquee } from "@/components/references-marquee";
 import { Section } from "@/components/section";
 import { SkillGrid } from "@/components/skill-grid";
@@ -21,8 +20,8 @@ import { skills } from "@/content/skills";
 const sectionContent: Record<SectionId, ReactNode> = {
   references: <ReferencesMarquee references={references} />,
   skills: <SkillGrid skills={skills} />,
-  projects: <ProjectsSection projects={projects} />,
-  blog: <BlogSection blogPosts={posts} />,
+  projects: <LinkCardGrid items={projects} />,
+  blog: <LinkCardGrid items={posts} />,
 };
 
 export default function Home() {
