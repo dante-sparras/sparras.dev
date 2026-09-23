@@ -3,16 +3,18 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { RgbSplit } from "@/components/rgb-split";
-import { profile } from "@/content/profile";
+import type { ImageSrc } from "@/content/types";
 import { cn } from "@/lib/utils";
 
 const AVATAR_SIZE_PX = 152;
 
 type ProfileAvatarProps = {
+  alt: string;
   className?: string;
+  src: ImageSrc;
 };
 
-export function ProfileAvatar({ className }: ProfileAvatarProps) {
+export function ProfileAvatar({ alt, className, src }: ProfileAvatarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,8 +43,8 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
       }
     >
       <Image
-        src={profile.avatar.src}
-        alt={profile.avatar.alt}
+        src={src}
+        alt={alt}
         fill
         sizes={`${AVATAR_SIZE_PX}px`}
         priority

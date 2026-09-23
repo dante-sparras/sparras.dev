@@ -41,7 +41,15 @@ function LinkCard({ item }: { item: LinkCardItem }) {
   );
 }
 
-export function LinkCardGrid({ items }: { items: readonly LinkCardItem[] }) {
+export function LinkCardGrid({
+  items,
+  showLessLabel,
+  showMoreLabel,
+}: {
+  items: readonly LinkCardItem[];
+  showLessLabel: string;
+  showMoreLabel: string;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const visibleItems = items.slice(0, INITIAL_COUNT);
   const hiddenItems = items.slice(INITIAL_COUNT);
@@ -73,11 +81,11 @@ export function LinkCardGrid({ items }: { items: readonly LinkCardItem[] }) {
               >
                 {isOpen ? (
                   <>
-                    Show Less <ChevronUp className="h-4 w-4" />
+                    {showLessLabel} <ChevronUp className="h-4 w-4" />
                   </>
                 ) : (
                   <>
-                    Show More <ChevronDown className="h-4 w-4" />
+                    {showMoreLabel} <ChevronDown className="h-4 w-4" />
                   </>
                 )}
               </Button>

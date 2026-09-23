@@ -1,10 +1,10 @@
+import { MenuIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Geist_Pixel } from "next/font/google";
-import "./globals.css";
-import { MenuIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import type * as React from "react";
+import { notFound } from "next/navigation";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,11 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
-import { sections } from "@/content/outline";
-import { profile } from "@/content/profile";
+import { getSections } from "@/content/outline";
+import { getProfile } from "@/content/profile";
+import { isLocale, locales } from "@/i18n/locale";
+import { getMessages } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
+import "../globals.css";
 
-// #region FONTS
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -33,28 +35,44 @@ const geistPixel = Geist_Pixel({
   axes: ["ELSH"],
   adjustFontFallback: false,
 });
-// #endregion
 
-// #region METADATA
-export const metadata: Metadata = {
-  title: profile.name,
-  description: profile.summary,
-};
-// #endregion
+export function generateStaticParams() {
+  return locales.map((lang) => ({ lang }));
+}
 
-const navLinks = sections.map((entry) => ({
-  title: entry.title,
-  href: `#${entry.id}` as const,
-}));
+export const dynamicParams = false;
 
-export default function RootLayout({
+export async function generateMetadata({
+  params,
+}: LayoutProps<"/[lang]">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!isLocale(lang)) return {};
+
+  const profile = getProfile(lang);
+  return {
+    title: profile.name,
+    description: profile.summary,
+  };
+}
+
+export default async function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+  params,
+}: LayoutProps<"/[lang]">) {
+  const { lang } = await params;
+  if (!isLocale(lang)) notFound();
+
+  const profile = getProfile(lang);
+  const messages = getMessages(lang);
+  const navLinks = getSections(lang).map((entry) => ({
+    id: entry.id,
+    title: entry.title,
+    href: `#${entry.id}` as const,
+  }));
+
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} scheme-dark scroll-smooth`}
     >
       <body className="bg-background font-sans text-foreground antialiased">
@@ -71,21 +89,24 @@ export default function RootLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 className="md:hidden"
-                aria-label="Main navigation"
+                aria-label={messages.mainNavigation}
               >
                 {navLinks.map((link) => (
                   <DropdownMenuItem
-                    key={link.title}
+                    key={link.id}
                     render={<Link href={link.href}>{link.title}</Link>}
                     className="cursor-pointer"
                   />
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <nav className="hidden md:flex" aria-label="Main navigation">
+            <nav
+              className="hidden md:flex"
+              aria-label={messages.mainNavigation}
+            >
               <ul className="flex items-center">
                 {navLinks.map((link) => (
-                  <li key={link.title}>
+                  <li key={link.id}>
                     <Link
                       href={link.href}
                       className={cn(navigationMenuTriggerStyle(), "h-9")}
@@ -96,6 +117,7 @@ export default function RootLayout({
                 ))}
               </ul>
             </nav>
+            <LanguageSwitcher lang={lang} menuLabel={messages.language} />
           </header>
         </div>
 
@@ -111,7 +133,7 @@ export default function RootLayout({
                 <Link href={link.href}>
                   <Image
                     src={link.iconSrc}
-                    alt={`${link.platform} Logo`}
+                    alt={messages.logoAlt(link.platform)}
                     width={16}
                     height={16}
                     className="size-4 object-contain brightness-0 invert filter"

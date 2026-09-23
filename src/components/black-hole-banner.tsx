@@ -96,7 +96,7 @@ function useElementWidth(
   return width;
 }
 
-export function BlackHoleBanner() {
+export function BlackHoleBanner({ alt }: { alt: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const bannerWidth = useElementWidth(rootRef, ARTBOARD_WIDTH_PX);
   const [lens, setLens] = useState(hoverLens.rest);
@@ -137,7 +137,7 @@ export function BlackHoleBanner() {
       <div className={cn("pointer-events-none", HOLE_LAYER_CLASS)}>
         <Image
           src="/banner/black-hole-banner.png"
-          alt="Pixel black hole accretion disk"
+          alt={alt}
           fill
           unoptimized
           priority

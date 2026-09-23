@@ -10,8 +10,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { LocalTime } from "@/components/local-time";
 import { Separator } from "@/components/ui/separator";
-import { profile } from "@/content/profile";
+import { getProfile } from "@/content/profile";
 import type { Href, ImageSrc } from "@/content/types";
+import type { Locale } from "@/i18n/locale";
+import { getMessages } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
 
 function OverviewRow({
@@ -61,14 +63,22 @@ function FactLink({ href, children }: { href: Href; children: ReactNode }) {
   );
 }
 
-export function ProfileOverview({ className }: { className?: string }) {
+export function ProfileOverview({
+  locale,
+  className,
+}: {
+  locale: Locale;
+  className?: string;
+}) {
+  const profile = getProfile(locale);
+  const messages = getMessages(locale);
   const company = (
     <FactLink href={profile.company.href}>{profile.company.name}</FactLink>
   );
 
   return (
     <section
-      aria-label="Profile details"
+      aria-label={messages.profileDetails}
       className={cn("border-b px-6 py-5", className)}
     >
       <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-0">
@@ -81,7 +91,16 @@ export function ProfileOverview({ className }: { className?: string }) {
           </LucideRow>
           <LucideRow icon={MapPinIcon}>{profile.location}</LucideRow>
           <LucideRow icon={ClockIcon}>
-            <LocalTime timeZone={profile.timeZone} />
+            <LocalTime
+              labels={{
+                localTime: messages.localTime,
+                same: messages.sameTime,
+                ahead: messages.ahead,
+                behind: messages.behind,
+              }}
+              locale={locale}
+              timeZone={profile.timeZone}
+            />
           </LucideRow>
         </ul>
         <Separator

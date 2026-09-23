@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  getHomepageOutline,
   homepageOutline,
   type OutlineEntry,
   visibleSections,
@@ -25,5 +26,17 @@ describe("homepageOutline", () => {
   test("gives every Section its own anchor", () => {
     const ids = homepageOutline.map((entry) => entry.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  test("translates section titles without changing their anchors", () => {
+    expect(getHomepageOutline("sv").map((entry) => entry.title)).toEqual([
+      "Referenser",
+      "Färdigheter",
+      "Projekt",
+      "Blogg",
+    ]);
+    expect(getHomepageOutline("sv").map((entry) => entry.id)).toEqual(
+      homepageOutline.map((entry) => entry.id),
+    );
   });
 });

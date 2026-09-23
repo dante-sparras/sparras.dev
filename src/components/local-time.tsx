@@ -1,18 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { describeTimeGap } from "@/lib/time-gap";
+import type { Locale } from "@/i18n/locale";
+import { describeTimeGap, type TimeGapLabels } from "@/lib/time-gap";
 
-function formatTime(timeZone: string, date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatTime(locale: Locale, timeZone: string, date: Date) {
+  return new Intl.DateTimeFormat(locale === "sv" ? "sv-SE" : "en-US", {
     timeZone,
     hour: "2-digit",
     minute: "2-digit",
-    hour12: true,
+    hour12: locale !== "sv",
   }).format(date);
 }
 
-export function LocalTime({ timeZone }: { timeZone: string }) {
+export function LocalTime({
+  locale,
+  timeZone,
+  labels,
+}: {
+  locale: Locale;
+  timeZone: string;
+  labels: TimeGapLabels & { localTime: string };
+}) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -23,13 +32,13 @@ export function LocalTime({ timeZone }: { timeZone: string }) {
   }, []);
 
   if (!now) {
-    return <span className="text-muted-foreground">Local time</span>;
+    return <span className="text-muted-foreground">{labels.localTime}</span>;
   }
 
   return (
     <span>
-      <span className="tabular-nums">{formatTime(timeZone, now)}</span>
-      {` // ${describeTimeGap(now, timeZone, -now.getTimezoneOffset())}`}
+      <span className="tabular-nums">{formatTime(locale, timeZone, now)}</span>
+      {` // ${describeTimeGap(now, timeZone, -now.getTimezoneOffset(), labels)}`}
     </span>
   );
 }

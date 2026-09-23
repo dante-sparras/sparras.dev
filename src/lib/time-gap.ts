@@ -16,6 +16,18 @@ function zoneOffsetMinutes(instant: Date, timeZone: string) {
   return (sign === "-" ? -1 : 1) * (Number(hours) * 60 + Number(minutes));
 }
 
+export type TimeGapLabels = {
+  same: string;
+  ahead: string;
+  behind: string;
+};
+
+const englishTimeGapLabels: TimeGapLabels = {
+  same: "same time",
+  ahead: "ahead",
+  behind: "behind",
+};
+
 /**
  * How far `timeZone` is from the visitor at `instant`, e.g. "2h ahead",
  * "3h 30m behind" or "same time".
@@ -24,10 +36,11 @@ export function describeTimeGap(
   instant: Date,
   timeZone: string,
   visitorUtcOffsetMinutes: number,
+  labels: TimeGapLabels = englishTimeGapLabels,
 ) {
   const gap = zoneOffsetMinutes(instant, timeZone) - visitorUtcOffsetMinutes;
   if (gap === 0) {
-    return "same time";
+    return labels.same;
   }
 
   const hours = Math.floor(Math.abs(gap) / 60);
@@ -35,5 +48,5 @@ export function describeTimeGap(
   const amount = [hours && `${hours}h`, minutes && `${minutes}m`]
     .filter(Boolean)
     .join(" ");
-  return `${amount} ${gap > 0 ? "ahead" : "behind"}`;
+  return `${amount} ${gap > 0 ? labels.ahead : labels.behind}`;
 }
