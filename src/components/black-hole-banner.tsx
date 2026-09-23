@@ -1,16 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { type PointerEvent, useRef } from "react";
-import {
-  circularLensMask,
-  pointerPositionInElement,
-  revealZoom,
-  useAnimatedLens,
-  useElementWidth,
-  usePrefersReducedMotion,
-  VISIBLE_SCALE_THRESHOLD,
-} from "@/components/hover-lens";
+import { type RefObject, useEffect, useRef, useState } from "react";
+import { usePointerEffect } from "@/hooks/use-pointer-effect";
+import { hoverLens } from "@/lib/pointer-effect";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,6 +26,13 @@ const MOBILE_HOLE_SHIFT_X = 0.66;
 const BANNER_IMAGE_SIZES = "(min-width: 768px) 48rem, 100vw";
 const HOLE_LAYER_CLASS =
   "absolute top-1/2 left-[66%] size-[125%] -translate-x-1/2 -translate-y-1/2 md:left-1/2";
+const REVEAL_ZOOM = 1.05;
+
+/** Inner part of the mask that is fully opaque (the rest fades out). */
+const MASK_SOLID_RATIO = 0.42;
+
+/** Hide the reveal layer once the fade-out is basically done. */
+const VISIBLE_SCALE_THRESHOLD = 0.02;
 
 /** Pointer 0–1 in the banner box → origin % on the overscanned image. */
 function pointerOriginOnScaledLayer(x: number, y: number, shiftX: number) {
@@ -41,11 +41,69 @@ function pointerOriginOnScaledLayer(x: number, y: number, shiftX: number) {
   return `${along(x, shiftX)}% ${along(y, 0.5)}%`;
 }
 
+/**
+ * CSS mask that punches a soft circle through the reveal layer.
+ *
+ * `mask-image` treats opaque pixels as "show this" and transparent as
+ * "hide this." The gradient is black (fully show) in the center, then
+ * fades to transparent at the edge so the lens does not look like a
+ * hard cookie-cutter. `x`/`y` are 0–1, converted to percents so the
+ * circle stays pinned to the pointer as the element resizes.
+ */
+function circularLensMask(radiusPx: number, x: number, y: number) {
+  const centerX = `${x * 100}%`;
+  const centerY = `${y * 100}%`;
+  const solidUntil = `${MASK_SOLID_RATIO * 100}%`;
+
+  return `radial-gradient(circle ${radiusPx}px at ${centerX} ${centerY}, #000 ${solidUntil}, transparent 100%)`;
+}
+
+function revealZoom(scale: number) {
+  return 1 + (REVEAL_ZOOM - 1) * scale;
+}
+
+/**
+ * Live width of a DOM node, starting from `fallbackWidth` on the first
+ * render (the node is not mounted yet, so we cannot measure it).
+ *
+ * ResizeObserver covers window resizes and layout changes; the extra
+ * `clientWidth` read covers the first paint before the observer fires.
+ */
+function useElementWidth(
+  ref: RefObject<HTMLElement | null>,
+  fallbackWidth: number,
+) {
+  const [width, setWidth] = useState(fallbackWidth);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) {
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setWidth(entry.contentRect.width);
+      }
+    });
+
+    observer.observe(element);
+    setWidth(element.clientWidth);
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return width;
+}
+
 export function BlackHoleBanner() {
   const rootRef = useRef<HTMLDivElement>(null);
-  const prefersReducedMotion = usePrefersReducedMotion();
   const bannerWidth = useElementWidth(rootRef, ARTBOARD_WIDTH_PX);
-  const { lens, moveTo, fadeOut } = useAnimatedLens();
+  const [lens, setLens] = useState(hoverLens.rest);
+  const { onPointerEnter, onPointerMove, onPointerLeave } = usePointerEffect(
+    hoverLens,
+    setLens,
+  );
 
   // Radius was designed on a 2160px-wide artboard. Scale it so the
   // circle covers the same fraction of the banner on any screen.
@@ -56,8 +114,7 @@ export function BlackHoleBanner() {
 
   // Tiny leftover scale after a fade-out is not worth showing — it
   // would look like a faint speck rather than a hidden lens.
-  const isLensVisible =
-    !prefersReducedMotion && lens.scale > VISIBLE_SCALE_THRESHOLD;
+  const isLensVisible = lens.scale > VISIBLE_SCALE_THRESHOLD;
 
   const mask = circularLensMask(lensRadiusPx, lens.x, lens.y);
 
@@ -65,30 +122,13 @@ export function BlackHoleBanner() {
   // drives opacity, so fade-in / fade-out and zoom stay in sync.
   const zoom = revealZoom(lens.scale);
 
-  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (prefersReducedMotion) {
-      return;
-    }
-
-    const { x, y } = pointerPositionInElement(event);
-    moveTo({ x, y, scale: 1 });
-  }
-
-  function handlePointerLeave() {
-    if (prefersReducedMotion) {
-      return;
-    }
-
-    fadeOut();
-  }
-
   return (
     <div
       ref={rootRef}
       className="relative aspect-2160/864 w-full touch-none select-none overflow-hidden bg-black"
-      onPointerEnter={handlePointerMove}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
+      onPointerEnter={onPointerEnter}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
     >
       {/*
         Both layers are 1.25× the banner box and centered, so the hole

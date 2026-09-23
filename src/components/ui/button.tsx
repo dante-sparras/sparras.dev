@@ -3,23 +3,16 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import {
-  pointerPositionInElement,
-  useAnimatedLens,
-  usePrefersReducedMotion,
-} from "@/components/hover-lens";
-import {
   RgbSplitBorderOverlay,
   RgbSplitFilter,
   useRgbSplitHover,
 } from "@/components/rgb-split";
 import { cn } from "@/lib/utils";
 
-export type ButtonHoverEffect = "rgb" | "parallax";
+export type ButtonHoverEffect = "rgb";
 
-const HALFTONE_IMAGE = "/halftone-background.png";
 const RGB_SPLIT_PX = 3;
 const RGB_GREEN_PX = 0.6;
-const PARALLAX_SHIFT_PX = 10;
 
 const buttonVariants = cva(
   "group/button relative isolate inline-flex shrink-0 select-none items-center justify-center overflow-hidden whitespace-nowrap rounded-md border border-transparent bg-clip-padding font-medium text-xs/relaxed outline-none transition-all before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-[url('/halftone-background.png')] before:bg-center before:bg-cover before:opacity-0 before:transition-opacity hover:before:opacity-100 focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[2px] aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
@@ -64,9 +57,6 @@ type ButtonProps = ButtonPrimitive.Props &
     rgbTarget?: "content" | "border" | "both";
   };
 
-const HALFTONE_LAYER =
-  "pointer-events-none absolute -z-10 bg-center bg-cover opacity-0 transition-opacity group-hover/button:opacity-100 group-focus-visible/button:opacity-100";
-
 function Button({
   hoverEffect,
   rgbSplitPx,
@@ -86,17 +76,6 @@ function Button({
         rgbSplitPx={rgbSplitPx}
         rgbGreenPx={rgbGreenPx}
         rgbTarget={rgbTarget}
-        {...props}
-      />
-    );
-  }
-
-  if (hoverEffect === "parallax") {
-    return (
-      <ParallaxButton
-        className={className}
-        variant={variant}
-        size={size}
         {...props}
       />
     );
@@ -208,84 +187,6 @@ function RgbSplitButton({
         )}
         style={splitContent ? contentSplit.filterStyle : undefined}
       >
-        {children}
-      </span>
-    </ButtonPrimitive>
-  );
-}
-
-function ParallaxButton({
-  className,
-  variant = "default",
-  size = "default",
-  children,
-  onPointerEnter,
-  onPointerMove,
-  onPointerLeave,
-  ...props
-}: Omit<ButtonProps, "hoverEffect">) {
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const { lens, moveTo, fadeOut } = useAnimatedLens();
-  const shiftX = (0.5 - lens.x) * PARALLAX_SHIFT_PX * lens.scale;
-  const shiftY = (0.5 - lens.y) * PARALLAX_SHIFT_PX * lens.scale;
-
-  const followPointer = (event: {
-    currentTarget: Element;
-    clientX: number;
-    clientY: number;
-  }) => {
-    if (prefersReducedMotion) {
-      return;
-    }
-    const { x, y } = pointerPositionInElement(event);
-    moveTo({ x, y, scale: 1 });
-  };
-
-  const handlePointerEnter: NonNullable<
-    ButtonPrimitive.Props["onPointerEnter"]
-  > = (event) => {
-    followPointer(event);
-    onPointerEnter?.(event);
-  };
-
-  const handlePointerMove: NonNullable<
-    ButtonPrimitive.Props["onPointerMove"]
-  > = (event) => {
-    followPointer(event);
-    onPointerMove?.(event);
-  };
-
-  const handlePointerLeave: NonNullable<
-    ButtonPrimitive.Props["onPointerLeave"]
-  > = (event) => {
-    if (!prefersReducedMotion) {
-      fadeOut();
-    }
-    onPointerLeave?.(event);
-  };
-
-  return (
-    <ButtonPrimitive
-      data-slot="button"
-      data-hover-effect="parallax"
-      className={cn(
-        buttonVariants({ variant, size, className }),
-        "before:hidden",
-      )}
-      {...props}
-      onPointerEnter={handlePointerEnter}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
-    >
-      <span
-        aria-hidden
-        className={cn(HALFTONE_LAYER, "-inset-4")}
-        style={{
-          backgroundImage: `url('${HALFTONE_IMAGE}')`,
-          transform: `translate(${shiftX}px, ${shiftY}px)`,
-        }}
-      />
-      <span className="relative z-10 inline-flex items-center justify-center gap-[inherit]">
         {children}
       </span>
     </ButtonPrimitive>
