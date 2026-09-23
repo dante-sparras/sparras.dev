@@ -16,12 +16,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-
-interface Project {
-  title: string;
-  description: string;
-  href: React.ComponentProps<typeof Link>["href"];
-}
+import type { Project } from "@/content/projects";
 
 interface ProjectsSectionProps {
   projects: Project[];

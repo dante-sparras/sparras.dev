@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
+import { profile } from "@/content/profile";
 import { cn } from "@/lib/utils";
 
 // #region FONTS
@@ -35,9 +36,8 @@ const geistPixel = Geist_Pixel({
 
 // #region METADATA
 export const metadata: Metadata = {
-  title: "Dante Sparrås",
-  description:
-    "Personal website and portfolio of Dante Sparrås, a software developer specializing in full-stack web development and .NET development.",
+  title: profile.name,
+  description: profile.summary,
 };
 // #endregion
 
@@ -50,27 +50,6 @@ const navData: {
   { title: "Skills", href: "#skills" },
   { title: "Projects", href: "#projects" },
   { title: "Blog", href: "#blog" },
-];
-const socialLinks: {
-  title: string;
-  href: React.ComponentProps<typeof Link>["href"];
-  src: React.ComponentProps<typeof Image>["src"];
-}[] = [
-  {
-    title: "X",
-    href: "https://x.com/DanteSparras",
-    src: "/icons/x.svg",
-  },
-  {
-    title: "LinkedIn",
-    href: "https://www.linkedin.com/in/dante-sparras/",
-    src: "/icons/linkedin.svg",
-  },
-  {
-    title: "GitHub",
-    href: "https://github.com/dante-sparras",
-    src: "/icons/github.svg",
-  },
 ];
 // #endregion
 
@@ -130,15 +109,15 @@ export default function RootLayout({
 
         <footer className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-6 md:border-x md:px-6">
           <ul className="flex w-full flex-row justify-center">
-            {socialLinks.map((link) => (
+            {profile.socialLinks.map((link) => (
               <li
-                key={link.href.toString()}
+                key={link.platform}
                 className="flex size-10 items-center justify-center"
               >
                 <Link href={link.href}>
                   <Image
-                    src={link.src}
-                    alt={`${link.title} Logo`}
+                    src={link.iconSrc}
+                    alt={`${link.platform} Logo`}
                     width={16}
                     height={16}
                     className="size-4 object-contain brightness-0 invert filter"

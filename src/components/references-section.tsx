@@ -4,17 +4,9 @@ import Image from "next/image";
 import { P } from "@/components/typography/p";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CardDescription, CardTitle } from "@/components/ui/card";
+import type { Reference } from "@/content/references";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { cn } from "@/lib/utils";
-
-export type Reference = {
-  name: string;
-  initials: string;
-  avatarSrc: string;
-  companyLogoSrc: string;
-  workplace?: string;
-  quote?: string;
-};
 
 const cardWidth = "w-72 shrink-0 border-x border-border p-4 [&+li]:-ml-px";
 

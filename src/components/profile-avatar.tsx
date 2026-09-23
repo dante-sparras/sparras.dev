@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { RgbSplitFilter, useRgbSplitHover } from "@/components/rgb-split";
+import { profile } from "@/content/profile";
 import { cn } from "@/lib/utils";
 
 const AVATAR_SIZE_PX = 152;
@@ -49,8 +50,8 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
     >
       <RgbSplitFilter id={filterId} offsetRefs={offsetRefs} />
       <Image
-        src="/avatar/profile.png"
-        alt="Picture of Dante Sparrås"
+        src={profile.avatar.src}
+        alt={profile.avatar.alt}
         fill
         sizes={`${AVATAR_SIZE_PX}px`}
         priority

@@ -2,16 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-const TIME_ZONE = "Europe/Stockholm";
-
 function offsetMinutes(timeZone: string, date: Date) {
   const utc = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
   const zoned = new Date(date.toLocaleString("en-US", { timeZone }));
   return (zoned.getTime() - utc.getTime()) / 60_000;
 }
 
-function formatOffset(date: Date) {
-  const diffMinutes = offsetMinutes(TIME_ZONE, date) + date.getTimezoneOffset();
+function formatOffset(timeZone: string, date: Date) {
+  const diffMinutes = offsetMinutes(timeZone, date) + date.getTimezoneOffset();
   const diffHours = Math.round(diffMinutes / 60);
 
   if (diffHours === 0) {
@@ -22,16 +20,16 @@ function formatOffset(date: Date) {
   return `${hours}h ${diffHours > 0 ? "ahead" : "behind"}`;
 }
 
-function formatTime(date: Date) {
+function formatTime(timeZone: string, date: Date) {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: TIME_ZONE,
+    timeZone,
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
   }).format(date);
 }
 
-export function LocalTime() {
+export function LocalTime({ timeZone }: { timeZone: string }) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -47,8 +45,8 @@ export function LocalTime() {
 
   return (
     <span>
-      <span className="tabular-nums">{formatTime(now)}</span>
-      {` // ${formatOffset(now)}`}
+      <span className="tabular-nums">{formatTime(timeZone, now)}</span>
+      {` // ${formatOffset(timeZone, now)}`}
     </span>
   );
 }

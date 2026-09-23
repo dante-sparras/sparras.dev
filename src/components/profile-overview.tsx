@@ -3,7 +3,6 @@ import {
   ClockIcon,
   CodeXmlIcon,
   LightbulbIcon,
-  LinkIcon,
   MapPinIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -11,39 +10,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { LocalTime } from "@/components/local-time";
 import { Separator } from "@/components/ui/separator";
+import { profile } from "@/content/profile";
+import type { Href, ImageSrc } from "@/content/types";
 import { cn } from "@/lib/utils";
-
-type OverviewLink = {
-  label: string;
-  href: React.ComponentProps<typeof Link>["href"];
-};
-
-const company = {
-  label: "Casuology",
-  href: "https://casuology.com",
-} as const satisfies OverviewLink;
-
-const facts = {
-  role: "Full-stack Developer",
-  studio: "Building games",
-  location: "Norrköping, Sweden",
-  github: {
-    label: "github.com/dante-sparras",
-    href: "https://github.com/dante-sparras",
-  },
-  website: {
-    label: "sparras.dev",
-    href: "https://sparras.dev",
-  },
-  x: {
-    label: "x.com/DanteSparras",
-    href: "https://x.com/DanteSparras",
-  },
-  linkedin: {
-    label: "linkedin.com/in/dante-sparras",
-    href: "https://www.linkedin.com/in/dante-sparras/",
-  },
-} as const;
 
 function OverviewRow({
   icon,
@@ -72,13 +41,7 @@ function LucideRow({
   return <OverviewRow icon={<Icon />}>{children}</OverviewRow>;
 }
 
-function BrandIcon({
-  src,
-  alt,
-}: {
-  src: React.ComponentProps<typeof Image>["src"];
-  alt: string;
-}) {
+function BrandIcon({ src, alt }: { src: ImageSrc; alt: string }) {
   return (
     <Image
       src={src}
@@ -90,13 +53,7 @@ function BrandIcon({
   );
 }
 
-function FactLink({
-  href,
-  children,
-}: {
-  href: OverviewLink["href"];
-  children: ReactNode;
-}) {
+function FactLink({ href, children }: { href: Href; children: ReactNode }) {
   return (
     <Link href={href} className="underline-offset-4 hover:underline">
       {children}
@@ -105,6 +62,10 @@ function FactLink({
 }
 
 export function ProfileOverview({ className }: { className?: string }) {
+  const company = (
+    <FactLink href={profile.company.href}>{profile.company.name}</FactLink>
+  );
+
   return (
     <section
       aria-label="Profile details"
@@ -113,19 +74,14 @@ export function ProfileOverview({ className }: { className?: string }) {
       <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-0">
         <ul className="flex flex-1 flex-col gap-2.5">
           <LucideRow icon={CodeXmlIcon}>
-            {facts.role} @{" "}
-            <FactLink href={company.href}>{company.label}</FactLink>
+            {profile.role} @ {company}
           </LucideRow>
           <LucideRow icon={LightbulbIcon}>
-            {facts.studio} @{" "}
-            <FactLink href={company.href}>{company.label}</FactLink>
+            {profile.focus} @ {company}
           </LucideRow>
-          <LucideRow icon={MapPinIcon}>{facts.location}</LucideRow>
-          <OverviewRow icon={<BrandIcon src="/icons/github.svg" alt="" />}>
-            <FactLink href={facts.github.href}>{facts.github.label}</FactLink>
-          </OverviewRow>
-          <LucideRow icon={LinkIcon}>
-            <FactLink href={facts.website.href}>{facts.website.label}</FactLink>
+          <LucideRow icon={MapPinIcon}>{profile.location}</LucideRow>
+          <LucideRow icon={ClockIcon}>
+            <LocalTime timeZone={profile.timeZone} />
           </LucideRow>
         </ul>
         <Separator
@@ -133,17 +89,14 @@ export function ProfileOverview({ className }: { className?: string }) {
           className="mx-6 hidden h-auto self-stretch sm:block"
         />
         <ul className="flex flex-1 flex-col gap-2.5">
-          <LucideRow icon={ClockIcon}>
-            <LocalTime />
-          </LucideRow>
-          <OverviewRow icon={<BrandIcon src="/icons/x.svg" alt="" />}>
-            <FactLink href={facts.x.href}>{facts.x.label}</FactLink>
-          </OverviewRow>
-          <OverviewRow icon={<BrandIcon src="/icons/linkedin.svg" alt="" />}>
-            <FactLink href={facts.linkedin.href}>
-              {facts.linkedin.label}
-            </FactLink>
-          </OverviewRow>
+          {profile.socialLinks.map((link) => (
+            <OverviewRow
+              key={link.platform}
+              icon={<BrandIcon src={link.iconSrc} alt="" />}
+            >
+              <FactLink href={link.href}>{link.label}</FactLink>
+            </OverviewRow>
+          ))}
         </ul>
       </div>
     </section>

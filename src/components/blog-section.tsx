@@ -16,16 +16,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import type { Post } from "@/content/posts";
 import { Muted } from "./typography/muted";
 
-interface BlogPost {
-  title: string;
-  description: string;
-  href: React.ComponentProps<typeof Link>["href"];
-}
-
 interface BlogSectionProps {
-  blogPosts: BlogPost[];
+  blogPosts: Post[];
 }
 
 export function BlogSection({ blogPosts }: BlogSectionProps) {
