@@ -2,26 +2,30 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { RgbSplit } from "@/components/rgb-split";
 import { Button } from "@/components/ui/button";
+import type { Href, ImageSrc } from "@/content/types";
 
 type SkillTileProps = {
-  href: React.ComponentProps<typeof Link>["href"];
-  src: React.ComponentProps<typeof Image>["src"];
+  href: Href;
+  src: ImageSrc;
   label: string;
 };
 
 export function SkillTile({ href, src, label }: SkillTileProps) {
   return (
-    <Button
-      variant="outline"
-      size="icon-lg"
-      nativeButton={false}
-      render={<Link href={href} />}
-      className="mx-auto size-14"
-      hoverEffect="rgb"
-      rgbTarget="both"
-      rgbSplitPx={2}
-      rgbGreenPx={0.4}
+    <RgbSplit
+      split="both"
+      strength={2}
+      render={
+        <Button
+          variant="outline"
+          size="icon-lg"
+          nativeButton={false}
+          render={<Link href={href} />}
+          className="mx-auto size-14 overflow-visible before:hidden"
+        />
+      }
     >
       <Image
         src={src}
@@ -30,6 +34,6 @@ export function SkillTile({ href, src, label }: SkillTileProps) {
         height={32}
         className="size-8 object-contain"
       />
-    </Button>
+    </RgbSplit>
   );
 }

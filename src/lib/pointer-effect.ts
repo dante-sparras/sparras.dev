@@ -257,3 +257,31 @@ export const rgbSplit: PointerEffect<RgbSplitValues> = {
   },
   leave: () => ({ target: { amount: 0 } }),
 };
+
+type ChannelOffset = { x: number; y: number };
+
+export type RgbSplitOffsets = {
+  red: ChannelOffset;
+  green: ChannelOffset;
+  blue: ChannelOffset;
+};
+
+/**
+ * Pixel offset of each channel: red and blue pull apart along the split
+ * axis by `splitPx`, green drifts across it by `greenPx`.
+ */
+export function rgbSplitOffsets(
+  { amount, angle }: RgbSplitValues,
+  { splitPx, greenPx }: { splitPx: number; greenPx: number },
+): RgbSplitOffsets {
+  const x = Math.cos(angle);
+  const y = Math.sin(angle);
+  const split = splitPx * amount;
+  const green = greenPx * amount;
+
+  return {
+    red: { x: x * split, y: y * split },
+    green: { x: -y * green, y: x * green },
+    blue: { x: -x * split, y: -y * split },
+  };
+}

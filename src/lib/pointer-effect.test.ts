@@ -6,6 +6,7 @@ import {
   hoverLens,
   type PointerEffect,
   rgbSplit,
+  rgbSplitOffsets,
 } from "@/lib/pointer-effect";
 
 const FRAME_MS = 16;
@@ -190,6 +191,46 @@ describe("RGB split", () => {
     split.settle();
 
     expect(split.latest()).toEqual({ amount: 0, angle: Math.PI / 2 });
+  });
+});
+
+describe("RGB split offsets", () => {
+  function expectOffset(
+    offset: { x: number; y: number },
+    expected: { x: number; y: number },
+  ) {
+    expect(offset.x).toBeCloseTo(expected.x, 10);
+    expect(offset.y).toBeCloseTo(expected.y, 10);
+  }
+
+  test("red and blue pull apart along the axis while green drifts across it", () => {
+    const offsets = rgbSplitOffsets(
+      { amount: 1, angle: Math.PI / 2 },
+      { splitPx: 4, greenPx: 1 },
+    );
+
+    expectOffset(offsets.red, { x: 0, y: 4 });
+    expectOffset(offsets.blue, { x: 0, y: -4 });
+    expectOffset(offsets.green, { x: -1, y: 0 });
+  });
+
+  test("every channel scales with the amount", () => {
+    const offsets = rgbSplitOffsets(
+      { amount: 0.5, angle: 0 },
+      { splitPx: 4, greenPx: 1 },
+    );
+
+    expectOffset(offsets.red, { x: 2, y: 0 });
+    expectOffset(offsets.blue, { x: -2, y: 0 });
+    expectOffset(offsets.green, { x: 0, y: 0.5 });
+  });
+
+  test("at rest every channel sits in place", () => {
+    const offsets = rgbSplitOffsets(rgbSplit.rest, { splitPx: 4, greenPx: 1 });
+
+    for (const offset of Object.values(offsets)) {
+      expectOffset(offset, { x: 0, y: 0 });
+    }
   });
 });
 

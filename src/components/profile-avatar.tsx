@@ -2,13 +2,11 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import { RgbSplitFilter, useRgbSplitHover } from "@/components/rgb-split";
+import { RgbSplit } from "@/components/rgb-split";
 import { profile } from "@/content/profile";
 import { cn } from "@/lib/utils";
 
 const AVATAR_SIZE_PX = 152;
-const SPLIT_PX = 5;
-const GREEN_PX = 1;
 
 type ProfileAvatarProps = {
   className?: string;
@@ -16,14 +14,6 @@ type ProfileAvatarProps = {
 
 export function ProfileAvatar({ className }: ProfileAvatarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const {
-    filterId,
-    filterStyle,
-    offsetRefs,
-    onPointerEnter,
-    onPointerMove,
-    onPointerLeave,
-  } = useRgbSplitHover({ splitPx: SPLIT_PX, greenPx: GREEN_PX });
 
   useEffect(() => {
     const node = rootRef.current;
@@ -38,17 +28,18 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
   }, []);
 
   return (
-    <div
-      ref={rootRef}
-      className={cn(
-        "relative size-38 touch-none select-none overflow-hidden rounded-full border",
-        className,
-      )}
-      onPointerEnter={onPointerEnter}
-      onPointerMove={onPointerMove}
-      onPointerLeave={onPointerLeave}
+    <RgbSplit
+      strength={5}
+      render={
+        <div
+          ref={rootRef}
+          className={cn(
+            "relative size-38 touch-none select-none overflow-hidden rounded-full border",
+            className,
+          )}
+        />
+      }
     >
-      <RgbSplitFilter id={filterId} offsetRefs={offsetRefs} />
       <Image
         src={profile.avatar.src}
         alt={profile.avatar.alt}
@@ -56,8 +47,7 @@ export function ProfileAvatar({ className }: ProfileAvatarProps) {
         sizes={`${AVATAR_SIZE_PX}px`}
         priority
         className="object-cover"
-        style={filterStyle}
       />
-    </div>
+    </RgbSplit>
   );
 }

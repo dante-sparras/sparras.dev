@@ -1,22 +1,34 @@
 "use client";
 
-import { type RefObject, useId, useRef } from "react";
+import { useRender } from "@base-ui/react/use-render";
+import {
+  type PointerEvent,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+  useId,
+  useRef,
+} from "react";
 import { usePointerEffect } from "@/hooks/use-pointer-effect";
-import { rgbSplit } from "@/lib/pointer-effect";
+import { rgbSplit, rgbSplitOffsets } from "@/lib/pointer-effect";
+import { cn } from "@/lib/utils";
 
-export type RgbSplitOffsetRefs = {
+export type RgbSplitTarget = "content" | "border" | "both";
+
+const GREEN_RATIO = 0.2;
+const BORDER_SPLIT_PX = 1;
+const BORDER_ENTER_DELAY_MS = 150;
+
+type OffsetRefs = {
   red: RefObject<SVGFEOffsetElement | null>;
   green: RefObject<SVGFEOffsetElement | null>;
   blue: RefObject<SVGFEOffsetElement | null>;
 };
 
-type UseRgbSplitHoverOptions = {
-  splitPx: number;
-  greenPx: number;
-  enterDelayMs?: number;
-};
-
-function writeOffset(node: SVGFEOffsetElement | null, x: number, y: number) {
+function writeOffset(
+  node: SVGFEOffsetElement | null,
+  { x, y }: { x: number; y: number },
+) {
   if (!node) {
     return;
   }
@@ -31,58 +43,48 @@ function cssFilterId(reactId: string) {
 }
 
 /**
- * Pointer-following chromatic split. Mutates SVG `feOffset` nodes so the
- * filter can run on any painted source (an image, or a border-only overlay).
+ * One SVG channel filter driven by the pointer. Mutates its `feOffset` nodes
+ * so the filter can run on any painted source.
  */
-export function useRgbSplitHover({
+function useChannelFilter({
   splitPx,
   greenPx,
   enterDelayMs,
-}: UseRgbSplitHoverOptions) {
-  const filterId = cssFilterId(useId());
-  const redOffsetRef = useRef<SVGFEOffsetElement>(null);
-  const greenOffsetRef = useRef<SVGFEOffsetElement>(null);
-  const blueOffsetRef = useRef<SVGFEOffsetElement>(null);
-  const offsetRefs: RgbSplitOffsetRefs = {
-    red: redOffsetRef,
-    green: greenOffsetRef,
-    blue: blueOffsetRef,
-  };
+}: {
+  splitPx: number;
+  greenPx: number;
+  enterDelayMs?: number;
+}) {
+  const id = cssFilterId(useId());
+  const red = useRef<SVGFEOffsetElement>(null);
+  const green = useRef<SVGFEOffsetElement>(null);
+  const blue = useRef<SVGFEOffsetElement>(null);
 
-  const { onPointerEnter, onPointerMove, onPointerLeave } = usePointerEffect(
+  const handlers = usePointerEffect(
     rgbSplit,
-    ({ amount, angle }) => {
-      const x = Math.cos(angle);
-      const y = Math.sin(angle);
-      const redX = x * splitPx * amount;
-      const redY = y * splitPx * amount;
-      const blueX = -x * splitPx * amount;
-      const blueY = -y * splitPx * amount;
-      const greenX = -y * greenPx * amount;
-      const greenY = x * greenPx * amount;
-      writeOffset(redOffsetRef.current, redX, redY);
-      writeOffset(blueOffsetRef.current, blueX, blueY);
-      writeOffset(greenOffsetRef.current, greenX, greenY);
+    (values) => {
+      const offsets = rgbSplitOffsets(values, { splitPx, greenPx });
+      writeOffset(red.current, offsets.red);
+      writeOffset(green.current, offsets.green);
+      writeOffset(blue.current, offsets.blue);
     },
     { enterDelayMs },
   );
 
   return {
-    filterId,
-    filterStyle: { filter: `url(#${filterId})` },
-    offsetRefs,
-    onPointerEnter,
-    onPointerMove,
-    onPointerLeave,
+    id,
+    style: { filter: `url(#${id})` },
+    offsetRefs: { red, green, blue } satisfies OffsetRefs,
+    handlers,
   };
 }
 
-export function RgbSplitFilter({
+function ChannelFilter({
   id,
   offsetRefs,
 }: {
   id: string;
-  offsetRefs: RgbSplitOffsetRefs;
+  offsetRefs: OffsetRefs;
 }) {
   return (
     <svg aria-hidden className="absolute size-0">
@@ -140,17 +142,86 @@ export function RgbSplitFilter({
   );
 }
 
-/** 1px ring whose painted border is the filter source. Content stays unfiltered. */
-export function RgbSplitBorderOverlay({
-  filterStyle,
+/**
+ * RGB split on the `render` element, following the pointer while it is
+ * over it. Pass the content as `children`, not on `render`: the module
+ * wraps it so only the content is filtered. Splitting the border replaces
+ * the element's own border with a filtered 1px ring.
+ */
+export function RgbSplit({
+  render,
+  split = "content",
+  strength = 3,
+  children,
 }: {
-  filterStyle: { filter: string };
+  render: ReactElement;
+  split?: RgbSplitTarget;
+  /** How far red and blue pull apart, in px. */
+  strength?: number;
+  children: ReactNode;
 }) {
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute inset-0 rounded-[inherit] border border-border transition-colors duration-150 group-hover/button:border-foreground group-focus-visible/button:border-foreground"
-      style={filterStyle}
-    />
-  );
+  const splitContent = split !== "border";
+  const splitBorder = split !== "content";
+  const content = useChannelFilter({
+    splitPx: strength,
+    greenPx: strength * GREEN_RATIO,
+  });
+  const border = useChannelFilter({
+    splitPx: BORDER_SPLIT_PX,
+    greenPx: 0,
+    enterDelayMs: BORDER_ENTER_DELAY_MS,
+  });
+  const filters = [
+    ...(splitContent ? [content] : []),
+    ...(splitBorder ? [border] : []),
+  ];
+
+  return useRender({
+    render,
+    props: {
+      className: cn("group/rgb-split", splitBorder && "border-transparent"),
+      onPointerEnter: (event: PointerEvent<Element>) => {
+        for (const filter of filters) {
+          filter.handlers.onPointerEnter(event);
+        }
+      },
+      onPointerMove: (event: PointerEvent<Element>) => {
+        for (const filter of filters) {
+          filter.handlers.onPointerMove(event);
+        }
+      },
+      onPointerLeave: () => {
+        for (const filter of filters) {
+          filter.handlers.onPointerLeave();
+        }
+      },
+      children: (
+        <>
+          {filters.map((filter) => (
+            <ChannelFilter
+              key={filter.id}
+              id={filter.id}
+              offsetRefs={filter.offsetRefs}
+            />
+          ))}
+          {splitBorder ? (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-[inherit] border border-border transition-colors duration-150 group-hover/rgb-split:border-foreground group-focus-visible/rgb-split:border-foreground"
+              style={border.style}
+            />
+          ) : null}
+          <span
+            className={cn(
+              "relative inline-flex size-full items-center justify-center gap-[inherit]",
+              splitBorder && "z-10",
+            )}
+            style={splitContent ? content.style : undefined}
+          >
+            {children}
+          </span>
+        </>
+      ),
+    },
+  });
 }
