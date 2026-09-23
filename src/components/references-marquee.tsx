@@ -51,31 +51,29 @@ function ReferenceCard({ reference }: { reference: Reference }) {
   );
 }
 
-export function ReferencesSection({ references }: { references: Reference[] }) {
+export function ReferencesMarquee({ references }: { references: Reference[] }) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
   return (
-    <section aria-label="References" id="references">
-      <div className="@container group/references overflow-hidden">
-        <ul className="references-track flex w-max motion-safe:animate-references-scroll">
-          {references.map((reference) => (
-            <li key={reference.name} className={cardWidth}>
-              <ReferenceCard reference={reference} />
-            </li>
-          ))}
-          {prefersReducedMotion
-            ? null
-            : references.map((reference) => (
-                <li
-                  key={`${reference.name}-loop`}
-                  aria-hidden
-                  className={cardWidth}
-                >
-                  <ReferenceCard reference={reference} />
-                </li>
-              ))}
-        </ul>
-      </div>
-    </section>
+    <div className="@container group/references overflow-hidden">
+      <ul className="references-track flex w-max motion-safe:animate-references-scroll">
+        {references.map((reference) => (
+          <li key={reference.name} className={cardWidth}>
+            <ReferenceCard reference={reference} />
+          </li>
+        ))}
+        {prefersReducedMotion
+          ? null
+          : references.map((reference) => (
+              <li
+                key={`${reference.name}-loop`}
+                aria-hidden
+                className={cardWidth}
+              >
+                <ReferenceCard reference={reference} />
+              </li>
+            ))}
+      </ul>
+    </div>
   );
 }

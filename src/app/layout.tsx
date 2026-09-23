@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
+import { sections } from "@/content/outline";
 import { profile } from "@/content/profile";
 import { cn } from "@/lib/utils";
 
@@ -41,17 +42,10 @@ export const metadata: Metadata = {
 };
 // #endregion
 
-// #region DATA
-const navData: {
-  title: string;
-  href: React.ComponentProps<typeof Link>["href"];
-}[] = [
-  { title: "References", href: "#references" },
-  { title: "Skills", href: "#skills" },
-  { title: "Projects", href: "#projects" },
-  { title: "Blog", href: "#blog" },
-];
-// #endregion
+const navLinks = sections.map((entry) => ({
+  title: entry.title,
+  href: `#${entry.id}` as const,
+}));
 
 export default function RootLayout({
   children,
@@ -79,7 +73,7 @@ export default function RootLayout({
                 className="md:hidden"
                 aria-label="Main navigation"
               >
-                {navData.map((link) => (
+                {navLinks.map((link) => (
                   <DropdownMenuItem
                     key={link.title}
                     render={<Link href={link.href}>{link.title}</Link>}
@@ -90,7 +84,7 @@ export default function RootLayout({
             </DropdownMenu>
             <nav className="hidden md:flex" aria-label="Main navigation">
               <ul className="flex items-center">
-                {navData.map((link) => (
+                {navLinks.map((link) => (
                   <li key={link.title}>
                     <Link
                       href={link.href}

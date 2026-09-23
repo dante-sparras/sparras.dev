@@ -1,48 +1,29 @@
+import { Fragment, type ReactNode } from "react";
 import { BlackHoleBanner } from "@/components/black-hole-banner";
 import { BlogSection } from "@/components/blog-section";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ProfileOverview } from "@/components/profile-overview";
 import { ProjectsSection } from "@/components/projects-section";
-import { ReferencesSection } from "@/components/references-section";
-import { SkillTile } from "@/components/skill-tile";
+import { ReferencesMarquee } from "@/components/references-marquee";
+import { Section } from "@/components/section";
+import { SkillGrid } from "@/components/skill-grid";
+import { StripedDivider } from "@/components/striped-divider";
 import { H2 } from "@/components/typography/h2";
-import { H3 } from "@/components/typography/h3";
 import { Muted } from "@/components/typography/muted";
 import { P } from "@/components/typography/p";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { type SectionId, sections } from "@/content/outline";
 import { posts } from "@/content/posts";
 import { profile } from "@/content/profile";
 import { projects } from "@/content/projects";
 import { references } from "@/content/references";
-import { type Skill, skills } from "@/content/skills";
-import { cn } from "@/lib/utils";
+import { skills } from "@/content/skills";
 
-function StripedDivider({ className }: { className?: string }) {
-  return <div className={cn("h-4 border-y bg-stripes", className)} />;
-}
-
-function SkillGrid({ skills: items }: { skills: Skill[] }) {
-  return (
-    <ul className="grid grid-cols-5 gap-4 px-6 py-4 sm:grid-cols-8 md:grid-cols-10">
-      {items.map(({ name, iconSrc, href }) => (
-        <Tooltip key={name}>
-          <TooltipTrigger
-            render={
-              <li>
-                <SkillTile href={href} src={iconSrc} label={name} />
-              </li>
-            }
-          />
-          <TooltipContent>{name}</TooltipContent>
-        </Tooltip>
-      ))}
-    </ul>
-  );
-}
+const sectionContent: Record<SectionId, ReactNode> = {
+  references: <ReferencesMarquee references={references} />,
+  skills: <SkillGrid skills={skills} />,
+  projects: <ProjectsSection projects={projects} />,
+  blog: <BlogSection blogPosts={posts} />,
+};
 
 export default function Home() {
   return (
@@ -65,33 +46,14 @@ export default function Home() {
       </header>
       <StripedDivider />
       <ProfileOverview />
-      <section aria-labelledby="about-heading">
-        <P className="text-balance px-6 py-5">{profile.bio}</P>
-      </section>
+      <P className="text-balance px-6 py-5">{profile.bio}</P>
       <StripedDivider />
-      <ReferencesSection references={references} />
-      <StripedDivider />
-      {/** UNCOMMENT LATER THIS YEAR */}
-      {/* <section aria-labelledby="github-calendar-heading">
-        <div className="relative flex items-center justify-center px-6 py-5">
-          <GitHubCalendar
-            username="dante-sparras"
-            weekStart={1}
-            blockSize={9.35}
-          />
-        </div>
-      </section> */}
-      <section aria-labelledby="skills-heading">
-        <H3 id="skills" className="border-b px-6 py-3">
-          Skills
-        </H3>
-        <SkillGrid skills={skills} />
-      </section>
-      <StripedDivider />
-      <ProjectsSection projects={projects} />
-      <StripedDivider />
-      <BlogSection blogPosts={posts} />
-      <StripedDivider />
+      {sections.map((entry) => (
+        <Fragment key={entry.id}>
+          <Section entry={entry}>{sectionContent[entry.id]}</Section>
+          <StripedDivider />
+        </Fragment>
+      ))}
     </>
   );
 }

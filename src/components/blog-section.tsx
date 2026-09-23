@@ -3,7 +3,6 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { H3 } from "@/components/typography/h3";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,11 +30,7 @@ export function BlogSection({ blogPosts }: BlogSectionProps) {
   const hiddenBlogPosts = blogPosts.slice(INITIAL_COUNT);
 
   return (
-    <section aria-labelledby="blog-heading">
-      <div className="flex items-center justify-between border-b px-6 py-3">
-        <H3 id="blog">Blog</H3>
-      </div>
-
+    <>
       {blogPosts.length === 0 ? (
         <Muted className="mx-auto px-6 py-6 text-center">
           No blog posts available at the moment.
@@ -95,6 +90,6 @@ export function BlogSection({ blogPosts }: BlogSectionProps) {
           )}
         </Collapsible>
       )}
-    </section>
+    </>
   );
 }
