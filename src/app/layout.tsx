@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Geist_Pixel } from "next/font/google";
 import "./globals.css";
 import { MenuIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import * as React from "react";
-import { Muted } from "@/components/typography/muted";
+import type * as React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +24,13 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+const geistPixel = Geist_Pixel({
+  variable: "--font-geist-pixel",
+  subsets: ["latin", "latin-ext"],
+  axes: ["ELSH"],
+  adjustFontFallback: false,
+});
 // #endregion
 
 // #region METADATA
@@ -40,6 +46,7 @@ const navData: {
   title: string;
   href: React.ComponentProps<typeof Link>["href"];
 }[] = [
+  { title: "References", href: "#references" },
   { title: "Skills", href: "#skills" },
   { title: "Projects", href: "#projects" },
   { title: "Blog", href: "#blog" },
@@ -65,23 +72,6 @@ const socialLinks: {
     src: "/icons/github.svg",
   },
 ];
-const madeWithLinks: {
-  href: React.ComponentProps<typeof Link>["href"];
-  title: string;
-}[] = [
-  {
-    href: "https://nextjs.org",
-    title: "Next.js",
-  },
-  {
-    href: "https://ui.shadcn.com",
-    title: "Shadcn/ui",
-  },
-  {
-    href: "https://tailwindcss.com",
-    title: "Tailwind CSS",
-  },
-];
 // #endregion
 
 export default function RootLayout({
@@ -90,10 +80,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scheme-dark scroll-smooth">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-background font-mono text-foreground antialiased`}
-      >
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} scheme-dark scroll-smooth`}
+    >
+      <body className="bg-background font-sans text-foreground antialiased">
         <div className="sticky top-0 z-50 mx-auto max-w-3xl md:border-x">
           <header className="flex h-14 items-center justify-end gap-4 border-b bg-background px-4 py-2">
             <DropdownMenu>
@@ -138,20 +129,6 @@ export default function RootLayout({
         <main className="mx-auto max-w-3xl md:border-x">{children}</main>
 
         <footer className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-6 md:border-x md:px-6">
-          <Muted className="text-center">
-            Made with{" "}
-            {madeWithLinks.map((link) => (
-              <React.Fragment key={link.href.toString()}>
-                <Link
-                  href={link.href}
-                  className="text-blue-400 hover:underline"
-                >
-                  {link.title}
-                </Link>{" "}
-              </React.Fragment>
-            ))}
-            ❤️
-          </Muted>
           <ul className="flex w-full flex-row justify-center">
             {socialLinks.map((link) => (
               <li

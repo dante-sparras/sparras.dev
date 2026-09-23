@@ -3,7 +3,9 @@ import type Link from "next/link";
 import { BlackHoleBanner } from "@/components/black-hole-banner";
 import { BlogSection } from "@/components/blog-section";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { ProfileOverview } from "@/components/profile-overview";
 import { ProjectsSection } from "@/components/projects-section";
+import { ReferencesSection } from "@/components/references-section";
 import { SkillTile } from "@/components/skill-tile";
 import { H2 } from "@/components/typography/h2";
 import { H3 } from "@/components/typography/h3";
@@ -128,6 +130,44 @@ const projects: {
   },
 ];
 
+const references: {
+  name: string;
+  initials: string;
+  avatarSrc: string;
+  companyLogoSrc: string;
+  workplace?: string;
+  quote?: string;
+}[] = [
+  {
+    name: "Sebastian Aarnio",
+    initials: "SA",
+    avatarSrc: "/sebastian-aarnio.png",
+    companyLogoSrc: "/spacexai-logo.jpg",
+    workplace: "Software Engineer @ SpaceXAI",
+  },
+  {
+    name: "Olie Aarnio",
+    initials: "OA",
+    avatarSrc: "/olie-aarnio.png",
+    companyLogoSrc: "/casuology-logo.jpg",
+    workplace: "Game Content Writer / Narrative Designer @ Casuology",
+  },
+  {
+    name: "Henry Brandt",
+    initials: "HB",
+    avatarSrc: "/henry-brandt.png",
+    companyLogoSrc: "/yh-akademin-logo.jpg",
+    workplace: "Student @ YH Akademin",
+  },
+  {
+    name: "Robert Johansson",
+    initials: "RJ",
+    avatarSrc: "/robert-johansson.png",
+    companyLogoSrc: "/yh-akademin-logo.jpg",
+    workplace: "Student @ YH Akademin",
+  },
+];
+
 const blogPosts: {
   title: string;
   description: string;
@@ -137,7 +177,7 @@ const blogPosts: {
 //#endregion
 
 function StripedDivider({ className }: { className?: string }) {
-  return <div className={cn("h-8 border-y bg-stripes", className)} />;
+  return <div className={cn("h-4 border-y bg-stripes", className)} />;
 }
 
 function SkillGrid({ skills: items }: { skills: typeof skills }) {
@@ -179,9 +219,12 @@ export default function Home() {
         </div>
       </header>
       <StripedDivider />
+      <ProfileOverview />
       <section aria-labelledby="about-heading">
         <P className="text-balance px-6 py-5">{aboutMe}</P>
       </section>
+      <StripedDivider />
+      <ReferencesSection references={references} />
       <StripedDivider />
       {/** UNCOMMENT LATER THIS YEAR */}
       {/* <section aria-labelledby="github-calendar-heading">
