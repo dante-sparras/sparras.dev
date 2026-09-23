@@ -29,6 +29,7 @@ export type RgbSplitOffsetRefs = {
 type UseRgbSplitHoverOptions = {
   splitPx: number;
   greenPx: number;
+  enterDelayMs?: number;
 };
 
 /** Signed delta from `from` to `to` on the shortest arc, in (-π, π]. */
@@ -67,6 +68,7 @@ function cssFilterId(reactId: string) {
 export function useRgbSplitHover({
   splitPx,
   greenPx,
+  enterDelayMs = 0,
 }: UseRgbSplitHoverOptions) {
   const filterId = cssFilterId(useId());
   const redOffsetRef = useRef<SVGFEOffsetElement>(null);
@@ -83,7 +85,16 @@ export function useRgbSplitHover({
   const angleTargetRef = useRef(0);
   const lastFrameRef = useRef(0);
   const rafRef = useRef<number | null>(null);
+  const enterDelayRef = useRef<number | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  const clearEnterDelay = useCallback(() => {
+    if (enterDelayRef.current == null) {
+      return;
+    }
+    window.clearTimeout(enterDelayRef.current);
+    enterDelayRef.current = null;
+  }, []);
 
   const apply = useCallback(() => {
     const amount = amountRef.current;
@@ -158,7 +169,13 @@ export function useRgbSplitHover({
     [startLoop],
   );
 
-  useEffect(() => stop, [stop]);
+  useEffect(
+    () => () => {
+      stop();
+      clearEnterDelay();
+    },
+    [clearEnterDelay, stop],
+  );
 
   function aimAtPointer(event: PointerEvent<Element>, snap: boolean) {
     const next = angleFromPointer(event);
@@ -176,7 +193,15 @@ export function useRgbSplitHover({
       return;
     }
     aimAtPointer(event, true);
-    playAmountTo(1);
+    clearEnterDelay();
+    if (enterDelayMs <= 0) {
+      playAmountTo(1);
+      return;
+    }
+    enterDelayRef.current = window.setTimeout(() => {
+      enterDelayRef.current = null;
+      playAmountTo(1);
+    }, enterDelayMs);
   }
 
   function onPointerMove(event: PointerEvent<Element>) {
@@ -191,6 +216,7 @@ export function useRgbSplitHover({
     if (prefersReducedMotion) {
       return;
     }
+    clearEnterDelay();
     playAmountTo(0);
   }
 
@@ -264,5 +290,20 @@ export function RgbSplitFilter({
         <feBlend in="rg" in2="b" mode="screen" />
       </filter>
     </svg>
+  );
+}
+
+/** 1px ring whose painted border is the filter source. Content stays unfiltered. */
+export function RgbSplitBorderOverlay({
+  filterStyle,
+}: {
+  filterStyle: { filter: string };
+}) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute inset-0 rounded-[inherit] border border-border transition-colors duration-150 group-hover/button:border-foreground group-focus-visible/button:border-foreground"
+      style={filterStyle}
+    />
   );
 }

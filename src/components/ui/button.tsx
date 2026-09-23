@@ -7,7 +7,11 @@ import {
   useAnimatedLens,
   usePrefersReducedMotion,
 } from "@/components/hover-lens";
-import { RgbSplitFilter, useRgbSplitHover } from "@/components/rgb-split";
+import {
+  RgbSplitBorderOverlay,
+  RgbSplitFilter,
+  useRgbSplitHover,
+} from "@/components/rgb-split";
 import { cn } from "@/lib/utils";
 
 export type ButtonHoverEffect = "rgb" | "parallax";
@@ -57,6 +61,7 @@ type ButtonProps = ButtonPrimitive.Props &
     hoverEffect?: ButtonHoverEffect;
     rgbSplitPx?: number;
     rgbGreenPx?: number;
+    rgbTarget?: "content" | "border" | "both";
   };
 
 const HALFTONE_LAYER =
@@ -66,6 +71,7 @@ function Button({
   hoverEffect,
   rgbSplitPx,
   rgbGreenPx,
+  rgbTarget,
   className,
   variant = "default",
   size = "default",
@@ -79,6 +85,7 @@ function Button({
         size={size}
         rgbSplitPx={rgbSplitPx}
         rgbGreenPx={rgbGreenPx}
+        rgbTarget={rgbTarget}
         {...props}
       />
     );
@@ -110,35 +117,58 @@ function RgbSplitButton({
   size = "default",
   rgbSplitPx = RGB_SPLIT_PX,
   rgbGreenPx = RGB_GREEN_PX,
+  rgbTarget = "content",
   children,
   onPointerEnter,
   onPointerMove,
   onPointerLeave,
   ...props
 }: Omit<ButtonProps, "hoverEffect">) {
-  const rgbSplit = useRgbSplitHover({
+  const splitContent = rgbTarget === "content" || rgbTarget === "both";
+  const splitBorder = rgbTarget === "border" || rgbTarget === "both";
+  const contentSplit = useRgbSplitHover({
     splitPx: rgbSplitPx,
     greenPx: rgbGreenPx,
+  });
+  const borderSplit = useRgbSplitHover({
+    splitPx: 1,
+    greenPx: 0,
+    enterDelayMs: 150,
   });
 
   const handlePointerEnter: NonNullable<
     ButtonPrimitive.Props["onPointerEnter"]
   > = (event) => {
-    rgbSplit.onPointerEnter(event);
+    if (splitContent) {
+      contentSplit.onPointerEnter(event);
+    }
+    if (splitBorder) {
+      borderSplit.onPointerEnter(event);
+    }
     onPointerEnter?.(event);
   };
 
   const handlePointerMove: NonNullable<
     ButtonPrimitive.Props["onPointerMove"]
   > = (event) => {
-    rgbSplit.onPointerMove(event);
+    if (splitContent) {
+      contentSplit.onPointerMove(event);
+    }
+    if (splitBorder) {
+      borderSplit.onPointerMove(event);
+    }
     onPointerMove?.(event);
   };
 
   const handlePointerLeave: NonNullable<
     ButtonPrimitive.Props["onPointerLeave"]
   > = (event) => {
-    rgbSplit.onPointerLeave();
+    if (splitContent) {
+      contentSplit.onPointerLeave();
+    }
+    if (splitBorder) {
+      borderSplit.onPointerLeave();
+    }
     onPointerLeave?.(event);
   };
 
@@ -149,16 +179,34 @@ function RgbSplitButton({
       className={cn(
         buttonVariants({ variant, size, className }),
         "overflow-visible before:hidden",
+        splitBorder && "border-transparent",
       )}
       {...props}
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      <RgbSplitFilter id={rgbSplit.filterId} offsetRefs={rgbSplit.offsetRefs} />
+      {splitContent ? (
+        <RgbSplitFilter
+          id={contentSplit.filterId}
+          offsetRefs={contentSplit.offsetRefs}
+        />
+      ) : null}
+      {splitBorder ? (
+        <RgbSplitFilter
+          id={borderSplit.filterId}
+          offsetRefs={borderSplit.offsetRefs}
+        />
+      ) : null}
+      {splitBorder ? (
+        <RgbSplitBorderOverlay filterStyle={borderSplit.filterStyle} />
+      ) : null}
       <span
-        className="inline-flex items-center justify-center gap-[inherit]"
-        style={rgbSplit.filterStyle}
+        className={cn(
+          "inline-flex items-center justify-center gap-[inherit]",
+          splitBorder && "relative z-10",
+        )}
+        style={splitContent ? contentSplit.filterStyle : undefined}
       >
         {children}
       </span>

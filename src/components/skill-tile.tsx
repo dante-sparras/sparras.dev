@@ -19,6 +19,7 @@ export function SkillTile({ href, src, label }: SkillTileProps) {
       render={<Link href={href} />}
       className="mx-auto size-14"
       hoverEffect="rgb"
+      rgbTarget="both"
       rgbSplitPx={2}
       rgbGreenPx={0.4}
     >
