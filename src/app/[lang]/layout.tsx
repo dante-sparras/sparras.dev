@@ -1,14 +1,22 @@
-import { MenuIcon } from "lucide-react";
+import { Languages, MenuIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Geist_Pixel } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import {
+  LanguageMenuItems,
+  LanguageSwitcher,
+} from "@/components/language-switcher";
+import { SiteLogo } from "@/components/site-logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
@@ -52,6 +60,10 @@ export async function generateMetadata({
   return {
     title: profile.name,
     description: profile.summary,
+    icons: {
+      icon: [{ url: "/favicon.png", type: "image/png", sizes: "192x192" }],
+      apple: [{ url: "/favicon.png", type: "image/png", sizes: "192x192" }],
+    },
   };
 }
 
@@ -77,31 +89,10 @@ export default async function RootLayout({
     >
       <body className="bg-background font-sans text-foreground antialiased">
         <div className="sticky top-0 z-50 mx-auto max-w-3xl md:border-x">
-          <header className="flex h-14 items-center justify-end gap-4 border-b bg-background px-4 py-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className={cn(
-                  navigationMenuTriggerStyle(),
-                  "mr-auto flex size-9 cursor-pointer px-0 md:hidden",
-                )}
-              >
-                <MenuIcon className="size-5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="md:hidden"
-                aria-label={messages.mainNavigation}
-              >
-                {navLinks.map((link) => (
-                  <DropdownMenuItem
-                    key={link.id}
-                    render={<Link href={link.href}>{link.title}</Link>}
-                    className="cursor-pointer"
-                  />
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 py-2">
+            <SiteLogo href={`/${lang}`} alt={profile.name} />
             <nav
-              className="hidden md:flex"
+              className="mr-auto hidden md:flex"
               aria-label={messages.mainNavigation}
             >
               <ul className="flex items-center">
@@ -117,7 +108,46 @@ export default async function RootLayout({
                 ))}
               </ul>
             </nav>
-            <LanguageSwitcher lang={lang} menuLabel={messages.language} />
+            <div className="hidden md:block">
+              <LanguageSwitcher lang={lang} menuLabel={messages.language} />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label={messages.mainNavigation}
+                className={cn(
+                  navigationMenuTriggerStyle(),
+                  "ml-auto flex size-9 cursor-pointer px-0 md:hidden",
+                )}
+              >
+                <MenuIcon className="size-5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="md:hidden"
+                aria-label={messages.mainNavigation}
+              >
+                {navLinks.map((link) => (
+                  <DropdownMenuItem
+                    key={link.id}
+                    render={<Link href={link.href}>{link.title}</Link>}
+                    className="cursor-pointer"
+                  />
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="cursor-pointer [&_svg:last-child]:rotate-180">
+                    <Languages aria-hidden="true" />
+                    {messages.language}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent
+                    side="left"
+                    aria-label={messages.language}
+                  >
+                    <LanguageMenuItems lang={lang} />
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </header>
         </div>
 

@@ -9,12 +9,30 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LocalTime } from "@/components/local-time";
-import { Separator } from "@/components/ui/separator";
-import { getProfile } from "@/content/profile";
-import type { Href, ImageSrc } from "@/content/types";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { getProfile, type SocialLink } from "@/content/profile";
+import type { Href } from "@/content/types";
 import type { Locale } from "@/i18n/locale";
 import { getMessages } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
+
+const socialIconOrder = ["X", "GitHub", "LinkedIn", "Discord"];
+
+function socialIcons(links: SocialLink[]) {
+  const byPlatform = new Map(links.map((link) => [link.platform, link]));
+  const ordered = socialIconOrder.flatMap((platform) => {
+    const link = byPlatform.get(platform);
+    return link ? [link] : [];
+  });
+  const listed = new Set(socialIconOrder);
+
+  return [...ordered, ...links.filter((link) => !listed.has(link.platform))];
+}
 
 function OverviewRow({
   icon,
@@ -25,7 +43,7 @@ function OverviewRow({
 }) {
   return (
     <li className="flex items-center gap-2.5 text-sm">
-      <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground [&_img]:size-4 [&_svg]:size-4">
+      <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground [&_svg]:size-4">
         {icon}
       </span>
       <span className="min-w-0">{children}</span>
@@ -41,18 +59,6 @@ function LucideRow({
   children: ReactNode;
 }) {
   return <OverviewRow icon={<Icon />}>{children}</OverviewRow>;
-}
-
-function BrandIcon({ src, alt }: { src: ImageSrc; alt: string }) {
-  return (
-    <Image
-      src={src}
-      alt={alt}
-      width={16}
-      height={16}
-      className="size-4 object-contain brightness-0 invert"
-    />
-  );
 }
 
 function FactLink({ href, children }: { href: Href; children: ReactNode }) {
@@ -79,45 +85,61 @@ export function ProfileOverview({
   return (
     <section
       aria-label={messages.profileDetails}
-      className={cn("border-b px-6 py-5", className)}
+      className={cn("border-b", className)}
     >
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-0">
-        <ul className="flex flex-1 flex-col gap-2.5">
-          <LucideRow icon={CodeXmlIcon}>
-            {profile.role} @ {company}
-          </LucideRow>
-          <LucideRow icon={LightbulbIcon}>
-            {profile.focus} @ {company}
-          </LucideRow>
-          <LucideRow icon={MapPinIcon}>{profile.location}</LucideRow>
-          <LucideRow icon={ClockIcon}>
-            <LocalTime
-              labels={{
-                localTime: messages.localTime,
-                same: messages.sameTime,
-                ahead: messages.ahead,
-                behind: messages.behind,
-              }}
-              locale={locale}
-              timeZone={profile.timeZone}
-            />
-          </LucideRow>
-        </ul>
-        <Separator
-          orientation="vertical"
-          className="mx-6 hidden h-auto self-stretch sm:block"
-        />
-        <ul className="flex flex-1 flex-col gap-2.5">
-          {profile.socialLinks.map((link) => (
-            <OverviewRow
-              key={link.platform}
-              icon={<BrandIcon src={link.iconSrc} alt="" />}
-            >
-              <FactLink href={link.href}>{link.label}</FactLink>
-            </OverviewRow>
+      <nav aria-label={messages.socialLinks} className="border-b px-6 py-3">
+        <ul className="flex items-center gap-2">
+          {socialIcons(profile.socialLinks).map((link) => (
+            <li key={link.platform}>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      size="icon-lg"
+                      nativeButton={false}
+                      render={
+                        <Link href={link.href} aria-label={link.platform} />
+                      }
+                      className="before:hidden"
+                    />
+                  }
+                >
+                  <Image
+                    src={link.iconSrc}
+                    alt=""
+                    width={16}
+                    height={16}
+                    className="size-4 object-contain brightness-0 invert"
+                  />
+                </TooltipTrigger>
+                <TooltipContent>{link.platform}</TooltipContent>
+              </Tooltip>
+            </li>
           ))}
         </ul>
-      </div>
+      </nav>
+      <ul className="flex flex-col gap-2.5 px-6 py-5">
+        <LucideRow icon={CodeXmlIcon}>
+          {profile.role} @ {company}
+        </LucideRow>
+        <LucideRow icon={LightbulbIcon}>
+          {profile.focus} @ {company}
+        </LucideRow>
+        <LucideRow icon={MapPinIcon}>{profile.location}</LucideRow>
+        <LucideRow icon={ClockIcon}>
+          <LocalTime
+            labels={{
+              localTime: messages.localTime,
+              same: messages.sameTime,
+              ahead: messages.ahead,
+              behind: messages.behind,
+            }}
+            locale={locale}
+            timeZone={profile.timeZone}
+          />
+        </LucideRow>
+      </ul>
     </section>
   );
 }

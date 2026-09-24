@@ -74,7 +74,9 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
       <StripedDivider />
       {sections.map((entry) => (
         <Fragment key={entry.id}>
-          <Section entry={entry}>{sectionContent[entry.id]}</Section>
+          <Section entry={entry} showHeading={entry.id !== "references"}>
+            {sectionContent[entry.id]}
+          </Section>
           <StripedDivider />
         </Fragment>
       ))}

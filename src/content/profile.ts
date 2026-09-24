@@ -3,7 +3,6 @@ import type { Locale } from "@/i18n/locale";
 
 export type SocialLink = {
   platform: string;
-  label: string;
   href: Href;
   iconSrc: ImageSrc;
 };
@@ -25,21 +24,23 @@ const company: { name: string; href: Href } = {
 const socialLinks: SocialLink[] = [
   {
     platform: "GitHub",
-    label: "github.com/dante-sparras",
     href: "https://github.com/dante-sparras",
     iconSrc: "/icons/github.svg",
   },
   {
     platform: "X",
-    label: "x.com/DanteSparras",
     href: "https://x.com/DanteSparras",
     iconSrc: "/icons/x.svg",
   },
   {
     platform: "LinkedIn",
-    label: "linkedin.com/in/dante-sparras",
     href: "https://www.linkedin.com/in/dante-sparras/",
     iconSrc: "/icons/linkedin.svg",
+  },
+  {
+    platform: "Discord",
+    href: "https://discord.com/users/274954642566283264",
+    iconSrc: "/icons/discord.svg",
   },
 ];
 

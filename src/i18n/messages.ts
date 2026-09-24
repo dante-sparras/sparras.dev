@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/locale";
 type Messages = {
   mainNavigation: string;
   profileDetails: string;
+  socialLinks: string;
   language: string;
   showMore: string;
   showLess: string;
@@ -18,6 +19,7 @@ export const messages: Record<Locale, Messages> = {
   en: {
     mainNavigation: "Main navigation",
     profileDetails: "Profile details",
+    socialLinks: "Social links",
     language: "Language",
     showMore: "Show More",
     showLess: "Show Less",
@@ -31,6 +33,7 @@ export const messages: Record<Locale, Messages> = {
   sv: {
     mainNavigation: "Huvudnavigering",
     profileDetails: "Profiluppgifter",
+    socialLinks: "Sociala länkar",
     language: "Språk",
     showMore: "Visa mer",
     showLess: "Visa mindre",
