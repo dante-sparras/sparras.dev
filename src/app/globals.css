@@ -107,23 +107,6 @@
   background-size: 9px 9px;
 }
 
-@keyframes references-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@utility animate-references-scroll {
-  animation: references-scroll 40s linear infinite;
-}
-
-.group\/references:hover .references-track {
-  animation-play-state: paused;
-}
-
 @layer utilities {
   .bg-graph-paper {
     @apply bg-background bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px),linear-gradient(to_right,var(--border)_2px,transparent_2px),linear-gradient(to_bottom,var(--border)_2px,transparent_2px)] bg-size-[20px_20px,20px_20px,200px_200px,200px_200px];

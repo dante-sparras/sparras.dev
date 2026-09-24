@@ -16,6 +16,7 @@ const referenceSources: {
   avatarSrc: string;
   companyLogoSrc: ImageSrc;
   workplace: Record<Locale, string>;
+  quote?: string;
 }[] = [
   {
     name: "Sebastian Aarnio",
@@ -26,6 +27,7 @@ const referenceSources: {
       en: "Software Engineer @ SpaceXAI",
       sv: "Mjukvaruutvecklare @ SpaceXAI",
     },
+    quote: "An awesome developer with great technical and artistic skills.",
   },
   {
     name: "Olie Aarnio",
@@ -36,6 +38,7 @@ const referenceSources: {
       en: "Game Content Writer / Narrative Designer @ Casuology",
       sv: "Spelinnehållsskribent / narrativ designer @ Casuology",
     },
+    quote: "Great attention to detail.",
   },
   {
     name: "Henry Brandt",
@@ -66,5 +69,6 @@ export function getReferences(locale: Locale): Reference[] {
     avatarSrc: reference.avatarSrc,
     companyLogoSrc: reference.companyLogoSrc,
     workplace: reference.workplace[locale],
+    quote: reference.quote,
   }));
 }
