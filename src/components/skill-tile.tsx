@@ -15,15 +15,14 @@ type SkillTileProps = {
 export function SkillTile({ href, src, label }: SkillTileProps) {
   return (
     <RgbSplit
-      split="both"
-      strength={2}
+      border={{ strength: 4, green: 0, delayMs: 150 }}
       render={
         <Button
           variant="outline"
           size="icon-lg"
           nativeButton={false}
           render={<Link href={href} />}
-          className="mx-auto size-14 overflow-visible before:hidden"
+          className="mx-auto size-14 before:hidden"
         />
       }
     >

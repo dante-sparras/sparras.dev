@@ -31,12 +31,12 @@ export function ProfileAvatar({ alt, className, src }: ProfileAvatarProps) {
 
   return (
     <RgbSplit
-      strength={5}
+      content={{ strength: 5, clip: true }}
       render={
         <div
           ref={rootRef}
           className={cn(
-            "relative size-38 touch-none select-none overflow-hidden rounded-full border",
+            "relative size-38 touch-none select-none rounded-full border",
             className,
           )}
         />
