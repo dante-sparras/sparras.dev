@@ -9,12 +9,13 @@ import type { Reference } from "@/content/references";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { cn } from "@/lib/utils";
 
-const cardWidth = "w-80 shrink-0 border-x border-border p-4 [&+li]:-ml-px";
+const cardWidth =
+  "w-80 shrink-0 border border-border border-y-transparent p-4 transition-colors duration-200 [&+li]:-ml-px hover:border-foreground [&:hover+li]:border-l-foreground";
 
 const scrollDuration = 40_000;
 
 /** Survives the remount that a locale change triggers, so the loop does not snap back to the start. */
-let savedScrollTime: number | null = null;
+let savedScrollLeft: number | null = null;
 
 const mediaClassName =
   "grayscale transition duration-200 group-hover/reference:grayscale-0!";
@@ -50,7 +51,7 @@ function ReferenceCard({ reference }: { reference: Reference }) {
           <CardDescription>{reference.workplace}</CardDescription>
         ) : null}
         {reference.quote ? (
-          <P className="text-pretty">{reference.quote}</P>
+          <P className="text-pretty leading-5">{reference.quote}</P>
         ) : null}
       </div>
     </div>
@@ -59,52 +60,78 @@ function ReferenceCard({ reference }: { reference: Reference }) {
 
 export function ReferencesMarquee({ references }: { references: Reference[] }) {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const trackRef = useRef<HTMLUListElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    const track = trackRef.current;
-    if (!track || prefersReducedMotion) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
 
-    const animation = track.animate(
-      [{ transform: "translateX(0)" }, { transform: "translateX(-50%)" }],
-      { duration: scrollDuration, iterations: Infinity, easing: "linear" },
-    );
-    const now = document.timeline.currentTime;
-    if (savedScrollTime !== null && typeof now === "number") {
-      animation.startTime = now - savedScrollTime;
+    const loopDistance = () =>
+      prefersReducedMotion ? scroller.scrollWidth : scroller.scrollWidth / 2;
+
+    if (savedScrollLeft !== null) {
+      const distance = loopDistance();
+      scroller.scrollLeft = distance > 0 ? savedScrollLeft % distance : 0;
     }
 
-    const root = track.parentElement;
-    const pause = () => animation.pause();
-    const play = () => animation.play();
-    root?.addEventListener("pointerenter", pause);
-    root?.addEventListener("pointerleave", play);
+    if (prefersReducedMotion) {
+      return () => {
+        savedScrollLeft = scroller.scrollLeft;
+      };
+    }
 
+    let paused = false;
+    let position = scroller.scrollLeft;
+    let previous = performance.now();
     let frame = 0;
-    const sample = () => {
-      frame = requestAnimationFrame(() => {
-        if (typeof animation.currentTime === "number") {
-          savedScrollTime = animation.currentTime;
-        }
-        sample();
-      });
+
+    const step = (now: number) => {
+      frame = requestAnimationFrame(step);
+      const delta = now - previous;
+      previous = now;
+      if (paused) return;
+
+      const distance = scroller.scrollWidth / 2;
+      if (distance <= 0) return;
+
+      position = (position + (distance * delta) / scrollDuration) % distance;
+      scroller.scrollLeft = position;
+      savedScrollLeft = position;
     };
-    sample();
+    frame = requestAnimationFrame(step);
+
+    const pause = () => {
+      paused = true;
+      position = scroller.scrollLeft;
+    };
+    const play = () => {
+      previous = performance.now();
+      paused = false;
+    };
+    const followManualScroll = () => {
+      if (!paused) return;
+      position = scroller.scrollLeft;
+      savedScrollLeft = position;
+    };
+    scroller.addEventListener("pointerenter", pause);
+    scroller.addEventListener("pointerleave", play);
+    scroller.addEventListener("scroll", followManualScroll);
 
     return () => {
       cancelAnimationFrame(frame);
-      root?.removeEventListener("pointerenter", pause);
-      root?.removeEventListener("pointerleave", play);
-      if (typeof animation.currentTime === "number") {
-        savedScrollTime = animation.currentTime;
-      }
-      animation.cancel();
+      scroller.removeEventListener("pointerenter", pause);
+      scroller.removeEventListener("pointerleave", play);
+      scroller.removeEventListener("scroll", followManualScroll);
+      savedScrollLeft = position;
     };
   }, [prefersReducedMotion]);
 
   return (
-    <div className="@container group/references overflow-hidden">
-      <ul ref={trackRef} className="references-track flex w-max">
+    <div
+      ref={scrollerRef}
+      className="@container group/references min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none"
+    >
+      <ul className="flex w-max">
         {references.map((reference) => (
           <li key={reference.name} className={cardWidth}>
             <ReferenceCard reference={reference} />
