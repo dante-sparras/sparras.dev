@@ -14,7 +14,9 @@ import {
 } from "react";
 import { usePointerEffect } from "@/hooks/use-pointer-effect";
 import {
+  type RgbSplitAngle,
   type RgbSplitValues,
+  resolveRgbSplitAngle,
   rgbSplit,
   rgbSplitOffsets,
 } from "@/lib/pointer-effect";
@@ -254,8 +256,9 @@ function BorderFilter({
 }
 
 /**
- * RGB split on the `render` element, following the pointer while it is over
- * it. Pass artwork as `children`: it is wrapped so a content layer filters
+ * RGB split on the `render` element while the pointer is over it. `angle`
+ * follows the pointer, or locks the axis to a fixed direction. Pass artwork
+ * as `children`: it is wrapped so a content layer filters
  * only that artwork. A border layer replaces the host border with a filtered
  * ring that copies the host's width and color.
  *
@@ -266,11 +269,19 @@ export function RgbSplit({
   render,
   content,
   border,
+  angle = "pointer",
   children,
 }: {
   render: ReactElement;
   content?: RgbSplitLayer;
   border?: RgbSplitLayer;
+  /**
+   * `"pointer"` aims the split at the cursor. A number is degrees clockwise
+   * from the right (0 right, 90 down). Named directions: `up`, `down`,
+   * `left`, `right`, and the diagonals `up-right`, `down-right`, `down-left`,
+   * `up-left`.
+   */
+  angle?: RgbSplitAngle;
   children: ReactNode;
 }) {
   const contentLayer = content ? resolveLayer(content) : null;
@@ -295,6 +306,9 @@ export function RgbSplit({
   contentRef.current = contentLayer;
   borderRef.current = borderLayer;
 
+  const fixedAngle = useRef<number | null>(resolveRgbSplitAngle(angle));
+  fixedAngle.current = resolveRgbSplitAngle(angle);
+
   const latest = useRef<RgbSplitValues>(rgbSplit.rest);
   const borderMotion = useRef({
     amount: 0,
@@ -313,7 +327,11 @@ export function RgbSplit({
 
   function paint(now: number) {
     stopPump();
-    const values = latest.current;
+    const tracked = latest.current;
+    const values =
+      fixedAngle.current == null
+        ? tracked
+        : { ...tracked, angle: fixedAngle.current };
     const contentNow = contentRef.current;
     if (contentNow) {
       const offsets = rgbSplitOffsets(values, {
@@ -372,6 +390,14 @@ export function RgbSplit({
     latest.current = values;
     paint(performance.now());
   });
+
+  const paintRef = useRef(paint);
+  paintRef.current = paint;
+
+  useLayoutEffect(() => {
+    fixedAngle.current = resolveRgbSplitAngle(angle);
+    paintRef.current(performance.now());
+  }, [angle]);
 
   useEffect(
     () => () => {

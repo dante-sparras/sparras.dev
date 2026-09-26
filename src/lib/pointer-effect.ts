@@ -240,6 +240,33 @@ function angleFromCenter({ x, y }: PointerPoint) {
   return Math.hypot(dx, dy) < DIRECTION_DEADZONE ? null : Math.atan2(dy, dx);
 }
 
+/**
+ * Screen-space directions, in degrees clockwise from the right.
+ * `up` is -90 so it sits on the short arc from rest.
+ */
+export const rgbSplitAngles = {
+  right: 0,
+  "down-right": 45,
+  down: 90,
+  "down-left": 135,
+  left: 180,
+  "up-left": -135,
+  up: -90,
+  "up-right": -45,
+} as const;
+
+/** `"pointer"` follows the cursor. Anything else is a fixed axis. */
+export type RgbSplitAngle = "pointer" | keyof typeof rgbSplitAngles | number;
+
+/** Radians for a fixed axis, or `null` when the split should follow the pointer. */
+export function resolveRgbSplitAngle(angle: RgbSplitAngle): number | null {
+  if (angle === "pointer") {
+    return null;
+  }
+  const degrees = typeof angle === "number" ? angle : rgbSplitAngles[angle];
+  return (degrees * Math.PI) / 180;
+}
+
 /** RGB split: the axis jumps to the pointer on enter, then eases after it. */
 export const rgbSplit: PointerEffect<RgbSplitValues> = {
   rest: { amount: 0, angle: 0 },

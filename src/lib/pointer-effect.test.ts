@@ -5,6 +5,7 @@ import {
   type FrameClock,
   hoverLens,
   type PointerEffect,
+  resolveRgbSplitAngle,
   rgbSplit,
   rgbSplitOffsets,
 } from "@/lib/pointer-effect";
@@ -223,6 +224,21 @@ describe("RGB split offsets", () => {
     expectOffset(offsets.red, { x: 2, y: 0 });
     expectOffset(offsets.blue, { x: -2, y: 0 });
     expectOffset(offsets.green, { x: 0, y: 0.5 });
+  });
+
+  test("a fixed angle is degrees clockwise from the right", () => {
+    expect(resolveRgbSplitAngle("pointer")).toBeNull();
+    expect(resolveRgbSplitAngle("down")).toBeCloseTo(Math.PI / 2);
+    expect(resolveRgbSplitAngle(90)).toBeCloseTo(Math.PI / 2);
+    expect(resolveRgbSplitAngle("up")).toBeCloseTo(-Math.PI / 2);
+
+    const offsets = rgbSplitOffsets(
+      { amount: 1, angle: resolveRgbSplitAngle("down") ?? 0 },
+      { splitPx: 4, greenPx: 0 },
+    );
+
+    expectOffset(offsets.red, { x: 0, y: 4 });
+    expectOffset(offsets.blue, { x: 0, y: -4 });
   });
 
   test("at rest every channel sits in place", () => {
