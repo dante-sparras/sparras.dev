@@ -10,7 +10,7 @@ import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { cn } from "@/lib/utils";
 
 const cardWidth =
-  "w-80 shrink-0 border border-border border-y-transparent p-4 transition-colors duration-200 [&+li]:-ml-px hover:border-foreground [&:hover+li]:border-l-foreground";
+  "w-[50cqw] min-w-80 shrink-0 border border-border border-y-transparent p-4 transition-colors duration-200 [&+li]:-ml-px hover:border-foreground [&:hover+li]:border-l-foreground";
 
 const scrollDuration = 40_000;
 

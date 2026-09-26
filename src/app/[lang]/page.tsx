@@ -16,7 +16,7 @@ import { posts } from "@/content/posts";
 import { getProfile } from "@/content/profile";
 import { getProjects } from "@/content/projects";
 import { getReferences } from "@/content/references";
-import { skills } from "@/content/skills";
+import { getSkillGroups } from "@/content/skills";
 import { isLocale } from "@/i18n/locale";
 import { getMessages } from "@/i18n/messages";
 
@@ -29,7 +29,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   const sections = getSections(lang);
   const sectionContent: Record<SectionId, ReactNode> = {
     references: <ReferencesMarquee references={getReferences(lang)} />,
-    skills: <SkillGrid skills={skills} />,
+    skills: <SkillGrid groups={getSkillGroups(lang)} />,
     projects: (
       <LinkCardGrid
         items={getProjects(lang)}
@@ -68,7 +68,6 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           </div>
         </div>
       </header>
-      <StripedDivider />
       <ProfileOverview locale={lang} />
       <P className="text-balance px-6 py-5">{profile.bio}</P>
       <StripedDivider />

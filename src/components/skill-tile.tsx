@@ -16,6 +16,7 @@ export function SkillTile({ href, src, label }: SkillTileProps) {
   return (
     <RgbSplit
       border={{ strength: 4, green: 0, delayMs: 150 }}
+      angle={45}
       render={
         <Button
           variant="outline"
