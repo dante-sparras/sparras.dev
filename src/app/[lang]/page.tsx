@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Fragment, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { BlackHoleBanner } from "@/components/black-hole-banner";
 import { LinkCardGrid } from "@/components/link-card-grid";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -7,7 +7,6 @@ import { ProfileOverview } from "@/components/profile-overview";
 import { ReferencesMarquee } from "@/components/references-marquee";
 import { Section } from "@/components/section";
 import { SkillLists } from "@/components/skill-lists";
-import { StripedDivider } from "@/components/striped-divider";
 import { H2 } from "@/components/typography/h2";
 import { Muted } from "@/components/typography/muted";
 import { P } from "@/components/typography/p";
@@ -68,17 +67,16 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           </div>
         </div>
       </header>
-      <StripedDivider />
       <ProfileOverview locale={lang} />
-      <P className="text-balance px-6 py-5">{profile.bio}</P>
-      <StripedDivider />
+      <P className="border-b px-6 py-5 text-balance">{profile.bio}</P>
       {sections.map((entry) => (
-        <Fragment key={entry.id}>
-          <Section entry={entry} showHeading={entry.id !== "references"}>
-            {sectionContent[entry.id]}
-          </Section>
-          <StripedDivider />
-        </Fragment>
+        <Section
+          key={entry.id}
+          entry={entry}
+          showHeading={entry.id !== "references"}
+        >
+          {sectionContent[entry.id]}
+        </Section>
       ))}
     </>
   );

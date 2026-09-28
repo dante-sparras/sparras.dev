@@ -17,7 +17,7 @@ export function Section({
       id={entry.id}
       aria-label={showHeading ? undefined : entry.title}
       aria-labelledby={showHeading ? headingId : undefined}
-      className="scroll-mt-14"
+      className="scroll-mt-14 border-b"
     >
       {showHeading ? (
         <h3
