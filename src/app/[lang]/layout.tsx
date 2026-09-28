@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import "../globals.css";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
@@ -85,7 +85,7 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
-      className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} scheme-dark scroll-smooth`}
+      className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} dark scheme-dark scroll-smooth`}
     >
       <body className="bg-background font-sans text-foreground antialiased">
         <div className="sticky top-0 z-50 mx-auto max-w-3xl md:border-x">
