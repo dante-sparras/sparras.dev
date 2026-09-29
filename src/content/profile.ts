@@ -8,10 +8,17 @@ export type SocialLink = {
   iconSrc: ImageSrc;
 };
 
+/**
+ * A piece of the bio: plain text, or a reference to an entry in
+ * `src/content/skills.ts` (matched by `skill`) that is rendered with its icon.
+ * Use `label` when the wording in the sentence differs from the skill name.
+ */
+export type BioPart = string | { skill: string; label?: string };
+
 type ProfileCopy = {
   role: string;
   summary: string;
-  bio: string;
+  bio: BioPart[];
   avatarAlt: string;
   focus: string;
   studies: string;
@@ -56,7 +63,19 @@ const profileCopy: Record<Locale, ProfileCopy> = {
   en: {
     role: "Full-stack Developer",
     summary: "Full-stack developer specializing in web and game development.",
-    bio: "I'm a full-stack developer who designs and builds websites and web applications, with game development as a second focus. On the web I work in TypeScript with Next.js and Tailwind CSS. For games, I use C# with Unity. I care about writing clean, performant code, designing thoughtfully and shipping work that holds up. I enjoy working closely with teams and sharing what I learn.",
+    bio: [
+      "I'm a full-stack developer who designs and builds websites and web applications, with game development as a second focus. On the web I work in ",
+      { skill: "TypeScript" },
+      " with ",
+      { skill: "Next.js" },
+      " and ",
+      { skill: "TailwindCSS", label: "Tailwind CSS" },
+      ". For games, I use ",
+      { skill: "C#" },
+      " with ",
+      { skill: "Unity" },
+      ". I care about writing clean, performant code, designing thoughtfully and shipping work that holds up. I enjoy working closely with teams and sharing what I learn.",
+    ],
     avatarAlt: "Picture of Dante Sparrås",
     focus: "Building games",
     studies: "Student",
@@ -65,7 +84,19 @@ const profileCopy: Record<Locale, ProfileCopy> = {
   sv: {
     role: "Fullstackutvecklare",
     summary: "Fullstackutvecklare med inriktning på webb- och spelutveckling.",
-    bio: "Jag är en fullstackutvecklare som designar och bygger webbplatser och webbapplikationer, med spelutveckling som ett andra fokusområde. På webben arbetar jag i TypeScript med Next.js och Tailwind CSS. För spel använder jag C# med Unity. Jag bryr mig om att skriva ren och effektiv kod, designa omsorgsfullt och leverera arbete som håller. Jag trivs med att arbeta nära andra i team och dela med mig av det jag lär mig.",
+    bio: [
+      "Jag är en fullstackutvecklare som designar och bygger webbplatser och webbapplikationer, med spelutveckling som ett andra fokusområde. På webben arbetar jag i ",
+      { skill: "TypeScript" },
+      " med ",
+      { skill: "Next.js" },
+      " och ",
+      { skill: "TailwindCSS", label: "Tailwind CSS" },
+      ". För spel använder jag ",
+      { skill: "C#" },
+      " med ",
+      { skill: "Unity" },
+      ". Jag bryr mig om att skriva ren och effektiv kod, designa omsorgsfullt och leverera arbete som håller. Jag trivs med att arbeta nära andra i team och dela med mig av det jag lär mig.",
+    ],
     avatarAlt: "Bild på Dante Sparrås",
     focus: "Bygger spel",
     studies: "Student",

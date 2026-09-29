@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { Bio } from "@/components/bio";
 import { BlackHoleBanner } from "@/components/black-hole-banner";
 import { LinkCardGrid } from "@/components/link-card-grid";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -80,8 +81,8 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         </div>
       </header>
       <ProfileOverview locale={lang} />
-      <P className="text-pretty border-b-bleed px-6 py-6 text-base leading-7">
-        {profile.bio}
+      <P className="group/bio text-pretty border-b-bleed px-6 py-6 text-base leading-7">
+        <Bio parts={profile.bio} />
       </P>
       {sections.map((entry) => (
         <Section
