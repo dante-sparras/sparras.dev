@@ -39,4 +39,10 @@ describe("formatTemperature", () => {
   test("never shows negative zero", () => {
     expect(formatTemperature(-0.3)).toBe("0°C");
   });
+
+  test("converts to Fahrenheit", () => {
+    expect(formatTemperature(0, "F")).toBe("32°F");
+    expect(formatTemperature(20, "F")).toBe("68°F");
+    expect(formatTemperature(-40, "F")).toBe("-40°F");
+  });
 });

@@ -21,11 +21,14 @@ const ARTBOARD_WIDTH_PX = 2160;
 const LENS_RADIUS_ON_ARTBOARD_PX = 160;
 const HOLE_SCALE = 1.25;
 const MOBILE_BREAKPOINT_PX = 768;
-/** Hole center as a fraction of the banner width on small screens. */
-const MOBILE_HOLE_SHIFT_X = 0.66;
+/** Hole center as a fraction of the banner width. Keep in sync with HOLE_LAYER_CLASS. */
+const MOBILE_HOLE_SHIFT_X = 0.69;
+const DESKTOP_HOLE_SHIFT_X = 0.6;
+/** Hole center as a fraction of the banner height. */
+const HOLE_SHIFT_Y = 0.4;
 const BANNER_IMAGE_SIZES = "(min-width: 768px) 48rem, 100vw";
 const HOLE_LAYER_CLASS =
-  "absolute top-1/2 left-[66%] size-[125%] -translate-x-1/2 -translate-y-1/2 md:left-1/2";
+  "absolute top-[40%] left-[69%] size-[125%] -translate-x-1/2 -translate-y-1/2 md:left-[60%]";
 const REVEAL_ZOOM = 1.05;
 
 /** Inner part of the mask that is fully opaque (the rest fades out). */
@@ -35,10 +38,15 @@ const MASK_SOLID_RATIO = 0.42;
 const VISIBLE_SCALE_THRESHOLD = 0.02;
 
 /** Pointer 0–1 in the banner box → origin % on the overscanned image. */
-function pointerOriginOnScaledLayer(x: number, y: number, shiftX: number) {
+function pointerOriginOnScaledLayer(
+  x: number,
+  y: number,
+  shiftX: number,
+  shiftY: number,
+) {
   const along = (value: number, shift: number) =>
     ((value - (shift - HOLE_SCALE / 2)) / HOLE_SCALE) * 100;
-  return `${along(x, shiftX)}% ${along(y, 0.5)}%`;
+  return `${along(x, shiftX)}% ${along(y, shiftY)}%`;
 }
 
 /**
@@ -110,7 +118,9 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
   const lensRadiusPx =
     (LENS_RADIUS_ON_ARTBOARD_PX / ARTBOARD_WIDTH_PX) * bannerWidth;
   const holeShiftX =
-    bannerWidth < MOBILE_BREAKPOINT_PX ? MOBILE_HOLE_SHIFT_X : 0.5;
+    bannerWidth < MOBILE_BREAKPOINT_PX
+      ? MOBILE_HOLE_SHIFT_X
+      : DESKTOP_HOLE_SHIFT_X;
 
   // Tiny leftover scale after a fade-out is not worth showing — it
   // would look like a faint speck rather than a hidden lens.
@@ -179,6 +189,7 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
                 lens.x,
                 lens.y,
                 holeShiftX,
+                HOLE_SHIFT_Y,
               ),
             }}
           />

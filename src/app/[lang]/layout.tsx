@@ -89,7 +89,7 @@ export default async function RootLayout({
     >
       <body className="overflow-x-clip bg-background font-sans text-foreground antialiased">
         <div className="sticky top-0 z-50 mx-auto max-w-3xl md:border-x">
-          <header className="flex h-14 items-center gap-4 border-b-bleed bg-background px-4 py-2">
+          <header className="flex h-14 items-center gap-4 border-b-bleed bg-background px-6 py-2">
             <SiteLogo href={`/${lang}`} alt={profile.name} />
             <nav
               className="mr-auto hidden md:flex"
@@ -153,7 +153,7 @@ export default async function RootLayout({
 
         <main className="mx-auto max-w-3xl md:border-x">{children}</main>
 
-        <footer className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-6 md:border-x md:px-6">
+        <footer className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-6 py-6 md:border-x">
           <ul className="flex w-full flex-row justify-center">
             {profile.socialLinks.map((link) => (
               <li

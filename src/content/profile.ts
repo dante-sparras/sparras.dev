@@ -23,6 +23,7 @@ type ProfileCopy = {
   focus: string;
   studies: string;
   location: string;
+  pronouns: string;
 };
 
 const company: { name: string; href: Href } = {
@@ -30,9 +31,19 @@ const company: { name: string; href: Href } = {
   href: "https://casuology.com",
 };
 
-const school = "YH Akademin";
+const school: { name: string; href: Href } = {
+  name: "YH Akademin",
+  href: "https://yh.se",
+};
 
 const email = "contact@sparras.dev";
+
+const phone = {
+  display: "+46 73 554 65 93",
+  href: "tel:+46735546593" as const,
+};
+
+const mapsHref: Href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("Norrköping, Sweden")}`;
 
 const coordinates: Coordinates = { latitude: 58.5877, longitude: 16.1924 };
 
@@ -61,7 +72,7 @@ const socialLinks: SocialLink[] = [
 
 const profileCopy: Record<Locale, ProfileCopy> = {
   en: {
-    role: "Full-stack Developer",
+    role: "Full-stack & .NET Developer",
     summary: "Full-stack developer specializing in web and game development.",
     bio: [
       "I'm a full-stack developer who designs and builds websites and web applications, with game development as a second focus. On the web I work in ",
@@ -80,9 +91,10 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     focus: "Building games",
     studies: "Student",
     location: "Norrköping, Sweden",
+    pronouns: "he/him",
   },
   sv: {
-    role: "Fullstackutvecklare",
+    role: "Fullstack- och .NET-utvecklare",
     summary: "Fullstackutvecklare med inriktning på webb- och spelutveckling.",
     bio: [
       "Jag är en fullstackutvecklare som designar och bygger webbplatser och webbapplikationer, med spelutveckling som ett andra fokusområde. På webben arbetar jag i ",
@@ -101,6 +113,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     focus: "Bygger spel",
     studies: "Student",
     location: "Norrköping, Sverige",
+    pronouns: "han/honom",
   },
 };
 
@@ -121,9 +134,12 @@ export function getProfile(locale: Locale) {
     studies: text.studies,
     school,
     location: text.location,
+    mapsHref,
+    pronouns: text.pronouns,
     coordinates,
     timeZone: "Europe/Stockholm",
     email,
+    phone,
     socialLinks,
   };
 }

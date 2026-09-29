@@ -69,6 +69,9 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
             <div className="flex min-w-0 flex-1 flex-col gap-2 border-t pt-2 pb-2">
               <H2 className="whitespace-nowrap border-b px-3 pb-2 font-normal font-pixel text-xl leading-none sm:text-3xl">
                 {profile.name}
+                <span className="ml-2 font-sans text-muted-foreground text-xs sm:text-sm">
+                  {profile.pronouns}
+                </span>
               </H2>
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3">
                 <Muted className="whitespace-nowrap text-xs sm:text-sm">

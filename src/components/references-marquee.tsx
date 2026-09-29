@@ -200,8 +200,10 @@ export function ReferencesMarquee({ references }: { references: Reference[] }) {
   const bottomRow = references.slice(splitAt);
 
   return (
-    // `auto-rows-fr` keeps both rows as tall as the tallest card.
-    <div className="grid min-w-0 auto-rows-fr">
+    // `auto-rows-fr` keeps both rows as tall as the tallest card. The `py-2`
+    // adds to each slot's own `p-2`, so the outer edges get the same 16px as
+    // the gap between the two rows.
+    <div className="grid min-w-0 auto-rows-fr py-2">
       <MarqueeRow references={topRow} direction="left" />
       {bottomRow.length > 0 ? (
         <MarqueeRow references={bottomRow} direction="right" />

@@ -12,6 +12,12 @@ type Messages = {
   sameTime: string;
   ahead: string;
   behind: string;
+  temperatureUnit: string;
+  celsius: string;
+  fahrenheit: string;
+  timeFormat: string;
+  hour24: string;
+  hour12: string;
   weather: Record<WeatherCondition, string>;
   bannerAlt: string;
   logoAlt: (platform: string) => string;
@@ -29,6 +35,12 @@ export const messages: Record<Locale, Messages> = {
     sameTime: "same time",
     ahead: "ahead",
     behind: "behind",
+    temperatureUnit: "Temperature unit",
+    celsius: "Celsius (°C)",
+    fahrenheit: "Fahrenheit (°F)",
+    timeFormat: "Time format",
+    hour24: "24-hour",
+    hour12: "12-hour (AM/PM)",
     weather: {
       clear: "clear",
       partlyCloudy: "partly cloudy",
@@ -53,6 +65,12 @@ export const messages: Record<Locale, Messages> = {
     sameTime: "samma tid",
     ahead: "före",
     behind: "efter",
+    temperatureUnit: "Temperaturenhet",
+    celsius: "Celsius (°C)",
+    fahrenheit: "Fahrenheit (°F)",
+    timeFormat: "Tidsformat",
+    hour24: "24-timmars",
+    hour12: "12-timmars (AM/PM)",
     weather: {
       clear: "klart",
       partlyCloudy: "halvklart",

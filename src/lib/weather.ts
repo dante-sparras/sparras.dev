@@ -30,8 +30,14 @@ export function weatherCondition(code: number): WeatherCondition {
   return "cloudy";
 }
 
-export function formatTemperature(celsius: number) {
-  return `${Math.round(celsius) || 0}°C`;
+export type TemperatureUnit = "C" | "F";
+
+export function formatTemperature(
+  celsius: number,
+  unit: TemperatureUnit = "C",
+) {
+  const value = unit === "F" ? (celsius * 9) / 5 + 32 : celsius;
+  return `${Math.round(value) || 0}°${unit}`;
 }
 
 type OpenMeteoResponse = {

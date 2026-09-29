@@ -9,28 +9,25 @@ import {
   CloudRainIcon,
   CloudSnowIcon,
   CloudSunIcon,
-  CodeXmlIcon,
   GraduationCapIcon,
-  LightbulbIcon,
   MailIcon,
   MapPinIcon,
   MoonIcon,
+  PhoneIcon,
   SunIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LocalTime } from "@/components/local-time";
+import { SwedenFlag } from "@/components/sweden-flag";
+import { Temperature } from "@/components/temperature";
 import { getProfile, type SocialLink } from "@/content/profile";
 import type { Href } from "@/content/types";
 import type { Locale } from "@/i18n/locale";
 import { getMessages } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
-import {
-  type CurrentWeather,
-  formatTemperature,
-  getCurrentWeather,
-} from "@/lib/weather";
+import { type CurrentWeather, getCurrentWeather } from "@/lib/weather";
 
 const socialIconOrder = ["X", "GitHub", "LinkedIn", "Discord"];
 
@@ -140,48 +137,53 @@ export async function ProfileOverview({
   const profile = getProfile(locale);
   const messages = getMessages(locale);
   const weather = await getCurrentWeather(profile.coordinates);
-  const company = (
-    <FactLink href={profile.company.href}>{profile.company.name}</FactLink>
-  );
 
   return (
     <section
       aria-label={messages.profileDetails}
       className={cn("border-b-bleed", className)}
     >
-      <ul className="flex flex-col gap-2.5 px-6 py-5 sm:relative sm:grid sm:auto-cols-fr sm:grid-flow-col sm:grid-rows-4 sm:gap-x-12 sm:before:absolute sm:before:inset-y-0 sm:before:left-1/2 sm:before:w-px sm:before:bg-border">
-        <LucideRow icon={CodeXmlIcon}>
-          {profile.role} @ {company}
-        </LucideRow>
-        <LucideRow icon={LightbulbIcon}>
-          {profile.focus} @ {company}
-        </LucideRow>
+      <ul className="flex flex-col gap-2.5 px-6 py-6 sm:relative sm:grid sm:auto-cols-fr sm:grid-flow-col sm:grid-rows-3 sm:gap-x-12 sm:before:absolute sm:before:inset-y-0 sm:before:left-1/2 sm:before:w-px sm:before:bg-border">
         <LucideRow icon={GraduationCapIcon}>
-          {profile.studies} @ {profile.school}
+          {profile.studies} @{" "}
+          <FactLink href={profile.school.href}>{profile.school.name}</FactLink>
         </LucideRow>
-        <LucideRow icon={MapPinIcon}>{profile.location}</LucideRow>
+        <LucideRow icon={MailIcon}>
+          <FactLink href={`mailto:${profile.email}`}>{profile.email}</FactLink>
+        </LucideRow>
+        <LucideRow icon={PhoneIcon}>
+          <FactLink href={profile.phone.href}>{profile.phone.display}</FactLink>
+        </LucideRow>
+        <LucideRow icon={MapPinIcon}>
+          <span className="group/location inline-flex items-center gap-2">
+            <FactLink href={profile.mapsHref}>{profile.location}</FactLink>
+            <SwedenFlag className="-translate-x-2 opacity-0 ring-1 ring-white/15 transition-[opacity,translate] duration-300 ease-out group-hover/location:translate-x-0 group-hover/location:opacity-100 motion-reduce:transition-none" />
+          </span>
+        </LucideRow>
         {weather && (
           <LucideRow icon={weatherIcon(weather)}>
-            <span className="tabular-nums">
-              {formatTemperature(weather.temperature)}
-            </span>
-            {` // ${messages.weather[weather.condition]}`}
+            <Temperature
+              celsius={weather.temperature}
+              condition={messages.weather[weather.condition]}
+              labels={{
+                menu: messages.temperatureUnit,
+                celsius: messages.celsius,
+                fahrenheit: messages.fahrenheit,
+              }}
+            />
           </LucideRow>
         )}
         <LucideRow icon={ClockIcon}>
           <LocalTime
             labels={{
               localTime: messages.localTime,
-              same: messages.sameTime,
-              ahead: messages.ahead,
-              behind: messages.behind,
+              menu: messages.timeFormat,
+              hour24: messages.hour24,
+              hour12: messages.hour12,
             }}
             locale={locale}
             timeZone={profile.timeZone}
           />
-        </LucideRow>
-        <LucideRow icon={MailIcon}>
-          <FactLink href={`mailto:${profile.email}`}>{profile.email}</FactLink>
         </LucideRow>
       </ul>
     </section>
