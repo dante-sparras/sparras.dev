@@ -147,7 +147,7 @@ export async function ProfileOverview({
   return (
     <section
       aria-label={messages.profileDetails}
-      className={cn("border-b", className)}
+      className={cn("border-b-bleed", className)}
     >
       <ul className="flex flex-col gap-2.5 px-6 py-5 sm:relative sm:grid sm:auto-cols-fr sm:grid-flow-col sm:grid-rows-4 sm:gap-x-12 sm:before:absolute sm:before:inset-y-0 sm:before:left-1/2 sm:before:w-px sm:before:bg-border">
         <LucideRow icon={CodeXmlIcon}>

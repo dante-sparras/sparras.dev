@@ -87,9 +87,9 @@ export default async function RootLayout({
       lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} dark scheme-dark scroll-smooth`}
     >
-      <body className="bg-background font-sans text-foreground antialiased">
+      <body className="overflow-x-clip bg-background font-sans text-foreground antialiased">
         <div className="sticky top-0 z-50 mx-auto max-w-3xl md:border-x">
-          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 py-2">
+          <header className="flex h-14 items-center gap-4 border-b-bleed bg-background px-4 py-2">
             <SiteLogo href={`/${lang}`} alt={profile.name} />
             <nav
               className="mr-auto hidden md:flex"

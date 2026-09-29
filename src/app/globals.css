@@ -131,6 +131,19 @@
 }
 
 @layer utilities {
+  /*
+   * Bottom border that reaches both edges of the window instead of stopping at
+   * the parent's width. It keeps the 1px box a real border would take up, and
+   * assumes the element is horizontally centered in the viewport.
+   */
+  .border-b-bleed {
+    @apply relative border-b border-b-transparent;
+
+    &::after {
+      content: "";
+      @apply pointer-events-none absolute bottom-[-1px] left-1/2 h-px w-screen -translate-x-1/2 bg-border;
+    }
+  }
   .bg-graph-paper {
     @apply bg-background bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px),linear-gradient(to_right,var(--border)_2px,transparent_2px),linear-gradient(to_bottom,var(--border)_2px,transparent_2px)] bg-size-[20px_20px,20px_20px,200px_200px,200px_200px];
   }

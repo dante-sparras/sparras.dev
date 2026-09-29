@@ -17,12 +17,12 @@ export function Section({
       id={entry.id}
       aria-label={showHeading ? undefined : entry.title}
       aria-labelledby={showHeading ? headingId : undefined}
-      className="scroll-mt-14 border-b"
+      className="scroll-mt-14 border-b-bleed"
     >
       {showHeading ? (
         <h3
           id={headingId}
-          className="border-b px-6 py-3 font-semibold text-2xl tracking-tight"
+          className="border-b-bleed px-6 py-3 font-semibold text-2xl tracking-tight"
         >
           {entry.title}
         </h3>

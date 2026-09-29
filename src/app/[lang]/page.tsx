@@ -50,35 +50,37 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
 
   return (
     <>
-      <header className="relative">
+      <header className="border-b-bleed">
         <div className="relative">
           <BlackHoleBanner alt={messages.bannerAlt} />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 bottom-px bg-[radial-gradient(ellipse_50%_60%_at_25%_100%,rgb(0_0_0/0.85)_30%,transparent)]"
+            className="pointer-events-none absolute inset-x-0 top-0 bottom-0 bg-[radial-gradient(ellipse_50%_60%_at_25%_100%,rgb(0_0_0/0.85)_30%,transparent)]"
           />
-          <div className="pointer-events-none absolute bottom-0 left-4 z-10 flex items-end gap-2 pb-3 sm:left-6 sm:gap-4">
-            <ProfileAvatar
-              alt={profile.avatar.alt}
-              className="pointer-events-auto size-28 sm:size-38"
-              src={profile.avatar.src}
-            />
-            <div className="flex min-w-0 flex-col gap-1.5 pb-1">
-              <H2 className="whitespace-nowrap font-normal font-pixel text-xl leading-none sm:text-3xl">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end">
+            <div className="pointer-events-auto border-t border-r">
+              <ProfileAvatar
+                alt={profile.avatar.alt}
+                className="size-28 sm:size-38"
+                src={profile.avatar.src}
+              />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-2 border-t pt-2 pb-2">
+              <H2 className="whitespace-nowrap border-b px-3 pb-2 font-normal font-pixel text-xl leading-none sm:text-3xl">
                 {profile.name}
               </H2>
-              <Muted className="whitespace-nowrap text-xs sm:text-sm">
-                {profile.role}
-              </Muted>
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3">
+                <Muted className="whitespace-nowrap text-xs sm:text-sm">
+                  {profile.role}
+                </Muted>
+                <SocialLinkBadges locale={lang} />
+              </div>
             </div>
-          </div>
-          <div className="pointer-events-none absolute top-3 right-4 z-10 sm:top-auto sm:right-6 sm:bottom-0 sm:pb-4">
-            <SocialLinkBadges locale={lang} />
           </div>
         </div>
       </header>
       <ProfileOverview locale={lang} />
-      <P className="text-balance border-b px-6 py-5">{profile.bio}</P>
+      <P className="text-balance border-b-bleed px-6 py-5">{profile.bio}</P>
       {sections.map((entry) => (
         <Section
           key={entry.id}

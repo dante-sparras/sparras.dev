@@ -125,7 +125,7 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
   return (
     <div
       ref={rootRef}
-      className="relative aspect-2160/864 w-full touch-none select-none overflow-hidden border-b bg-black"
+      className="relative aspect-2160/864 w-full touch-none select-none overflow-hidden bg-black"
       onPointerEnter={onPointerEnter}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
