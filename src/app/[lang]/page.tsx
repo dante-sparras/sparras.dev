@@ -3,7 +3,10 @@ import type { ReactNode } from "react";
 import { BlackHoleBanner } from "@/components/black-hole-banner";
 import { LinkCardGrid } from "@/components/link-card-grid";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { ProfileOverview } from "@/components/profile-overview";
+import {
+  ProfileOverview,
+  SocialLinkBadges,
+} from "@/components/profile-overview";
 import { ReferencesMarquee } from "@/components/references-marquee";
 import { Section } from "@/components/section";
 import { SkillLists } from "@/components/skill-lists";
@@ -50,6 +53,10 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
       <header className="relative">
         <div className="relative">
           <BlackHoleBanner alt={messages.bannerAlt} />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 bottom-px bg-[radial-gradient(ellipse_50%_60%_at_25%_100%,rgb(0_0_0/0.85)_30%,transparent)]"
+          />
           <div className="pointer-events-none absolute bottom-0 left-4 z-10 flex items-end gap-2 pb-3 sm:left-6 sm:gap-4">
             <ProfileAvatar
               alt={profile.avatar.alt}
@@ -65,10 +72,13 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
               </Muted>
             </div>
           </div>
+          <div className="pointer-events-none absolute top-3 right-4 z-10 sm:top-auto sm:right-6 sm:bottom-0 sm:pb-4">
+            <SocialLinkBadges locale={lang} />
+          </div>
         </div>
       </header>
       <ProfileOverview locale={lang} />
-      <P className="border-b px-6 py-5 text-balance">{profile.bio}</P>
+      <P className="text-balance border-b px-6 py-5">{profile.bio}</P>
       {sections.map((entry) => (
         <Section
           key={entry.id}

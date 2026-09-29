@@ -1,5 +1,6 @@
 import type { Href, ImageSrc } from "@/content/types";
 import type { Locale } from "@/i18n/locale";
+import type { Coordinates } from "@/lib/weather";
 
 export type SocialLink = {
   platform: string;
@@ -13,6 +14,7 @@ type ProfileCopy = {
   bio: string;
   avatarAlt: string;
   focus: string;
+  studies: string;
   location: string;
 };
 
@@ -20,6 +22,12 @@ const company: { name: string; href: Href } = {
   name: "Casuology",
   href: "https://casuology.com",
 };
+
+const school = "YH Akademin";
+
+const email = "contact@sparras.dev";
+
+const coordinates: Coordinates = { latitude: 58.5877, longitude: 16.1924 };
 
 const socialLinks: SocialLink[] = [
   {
@@ -51,6 +59,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     bio: "I'm a Full-stack developer specializing in web and game development. Both artistic and technical, I blend strong design sensibility with deep technical expertise. My core strengths include writing clean and readable code, designing robust architecture, building modular and scalable systems, understanding low-level mechanics, and delivering exceptional developer and user experiences (DX + UX). I'm driven to create elegant, high-performance solutions that scale seamlessly.",
     avatarAlt: "Picture of Dante Sparrås",
     focus: "Building games",
+    studies: "Student",
     location: "Norrköping, Sweden",
   },
   sv: {
@@ -59,6 +68,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     bio: "Jag är fullstackutvecklare med inriktning på webb- och spelutveckling. Både konstnärlig och teknisk, och jag förenar ett starkt formspråk med djup teknisk kompetens. Mina främsta styrkor är att skriva ren och läsbar kod, utforma robust arkitektur, bygga modulära och skalbara system, förstå lågnivåmekanik och leverera en exceptionell upplevelse för både utvecklare och användare (DX + UX). Jag drivs av att skapa eleganta, högpresterande lösningar som skalar sömlöst.",
     avatarAlt: "Bild på Dante Sparrås",
     focus: "Bygger spel",
+    studies: "Student",
     location: "Norrköping, Sverige",
   },
 };
@@ -77,8 +87,12 @@ export function getProfile(locale: Locale) {
     },
     company,
     focus: text.focus,
+    studies: text.studies,
+    school,
     location: text.location,
+    coordinates,
     timeZone: "Europe/Stockholm",
+    email,
     socialLinks,
   };
 }

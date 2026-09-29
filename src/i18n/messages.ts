@@ -1,4 +1,5 @@
 import type { Locale } from "@/i18n/locale";
+import type { WeatherCondition } from "@/lib/weather";
 
 type Messages = {
   mainNavigation: string;
@@ -11,6 +12,7 @@ type Messages = {
   sameTime: string;
   ahead: string;
   behind: string;
+  weather: Record<WeatherCondition, string>;
   bannerAlt: string;
   logoAlt: (platform: string) => string;
 };
@@ -27,6 +29,16 @@ export const messages: Record<Locale, Messages> = {
     sameTime: "same time",
     ahead: "ahead",
     behind: "behind",
+    weather: {
+      clear: "clear",
+      partlyCloudy: "partly cloudy",
+      cloudy: "cloudy",
+      fog: "fog",
+      drizzle: "drizzle",
+      rain: "rain",
+      snow: "snow",
+      thunderstorm: "thunderstorm",
+    },
     bannerAlt: "Pixel black hole accretion disk",
     logoAlt: (platform) => `${platform} Logo`,
   },
@@ -41,6 +53,16 @@ export const messages: Record<Locale, Messages> = {
     sameTime: "samma tid",
     ahead: "före",
     behind: "efter",
+    weather: {
+      clear: "klart",
+      partlyCloudy: "halvklart",
+      cloudy: "mulet",
+      fog: "dimma",
+      drizzle: "duggregn",
+      rain: "regn",
+      snow: "snö",
+      thunderstorm: "åska",
+    },
     bannerAlt: "Pixelkonst av ett svart håls ackretionsskiva",
     logoAlt: (platform) => `${platform}-logotyp`,
   },
