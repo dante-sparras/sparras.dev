@@ -64,6 +64,28 @@ const referenceSources: {
     },
     quote: "Taught our team new technologies and concepts along the way.",
   },
+  {
+    name: "Frank Jonsson",
+    initials: "FJ",
+    avatarSrc: "/frank-jonsson.png",
+    companyLogoSrc: "/yh-akademin-logo.jpg",
+    workplace: {
+      en: "Student @ YH Akademin",
+      sv: "Student @ YH Akademin",
+    },
+    quote: "Analytical and driven, dedicated to the craft. A dependable teammate who takes responsibility for the result.",
+  },
+  {
+    name: "Leopold Hedefalk Nybom",
+    initials: "LH",
+    avatarSrc: "/leopold-hedefalk-nybom.png",
+    companyLogoSrc: "/yh-akademin-logo.jpg",
+    workplace: {
+      en: "Student @ YH Akademin",
+      sv: "Student @ YH Akademin",
+    },
+    quote: "He picks up new tech fast and shares what he learns. He helped me set up an AI coding agent and use it daily.",
+  },
 ];
 
 export function getReferences(locale: Locale): Reference[] {
