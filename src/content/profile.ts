@@ -56,7 +56,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
   en: {
     role: "Full-stack Developer",
     summary: "Full-stack developer specializing in web and game development.",
-    bio: "I'm a Full-stack developer specializing in web and game development. Both artistic and technical, I blend strong design sensibility with deep technical expertise. My core strengths include writing clean and readable code, designing robust architecture, building modular and scalable systems, understanding low-level mechanics, and delivering exceptional developer and user experiences (DX + UX). I'm driven to create elegant, high-performance solutions that scale seamlessly.",
+    bio: "I'm a full-stack developer who designs and builds websites and web applications, with game development as a second focus. On the web I work in TypeScript with Next.js and Tailwind CSS. For games, I use C# with Unity. I care about writing clean, performant code, designing thoughtfully and shipping work that holds up. I enjoy working closely with teams and sharing what I learn.",
     avatarAlt: "Picture of Dante Sparrås",
     focus: "Building games",
     studies: "Student",
@@ -65,7 +65,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
   sv: {
     role: "Fullstackutvecklare",
     summary: "Fullstackutvecklare med inriktning på webb- och spelutveckling.",
-    bio: "Jag är fullstackutvecklare med inriktning på webb- och spelutveckling. Både konstnärlig och teknisk, och jag förenar ett starkt formspråk med djup teknisk kompetens. Mina främsta styrkor är att skriva ren och läsbar kod, utforma robust arkitektur, bygga modulära och skalbara system, förstå lågnivåmekanik och leverera en exceptionell upplevelse för både utvecklare och användare (DX + UX). Jag drivs av att skapa eleganta, högpresterande lösningar som skalar sömlöst.",
+    bio: "Jag är en fullstackutvecklare som designar och bygger webbplatser och webbapplikationer, med spelutveckling som ett andra fokusområde. På webben arbetar jag i TypeScript med Next.js och Tailwind CSS. För spel använder jag C# med Unity. Jag bryr mig om att skriva ren och effektiv kod, designa omsorgsfullt och leverera arbete som håller. Jag trivs med att arbeta nära andra i team och dela med mig av det jag lär mig.",
     avatarAlt: "Bild på Dante Sparrås",
     focus: "Bygger spel",
     studies: "Student",
