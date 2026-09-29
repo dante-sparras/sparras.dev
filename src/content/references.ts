@@ -27,7 +27,8 @@ const referenceSources: {
       en: "Software Engineer @ SpaceXAI",
       sv: "Mjukvaruutvecklare @ SpaceXAI",
     },
-    quote: "An awesome developer with great technical and artistic skills.",
+    quote:
+      "Strong engineer who combines solid technical skills with a real eye for design.",
   },
   {
     name: "Olie Aarnio",
@@ -35,10 +36,11 @@ const referenceSources: {
     avatarSrc: "/olie-aarnio.png",
     companyLogoSrc: "/casuology-logo.jpg",
     workplace: {
-      en: "Game Content Writer / Narrative Designer @ Casuology",
-      sv: "Spelinnehållsskribent / narrativ designer @ Casuology",
+      en: "Game Content Writer @ Casuology",
+      sv: "Spelinnehållsskribent @ Casuology",
     },
-    quote: "Great attention to detail.",
+    quote:
+      "Reliable to work with. Ships polished work and cares about the details.",
   },
   {
     name: "Henry Brandt",
@@ -49,6 +51,7 @@ const referenceSources: {
       en: "Student @ YH Akademin",
       sv: "Student @ YH Akademin",
     },
+    quote: "Explains his code clearly and makes complex things easy to follow.",
   },
   {
     name: "Robert Johansson",
@@ -59,6 +62,7 @@ const referenceSources: {
       en: "Student @ YH Akademin",
       sv: "Student @ YH Akademin",
     },
+    quote: "Taught our team new technologies and concepts along the way.",
   },
 ];
 
