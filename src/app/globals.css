@@ -134,14 +134,30 @@
   /*
    * Bottom border that reaches both edges of the window instead of stopping at
    * the parent's width. It keeps the 1px box a real border would take up, and
-   * assumes the element is horizontally centered in the viewport.
+   * assumes the element is horizontally centered in the viewport. The part
+   * outside the 48rem column (max-w-3xl) fades out towards the window edges (the
+   * fade reaches slightly into the column, up to 16rem long), staying
+   * faint for most of the way and only picking up close to the column.
    */
   .border-b-bleed {
     @apply relative border-b border-b-transparent;
 
     &::after {
       content: "";
-      @apply pointer-events-none absolute bottom-[-1px] left-1/2 h-px w-screen -translate-x-1/2 bg-border;
+      --bleed: max(0px, calc((100vw - 48rem) / 2));
+      --fade: min(16rem, calc(var(--bleed) * 1.35));
+      background-image: linear-gradient(
+        to right,
+        transparent,
+        color-mix(in srgb, var(--border) 15%, transparent)
+          calc(var(--fade) * 0.6),
+        var(--border) var(--fade),
+        var(--border) calc(100% - var(--fade)),
+        color-mix(in srgb, var(--border) 15%, transparent)
+          calc(100% - var(--fade) * 0.6),
+        transparent
+      );
+      @apply pointer-events-none absolute bottom-[-1px] left-1/2 h-px w-screen -translate-x-1/2;
     }
   }
   .bg-graph-paper {

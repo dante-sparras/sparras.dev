@@ -80,7 +80,9 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         </div>
       </header>
       <ProfileOverview locale={lang} />
-      <P className="text-balance border-b-bleed px-6 py-5">{profile.bio}</P>
+      <P className="text-pretty border-b-bleed px-6 py-6 text-base leading-7">
+        {profile.bio}
+      </P>
       {sections.map((entry) => (
         <Section
           key={entry.id}
