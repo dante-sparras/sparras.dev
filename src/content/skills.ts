@@ -102,6 +102,11 @@ const skillCategories: SkillCategory[] = [
         href: "https://dotnet.microsoft.com/en-us/apps/aspnet",
       },
       {
+        name: "ADO.NET",
+        iconSrc: "/icons/dotnet.svg",
+        href: "https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/ado-net-overview",
+      },
+      {
         name: "SQL Server",
         iconSrc: "/icons/sql-server.svg",
         href: "https://www.microsoft.com/en-us/sql-server",
@@ -134,9 +139,9 @@ const skillCategories: SkillCategory[] = [
     title: { en: "Workflow & AI", sv: "Arbetsflöde och AI" },
     skills: [
       {
-        name: "Cursor",
-        iconSrc: "/icons/cursor.svg",
-        href: "https://cursor.com/",
+        name: "T3 Code",
+        iconSrc: "/icons/t3-code.svg",
+        href: "https://t3.codes/",
       },
       { name: "Git", iconSrc: "/icons/git.svg", href: "https://git-scm.com/" },
       {
@@ -170,9 +175,19 @@ const skillCategories: SkillCategory[] = [
         href: "https://hermes-agent.nousresearch.com/",
       },
       {
+        name: "Cursor",
+        iconSrc: "/icons/cursor.svg",
+        href: "https://cursor.com/",
+      },
+      {
         name: "Grok Build",
         iconSrc: "/icons/grok-build.png",
         href: "https://docs.x.ai/build/overview",
+      },
+      {
+        name: "Claude Code",
+        iconSrc: "/icons/claude-code.svg",
+        href: "https://code.claude.com/",
       },
     ],
   },
