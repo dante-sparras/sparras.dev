@@ -4,7 +4,13 @@ import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
-export function SiteLogo({ href, alt }: { href: Route; alt: string }) {
+export function SiteLogo<T extends string>({
+  href,
+  alt,
+}: {
+  href: Route<T>;
+  alt: string;
+}) {
   return (
     <Link
       href={href}

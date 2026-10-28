@@ -8,6 +8,7 @@ import {
   ProfileOverview,
   SocialLinkBadges,
 } from "@/components/profile-overview";
+import { ProjectList } from "@/components/project-list";
 import { ReferencesMarquee } from "@/components/references-marquee";
 import { Section } from "@/components/section";
 import { SkillLists } from "@/components/skill-lists";
@@ -30,14 +31,15 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   const profile = getProfile(lang);
   const messages = getMessages(lang);
   const sections = getSections(lang);
+  const projects = getProjects(lang);
   const sectionContent: Record<SectionId, ReactNode> = {
     references: <ReferencesMarquee references={getReferences(lang)} />,
     skills: <SkillLists categories={getSkillCategories(lang)} />,
     projects: (
-      <LinkCardGrid
-        items={getProjects(lang)}
+      <ProjectList
+        projects={projects}
         showLessLabel={messages.showLess}
-        showMoreLabel={messages.showMore}
+        showAllLabel={messages.showAllProjects(projects.length)}
       />
     ),
     blog: (
@@ -84,7 +86,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         </div>
       </header>
       <ProfileOverview locale={lang} />
-      <P className="group/bio text-pretty border-b-bleed px-6 py-6 text-base leading-7">
+      <P className="text-pretty border-b-bleed px-6 py-6 text-base leading-7">
         <Bio parts={profile.bio} />
       </P>
       {sections.map((entry) => (

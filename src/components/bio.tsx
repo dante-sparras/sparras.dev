@@ -29,7 +29,7 @@ export function Bio({ parts }: { parts: readonly BioPart[] }) {
           alt=""
           width={16}
           height={16}
-          className="size-[0.9em] object-contain opacity-70 grayscale transition group-hover/bio:opacity-100 group-hover/bio:grayscale-0"
+          className="size-[0.9em] object-contain"
         />
       </Link>
     );

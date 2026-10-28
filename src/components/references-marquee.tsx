@@ -18,12 +18,9 @@ type Direction = "left" | "right";
 /** Survives the remount that a locale change triggers, so the loops do not snap back to the start. */
 const savedScrollLeft: Partial<Record<Direction, number>> = {};
 
-const mediaClassName =
-  "grayscale transition duration-200 group-hover/reference:grayscale-0!";
-
 function ReferenceCard({ reference }: { reference: Reference }) {
   return (
-    <div className="group/reference flex h-full flex-col justify-between gap-4 rounded-2xl border border-border p-4 transition-colors duration-200 hover:border-foreground">
+    <div className="flex h-full flex-col justify-between gap-4 rounded-2xl border border-border p-4 transition-colors duration-200 hover:border-foreground">
       {reference.quote ? (
         <P className="text-pretty leading-5">{reference.quote}</P>
       ) : (
@@ -31,11 +28,7 @@ function ReferenceCard({ reference }: { reference: Reference }) {
       )}
       <div className="flex items-center gap-3">
         <Avatar>
-          <AvatarImage
-            alt=""
-            className={mediaClassName}
-            src={reference.avatarSrc}
-          />
+          <AvatarImage alt="" src={reference.avatarSrc} />
           <AvatarFallback>{reference.initials}</AvatarFallback>
         </Avatar>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -50,10 +43,7 @@ function ReferenceCard({ reference }: { reference: Reference }) {
         </div>
         <Image
           alt=""
-          className={cn(
-            "size-6 shrink-0 rounded-sm object-cover",
-            mediaClassName,
-          )}
+          className="size-6 shrink-0 rounded-sm object-cover"
           height={48}
           src={reference.companyLogoSrc}
           width={48}
@@ -175,7 +165,7 @@ function MarqueeRow({
     <div
       ref={scrollerRef}
       className={cn(
-        "@container group/references scrollbar-none flex min-w-0 overflow-x-auto overscroll-x-contain",
+        "@container scrollbar-none flex min-w-0 overflow-x-auto overscroll-x-contain",
         className,
       )}
     >

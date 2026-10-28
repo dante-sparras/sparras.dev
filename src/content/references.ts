@@ -24,8 +24,8 @@ const referenceSources: {
     avatarSrc: "/sebastian-aarnio.png",
     companyLogoSrc: "/spacexai-logo.jpg",
     workplace: {
-      en: "Software Engineer @ SpaceXAI",
-      sv: "Mjukvaruutvecklare @ SpaceXAI",
+      en: "Software Engineer @ SpaceXSI",
+      sv: "Mjukvaruutvecklare @ SpaceXSI",
     },
     quote:
       "Strong engineer who combines solid technical skills with a real eye for design.",
@@ -73,7 +73,8 @@ const referenceSources: {
       en: "Student @ YH Akademin",
       sv: "Student @ YH Akademin",
     },
-    quote: "Analytical and driven, dedicated to the craft. A dependable teammate who takes responsibility for the result.",
+    quote:
+      "Analytical and driven, dedicated to the craft. A dependable teammate who takes responsibility for the result.",
   },
   {
     name: "Leopold Hedefalk Nybom",
@@ -84,7 +85,8 @@ const referenceSources: {
       en: "Student @ YH Akademin",
       sv: "Student @ YH Akademin",
     },
-    quote: "He picks up new tech fast and shares what he learns. He helped me set up an AI coding agent and use it daily.",
+    quote:
+      "He picks up new tech fast and shares what he learns. He helped me set up an AI coding agent and use it daily.",
   },
 ];
 
