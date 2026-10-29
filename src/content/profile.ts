@@ -20,21 +20,17 @@ type ProfileCopy = {
   summary: string;
   bio: BioPart[];
   avatarAlt: string;
-  focus: string;
   studies: string;
   location: string;
   pronouns: string;
-};
-
-const company: { name: string; href: Href } = {
-  name: "Casuology",
-  href: "https://casuology.com",
 };
 
 const school: { name: string; href: Href } = {
   name: "YH Akademin",
   href: "https://yh.se",
 };
+
+export const timeZone = "Europe/Stockholm";
 
 const email = "contact@sparras.dev";
 
@@ -88,7 +84,6 @@ const profileCopy: Record<Locale, ProfileCopy> = {
       ". I care about writing clean, performant code, designing thoughtfully and shipping work that holds up. I enjoy working closely with teams and sharing what I learn.",
     ],
     avatarAlt: "Picture of Dante Sparrås",
-    focus: "Building games",
     studies: "Student",
     location: "Norrköping, Sweden",
     pronouns: "he/him",
@@ -110,7 +105,6 @@ const profileCopy: Record<Locale, ProfileCopy> = {
       ". Jag bryr mig om att skriva ren och effektiv kod, designa omsorgsfullt och leverera arbete som håller. Jag trivs med att arbeta nära andra i team och dela med mig av det jag lär mig.",
     ],
     avatarAlt: "Bild på Dante Sparrås",
-    focus: "Bygger spel",
     studies: "Student",
     location: "Norrköping, Sverige",
     pronouns: "han/honom",
@@ -129,15 +123,13 @@ export function getProfile(locale: Locale) {
       src: "/avatar/profile.png" satisfies ImageSrc,
       alt: text.avatarAlt,
     },
-    company,
-    focus: text.focus,
     studies: text.studies,
     school,
     location: text.location,
     mapsHref,
     pronouns: text.pronouns,
     coordinates,
-    timeZone: "Europe/Stockholm",
+    timeZone,
     email,
     phone,
     socialLinks,
