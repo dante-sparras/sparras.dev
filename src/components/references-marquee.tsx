@@ -9,7 +9,8 @@ import type { Reference } from "@/content/references";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { cn } from "@/lib/utils";
 
-const slotClassName = "w-96 shrink-0 p-2";
+/** Never wider than a phone screen, so one card is always readable whole. */
+const slotClassName = "w-[min(24rem,100vw)] shrink-0 p-2";
 
 const scrollDuration = 40_000;
 
@@ -25,7 +26,10 @@ function ReferenceCard({ reference }: { reference: Reference }) {
   return (
     <div className="flex h-full flex-col justify-between gap-4 rounded-2xl border border-border p-4 transition-colors duration-200 hover:border-foreground">
       {reference.quote ? (
-        <P className="text-pretty leading-5">{reference.quote}</P>
+        // The quotes are given in English on both language pages.
+        <P lang="en" className="text-pretty leading-5">
+          {reference.quote}
+        </P>
       ) : (
         <span />
       )}

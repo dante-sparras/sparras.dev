@@ -25,6 +25,12 @@ import { getSkillCategories } from "@/content/skills";
 import { isLocale } from "@/i18n/locale";
 import { getMessages } from "@/i18n/messages";
 
+/**
+ * Regenerate every 15 minutes. Experience's "Current" labels and durations
+ * depend on today's date, so the page must not stay frozen at build time.
+ */
+export const revalidate = 900;
+
 export default async function Home({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
@@ -78,9 +84,10 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
               />
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-2 border-t pt-2 pb-2">
-              <h1 className="scroll-m-20 whitespace-nowrap border-b px-3 pb-2 font-pixel text-xl leading-none sm:text-3xl">
-                {profile.name}
-                <span className="ml-2 font-sans text-muted-foreground text-xs sm:text-sm">
+              {/* Pronouns drop below the name when the row is too narrow. */}
+              <h1 className="flex scroll-m-20 flex-wrap items-baseline gap-x-2 gap-y-1 border-b px-3 pb-2 font-pixel text-xl leading-none sm:text-3xl">
+                <span className="whitespace-nowrap">{profile.name}</span>
+                <span className="whitespace-nowrap font-sans text-muted-foreground text-xs sm:text-sm">
                   {profile.pronouns}
                 </span>
               </h1>

@@ -32,6 +32,8 @@ export function ChoiceMenu<T extends string>({
     <DropdownMenu>
       <DropdownMenuTrigger className="cursor-pointer rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50">
         {children}
+        {/* The value alone doesn't say what the button changes. */}
+        <span className="sr-only"> ({label})</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent aria-label={label} className="w-auto min-w-44">
         <DropdownMenuRadioGroup
