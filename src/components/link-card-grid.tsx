@@ -73,7 +73,7 @@ function LinkCard({ item }: { item: LinkCardItem }) {
       <LinkCardMedia item={item} />
       <div className="flex flex-1 flex-col gap-2 p-5">
         <div className="flex items-center justify-between gap-3">
-          <h4 className="font-pixel text-xl leading-none">{item.title}</h4>
+          <h3 className="font-pixel text-xl leading-none">{item.title}</h3>
           <span
             aria-hidden
             className="grid size-8 shrink-0 place-items-center rounded-full border text-muted-foreground transition duration-300 group-hover:border-foreground group-hover:bg-foreground group-hover:text-background"

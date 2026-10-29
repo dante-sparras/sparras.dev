@@ -20,12 +20,12 @@ export function Section({
       className="scroll-mt-14 border-b-bleed"
     >
       {showHeading ? (
-        <h3
+        <h2
           id={headingId}
           className="border-b-bleed px-6 py-3 font-semibold text-2xl tracking-tight"
         >
           {entry.title}
-        </h3>
+        </h2>
       ) : null}
       {children}
     </section>

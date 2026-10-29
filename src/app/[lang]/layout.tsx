@@ -58,8 +58,16 @@ export async function generateMetadata({
 
   const profile = getProfile(lang);
   return {
+    metadataBase: new URL("https://sparras.dev"),
     title: profile.name,
     description: profile.summary,
+    alternates: {
+      canonical: `/${lang}`,
+      languages: {
+        ...Object.fromEntries(locales.map((locale) => [locale, `/${locale}`])),
+        "x-default": "/",
+      },
+    },
     icons: {
       icon: [{ url: "/favicon.png", type: "image/png", sizes: "192x192" }],
       apple: [{ url: "/favicon.png", type: "image/png", sizes: "192x192" }],
@@ -85,7 +93,9 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
-      className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} dark scheme-dark scroll-smooth`}
+      className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} dark scheme-dark motion-safe:scroll-smooth`}
+      // Next 16 only turns smooth scrolling off for route changes with this.
+      data-scroll-behavior="smooth"
     >
       <body className="overflow-x-clip bg-background font-sans text-foreground antialiased">
         <div className="sticky top-0 z-50 mx-auto max-w-3xl md:border-x">
