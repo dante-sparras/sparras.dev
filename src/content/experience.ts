@@ -98,35 +98,6 @@ const experienceSources: readonly ExperienceSource[] = [
     ],
   },
   {
-    company: "Stödpedagog",
-    location: {
-      en: "Norrköping, Sweden",
-      sv: "Norrköping, Sverige",
-    },
-    icon: "briefcase",
-    roles: [
-      {
-        title: { en: "Full-stack Developer", sv: "Fullstackutvecklare" },
-        employment: "freelance",
-        icon: "code",
-        start: { year: 2025, month: 12 },
-        description: {
-          en: [
-            "Building a public-facing website.",
-            "Building a client booking and appointment scheduling system.",
-            "Building a secure admin dashboard for client bookings and data.",
-          ],
-          sv: [
-            "Bygger en publik webbplats.",
-            "Bygger ett system för kundbokning och tidsbokning.",
-            "Bygger en säker adminpanel för kundbokningar och data.",
-          ],
-        },
-        skills: [],
-      },
-    ],
-  },
-  {
     company: "Casuology",
     href: "https://casuology.com",
     location: { en: "Turku, Finland", sv: "Åbo, Finland" },

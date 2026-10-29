@@ -81,13 +81,11 @@ describe("getExperience", () => {
 
     expect(entries.map((entry) => entry.company)).toEqual([
       "YH Akademin",
-      "Stödpedagog",
       "Casuology",
       "The Game Assembly",
       "NTI Gymnasiet",
     ]);
     expect(entries.map((entry) => entry.isCurrent)).toEqual([
-      true,
       true,
       true,
       false,
@@ -96,17 +94,16 @@ describe("getExperience", () => {
     expect(entries[0]?.roles[0]?.meta).toBe(
       "Full-time | 01.2026–12.2027 | 10m",
     );
-    expect(entries[1]?.roles[0]?.meta).toBe("Freelance | 12.2025–∞ | 11m");
-    expect(entries[2]?.roles[0]?.meta).toBe("Part-time | 07.2022–∞ | 4y 4m");
-    expect(entries[3]?.roles[0]?.meta).toBe("Full-time | 08.2021–02.2022 | 7m");
-    expect(entries[4]?.roles.map((role) => role.meta)).toEqual([
+    expect(entries[1]?.roles[0]?.meta).toBe("Part-time | 07.2022–∞ | 4y 4m");
+    expect(entries[2]?.roles[0]?.meta).toBe("Full-time | 08.2021–02.2022 | 7m");
+    expect(entries[3]?.roles.map((role) => role.meta)).toEqual([
       "Full-time | 08.2018–06.2021 | 2y 11m",
       "Part-time | 12.2018–06.2021 | 2y 7m",
       "Part-time | 12.2018–06.2021 | 2y 7m",
       "06.2021",
     ]);
-    expect(entries[2]?.roles[0]?.skills).toEqual(["Unity", "C#"]);
-    expect(entries[4]?.roles.map((role) => role.title)).toEqual([
+    expect(entries[1]?.roles[0]?.skills).toEqual(["Unity", "C#"]);
+    expect(entries[3]?.roles.map((role) => role.title)).toEqual([
       "Technology Programme",
       "Student Ambassador",
       "Makerspace Coordinator",
@@ -124,16 +121,14 @@ describe("getExperience", () => {
     expect(entries[0]?.roles[0]?.meta).toBe(
       "Heltid | 01.2026–12.2027 | 10 mån",
     );
-    expect(entries[1]?.roles[0]?.title).toBe("Fullstackutvecklare");
-    expect(entries[1]?.roles[0]?.meta).toBe("Frilans | 12.2025–∞ | 11 mån");
-    expect(entries[2]?.location).toBe("Åbo, Finland");
-    expect(entries[2]?.roles[0]?.meta).toBe("Deltid | 07.2022–∞ | 4 år 4 mån");
-    expect(entries[3]?.roles[0]?.meta).toBe("Heltid | 08.2021–02.2022 | 7 mån");
-    expect(entries[4]?.roles[0]?.title).toBe("Teknikprogrammet");
-    expect(entries[4]?.roles[0]?.meta).toBe(
+    expect(entries[1]?.location).toBe("Åbo, Finland");
+    expect(entries[1]?.roles[0]?.meta).toBe("Deltid | 07.2022–∞ | 4 år 4 mån");
+    expect(entries[2]?.roles[0]?.meta).toBe("Heltid | 08.2021–02.2022 | 7 mån");
+    expect(entries[3]?.roles[0]?.title).toBe("Teknikprogrammet");
+    expect(entries[3]?.roles[0]?.meta).toBe(
       "Heltid | 08.2018–06.2021 | 2 år 11 mån",
     );
-    expect(entries[4]?.roles[3]?.title).toBe(
+    expect(entries[3]?.roles[3]?.title).toBe(
       "Bästa gymnasiearbete (utsedd av eleverna)",
     );
   });
