@@ -62,16 +62,12 @@ function fakeFrameClock() {
   };
 }
 
-function setup<V extends Record<string, number>>(
-  effect: PointerEffect<V>,
-  enterDelayMs?: number,
-) {
+function setup<V extends Record<string, number>>(effect: PointerEffect<V>) {
   const time = fakeFrameClock();
   const frames: V[] = [];
   const controller = createPointerEffect(effect, {
     clock: time.clock,
     onFrame: (values) => frames.push({ ...values }),
-    enterDelayMs,
   });
 
   function latest() {
@@ -247,35 +243,6 @@ describe("RGB split offsets", () => {
     for (const offset of Object.values(offsets)) {
       expectOffset(offset, { x: 0, y: 0 });
     }
-  });
-});
-
-describe("enter delay", () => {
-  test("holds the enter target back for the delay", () => {
-    const border = setup(rgbSplit, 150);
-
-    border.controller.enter({ x: 1, y: 0.5 });
-    for (let elapsed = FRAME_MS; elapsed < 150; elapsed += FRAME_MS) {
-      border.frame();
-      expect(border.latest().amount).toBe(0);
-    }
-
-    border.frame();
-
-    expect(border.latest().amount).toBeGreaterThan(0);
-  });
-
-  test("leaving inside the delay cancels it", () => {
-    const border = setup(rgbSplit, 150);
-
-    border.controller.enter({ x: 1, y: 0.5 });
-    border.frame(100);
-    border.controller.leave();
-    border.settle();
-    border.frame(200);
-
-    expect(border.frames.every(({ amount }) => amount === 0)).toBe(true);
-    expect(border.hasPendingFrame()).toBe(false);
   });
 });
 

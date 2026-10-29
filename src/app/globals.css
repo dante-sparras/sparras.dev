@@ -160,10 +160,4 @@
       @apply pointer-events-none absolute bottom-[-1px] left-1/2 h-px w-screen -translate-x-1/2;
     }
   }
-  .bg-graph-paper {
-    @apply bg-background bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px),linear-gradient(to_right,var(--border)_2px,transparent_2px),linear-gradient(to_bottom,var(--border)_2px,transparent_2px)] bg-size-[20px_20px,20px_20px,200px_200px,200px_200px];
-  }
-  .bg-dots-border {
-    @apply bg-background bg-[radial-gradient(var(--border)_1px,transparent_1px)] bg-size-[20px_20px];
-  }
 }

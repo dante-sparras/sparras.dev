@@ -31,8 +31,6 @@ export type FrameClock = {
 export type PointerEffectOptions<V extends Values> = {
   clock: FrameClock;
   onFrame: (values: Readonly<V>) => void;
-  /** Hold the enter target back this long; leaving inside the delay cancels it. */
-  enterDelayMs?: number;
 };
 
 export type PointerEffectController = {
@@ -69,13 +67,12 @@ function exponentialEase(dt: number) {
 
 export function createPointerEffect<V extends Values>(
   effect: PointerEffect<V>,
-  { clock, onFrame, enterDelayMs = 0 }: PointerEffectOptions<V>,
+  { clock, onFrame }: PointerEffectOptions<V>,
 ): PointerEffectController {
   const fields = Object.keys(effect.rest);
   const angles = new Set<string>(effect.angles ?? []);
   let current: Values = { ...effect.rest };
   let target: Values = { ...effect.rest };
-  let delayed: { target: Partial<V>; dueAt: number } | null = null;
   let frame: number | null = null;
   let lastFrameAt = 0;
   let reducedMotion = false;
@@ -85,13 +82,10 @@ export function createPointerEffect<V extends Values>(
   }
 
   function isSettled() {
-    return (
-      delayed == null &&
-      fields.every(
-        (field) =>
-          Math.abs(delta(field, current[field], target[field])) <
-          SETTLED_DISTANCE,
-      )
+    return fields.every(
+      (field) =>
+        Math.abs(delta(field, current[field], target[field])) <
+        SETTLED_DISTANCE,
     );
   }
 
@@ -100,11 +94,6 @@ export function createPointerEffect<V extends Values>(
     const elapsedSeconds = Math.max(0, (now - lastFrameAt) / 1000);
     const step = exponentialEase(Math.min(MAX_FRAME_SECONDS, elapsedSeconds));
     lastFrameAt = now;
-
-    if (delayed && now >= delayed.dueAt) {
-      target = { ...target, ...delayed.target };
-      delayed = null;
-    }
 
     const next: Values = {};
     for (const field of fields) {
@@ -155,14 +144,7 @@ export function createPointerEffect<V extends Values>(
       if (reducedMotion) {
         return;
       }
-      const { target: aimed, snap } = effect.enter(point, current as V);
-      delayed = null;
-      if (aimed && enterDelayMs > 0) {
-        delayed = { target: aimed, dueAt: clock.now() + enterDelayMs };
-        aim({ snap });
-        return;
-      }
-      aim({ target: aimed, snap });
+      aim(effect.enter(point, current as V));
     },
 
     move(point) {
@@ -179,7 +161,6 @@ export function createPointerEffect<V extends Values>(
       if (reducedMotion) {
         return;
       }
-      delayed = null;
       aim(effect.leave(current as V));
     },
 
@@ -189,7 +170,6 @@ export function createPointerEffect<V extends Values>(
         return;
       }
       stop();
-      delayed = null;
       current = { ...effect.rest };
       target = { ...effect.rest };
       onFrame(current as V);
@@ -197,7 +177,6 @@ export function createPointerEffect<V extends Values>(
 
     dispose() {
       stop();
-      delayed = null;
     },
   };
 }

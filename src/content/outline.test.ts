@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
   getHomepageOutline,
-  homepageOutline,
   type OutlineEntry,
   visibleSections,
 } from "@/content/outline";
@@ -22,9 +21,9 @@ describe("visibleSections", () => {
   });
 });
 
-describe("homepageOutline", () => {
+describe("getHomepageOutline", () => {
   test("gives every Section its own anchor", () => {
-    const ids = homepageOutline.map((entry) => entry.id);
+    const ids = getHomepageOutline("en").map((entry) => entry.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
@@ -37,7 +36,7 @@ describe("homepageOutline", () => {
       "Blogg",
     ]);
     expect(getHomepageOutline("sv").map((entry) => entry.id)).toEqual(
-      homepageOutline.map((entry) => entry.id),
+      getHomepageOutline("en").map((entry) => entry.id),
     );
   });
 });
