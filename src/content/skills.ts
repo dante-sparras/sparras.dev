@@ -24,6 +24,21 @@ const skillCategories: SkillCategory[] = [
         href: "https://www.typescriptlang.org/",
       },
       {
+        name: "JavaScript",
+        iconSrc: "/icons/javascript.svg",
+        href: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+      },
+      {
+        name: "HTML",
+        iconSrc: "/icons/html5.svg",
+        href: "https://developer.mozilla.org/en-US/docs/Web/HTML",
+      },
+      {
+        name: "CSS",
+        iconSrc: "/icons/css.svg",
+        href: "https://developer.mozilla.org/en-US/docs/Web/CSS",
+      },
+      {
         name: "C#",
         iconSrc: "/icons/c-sharp.svg",
         href: "https://learn.microsoft.com/en-us/dotnet/csharp/",
@@ -204,3 +219,15 @@ export function getSkillCategories(locale: Locale) {
 export const skills: Skill[] = skillCategories.flatMap(
   (category) => category.skills,
 );
+
+/** Shown as badges in Experience, but left out of the Skills section. */
+const unlistedSkills: Skill[] = [
+  {
+    name: "Perforce",
+    iconSrc: "/icons/perforce.svg",
+    href: "https://www.perforce.com/products/helix-core",
+  },
+];
+
+/** Every skill a badge can name, listed or not. */
+export const allSkills: Skill[] = [...skills, ...unlistedSkills];
