@@ -1,4 +1,4 @@
-import { skills } from "@/content/skills";
+import { allSkills } from "@/content/skills";
 import type { Href, ImageSrc } from "@/content/types";
 import type { Locale } from "@/i18n/locale";
 
@@ -20,6 +20,8 @@ export type ExperienceIcon =
 
 type Employment = "full-time" | "part-time" | "freelance";
 
+export type ExperienceKind = "education" | "work";
+
 type ExperienceRoleSource = {
   title: Record<Locale, string>;
   /** Left off for a one-off honor, which is not a kind of employment. */
@@ -40,6 +42,7 @@ type ExperienceRoleSource = {
 
 type ExperienceSource = {
   company: string;
+  kind: ExperienceKind;
   href?: Href;
   location: Record<Locale, string>;
   icon: ExperienceIcon;
@@ -53,17 +56,28 @@ const employmentLabels: Record<Employment, Record<Locale, string>> = {
   freelance: { en: "Freelance", sv: "Frilans" },
 };
 
-const durationLabels: Record<
+const kindLabels: Record<ExperienceKind, Record<Locale, string>> = {
+  education: { en: "Education", sv: "Utbildning" },
+  work: { en: "Work", sv: "Arbete" },
+};
+
+const periodLabels: Record<
   Locale,
-  { years: (count: number) => string; months: (count: number) => string }
+  {
+    years: (count: number) => string;
+    months: (count: number) => string;
+    current: string;
+  }
 > = {
   en: {
     years: (count) => `${count}y`,
     months: (count) => `${count}m`,
+    current: "Current",
   },
   sv: {
     years: (count) => `${count} år`,
     months: (count) => `${count} mån`,
+    current: "Pågående",
   },
 };
 
@@ -74,6 +88,7 @@ const durationLabels: Record<
 const experienceSources: readonly ExperienceSource[] = [
   {
     company: "YH Akademin",
+    kind: "education",
     href: "https://yh.se",
     location: { en: "Stockholm, Sweden", sv: "Stockholm, Sverige" },
     icon: "graduation",
@@ -93,12 +108,13 @@ const experienceSources: readonly ExperienceSource[] = [
             "Studerar till en kvalificerad yrkeshögskoleexamen som systemutvecklare .NET.",
           ],
         },
-        skills: [],
+        skills: ["C#", "SQL Server", "ASP.NET", "ADO.NET"],
       },
     ],
   },
   {
     company: "Casuology",
+    kind: "work",
     href: "https://casuology.com",
     location: { en: "Turku, Finland", sv: "Åbo, Finland" },
     icon: "gamepad",
@@ -125,6 +141,7 @@ const experienceSources: readonly ExperienceSource[] = [
   },
   {
     company: "The Game Assembly",
+    kind: "education",
     href: "https://thegameassembly.com",
     location: { en: "Stockholm, Sweden", sv: "Stockholm, Sverige" },
     icon: "graduation",
@@ -148,12 +165,13 @@ const experienceSources: readonly ExperienceSource[] = [
             "Byggde verktyg som förenklade teamets arbetsflöde.",
           ],
         },
-        skills: [],
+        skills: ["C++", "C#", "Unity", "Perforce"],
       },
     ],
   },
   {
     company: "NTI Gymnasiet",
+    kind: "education",
     href: "https://ntigymnasiet.se",
     location: { en: "Södertälje, Sweden", sv: "Södertälje, Sverige" },
     icon: "school",
@@ -169,7 +187,7 @@ const experienceSources: readonly ExperienceSource[] = [
           en: ["Studied the Technology Programme at upper secondary school."],
           sv: ["Läste teknikprogrammet på gymnasiet."],
         },
-        skills: [],
+        skills: ["Python", "C#", "Unity", "Git", "GitHub"],
       },
       {
         title: { en: "Student Ambassador", sv: "Studentambassadör" },
@@ -233,6 +251,8 @@ export type ExperienceRole = {
 
 export type Experience = {
   company: string;
+  kind: ExperienceKind;
+  kindLabel: string;
   href?: Href;
   location: string;
   icon: ExperienceIcon;
@@ -274,7 +294,7 @@ export function formatExperiencePeriod(
   const months = inclusiveMonthCount(start, effectiveEnd);
   const years = Math.floor(months / 12);
   const remainder = months % 12;
-  const labels = durationLabels[locale];
+  const labels = periodLabels[locale];
   const duration = [
     years > 0 ? labels.years(years) : null,
     remainder > 0 ? labels.months(remainder) : null,
@@ -282,14 +302,16 @@ export function formatExperiencePeriod(
     .filter((part) => part !== null)
     .join(" ");
   const range = `${padMonth(start.month)}.${start.year}–${
-    end ? `${padMonth(end.month)}.${end.year}` : "∞"
+    end && !isOngoing(end, now)
+      ? `${padMonth(end.month)}.${end.year}`
+      : labels.current
   }`;
 
   return { range, duration };
 }
 
 function skillLabel(name: string) {
-  const skill = skills.find((entry) => entry.name === name);
+  const skill = allSkills.find((entry) => entry.name === name);
   if (!skill) {
     throw new Error(`Unknown skill in experience: ${name}`);
   }
@@ -319,6 +341,8 @@ function roleMeta(role: ExperienceRoleSource, locale: Locale, now: Date) {
 export function getExperience(locale: Locale, now = new Date()): Experience[] {
   return experienceSources.map((entry) => ({
     company: entry.company,
+    kind: entry.kind,
+    kindLabel: kindLabels[entry.kind][locale],
     href: entry.href,
     location: entry.location[locale],
     icon: entry.icon,

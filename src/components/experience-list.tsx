@@ -1,31 +1,25 @@
-"use client";
-
 import type { LucideIcon } from "lucide-react";
 import {
+  ArrowUpRight,
   Award,
   Briefcase,
   ChevronDown,
-  ChevronUp,
   CodeXml,
   Gamepad2,
   GraduationCap,
   Lightbulb,
+  MapPin,
   Megaphone,
   School,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import type { Experience, ExperienceIcon } from "@/content/experience";
-import { cn } from "@/lib/utils";
-
-const INITIAL_COUNT = 3;
+import type {
+  Experience,
+  ExperienceIcon,
+  ExperienceRole,
+} from "@/content/experience";
+import { allSkills } from "@/content/skills";
 
 const icons = {
   briefcase: Briefcase,
@@ -38,213 +32,199 @@ const icons = {
   award: Award,
 } satisfies Record<ExperienceIcon, LucideIcon>;
 
-function ExperienceIconBadge({
-  icon,
-  large = false,
-  className,
-}: {
-  icon: ExperienceIcon;
-  large?: boolean;
-  className?: string;
-}) {
-  const Icon = icons[icon];
+function OrganizationMark({ entry }: { entry: Experience }) {
+  const Icon = icons[entry.icon];
 
-  return (
-    <span
-      className={cn(
-        "relative z-10 flex shrink-0 items-center justify-center border bg-background text-muted-foreground",
-        large ? "size-8 rounded-lg" : "size-6 rounded-md",
-        className,
-      )}
-    >
-      <Icon aria-hidden className={large ? "size-4" : "size-3.5"} />
+  return entry.logoSrc ? (
+    <Image
+      src={entry.logoSrc}
+      alt=""
+      width={32}
+      height={32}
+      className="size-8 shrink-0 rounded-lg border bg-background object-cover"
+    />
+  ) : (
+    <span className="grid size-8 shrink-0 place-items-center rounded-lg border text-muted-foreground">
+      <Icon aria-hidden className="size-4" />
     </span>
   );
 }
 
-function RoleRow({
-  role,
-  defaultOpen,
-}: {
-  role: Experience["roles"][number];
-  defaultOpen: boolean;
-}) {
-  const hasDetails = role.description.length > 0;
+function KindBadge({ entry }: { entry: Experience }) {
+  const Icon = entry.kind === "education" ? GraduationCap : Briefcase;
 
   return (
-    <li className="relative pl-6">
-      <ExperienceIconBadge
-        className="absolute top-0 -left-3"
-        icon={role.icon}
-      />
-      <Collapsible defaultOpen={defaultOpen}>
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h5 className="font-semibold text-sm">{role.title}</h5>
-            <p className="mt-0.5 text-muted-foreground text-xs">{role.meta}</p>
-          </div>
-          {hasDetails ? (
-            <CollapsibleTrigger
-              aria-label={role.title}
-              className="group -mr-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <ChevronDown
-                aria-hidden
-                className="size-4 transition-transform group-data-panel-open:rotate-180 motion-reduce:transition-none"
-              />
-            </CollapsibleTrigger>
-          ) : null}
-        </div>
-        {hasDetails ? (
-          <CollapsibleContent>
-            <ul className="mt-2 list-disc space-y-1 pl-4 text-sm leading-5 marker:text-muted-foreground">
-              {role.description.map((line) => (
-                <li key={line} className="text-pretty">
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </CollapsibleContent>
-        ) : null}
-        {role.skills.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-1.5">
-            {role.skills.map((skill) => (
-              <li key={skill}>
-                <span className="inline-flex rounded-md border px-2 py-0.5 text-muted-foreground text-xs">
-                  {skill}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Collapsible>
-    </li>
+    <span className="inline-flex h-5 items-center gap-1 rounded-full border px-1.5 font-mono text-[10px] text-muted-foreground">
+      <Icon aria-hidden className="size-3" />
+      {entry.kindLabel}
+    </span>
   );
 }
 
-function ExperienceCompany({
-  entry,
-  defaultOpen,
-  currentLabel,
-}: {
-  entry: Experience;
-  defaultOpen: boolean;
-  currentLabel: string;
-}) {
+function SkillBadges({ names }: { names: readonly string[] }) {
   return (
-    <li className="px-6 py-5">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <div className="flex min-w-0 items-center gap-3">
-          {entry.logoSrc ? (
-            <span className="relative size-8 shrink-0 overflow-hidden rounded-lg border">
+    <ul className="mt-2.5 flex flex-wrap gap-1.5">
+      {names.map((name) => {
+        const skill = allSkills.find((entry) => entry.name === name);
+
+        return (
+          <li
+            key={name}
+            className="inline-flex h-6 items-center gap-1.5 rounded-full border bg-background px-2 font-mono text-foreground text-xs"
+          >
+            {skill && (
               <Image
+                src={skill.iconSrc}
                 alt=""
-                className="size-8 object-cover"
-                height={32}
-                src={entry.logoSrc}
-                width={32}
+                width={14}
+                height={14}
+                className="size-3.5 object-contain"
               />
-            </span>
-          ) : (
-            <ExperienceIconBadge icon={entry.icon} large />
-          )}
-          <h4 className="font-semibold text-sm sm:text-base">
-            {entry.href ? (
-              <Link
-                href={entry.href}
-                className="underline-offset-4 hover:underline"
-              >
-                {entry.company}
-              </Link>
-            ) : (
-              entry.company
             )}
-          </h4>
+            {name}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function RoleDescription({ role }: { role: ExperienceRole }) {
+  return (
+    <>
+      {role.description.length === 1 ? (
+        <p className="text-pretty text-sm leading-6">{role.description[0]}</p>
+      ) : role.description.length > 1 ? (
+        <ul className="list-disc space-y-1.5 pl-4 text-sm leading-6 marker:text-muted-foreground">
+          {role.description.map((line) => (
+            <li key={line} className="text-pretty pl-0.5">
+              {line}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </>
+  );
+}
+
+function AdditionalRole({ role }: { role: ExperienceRole }) {
+  const Icon = icons[role.icon];
+
+  return (
+    <li className="py-4 last:pb-0">
+      <div className="flex items-start gap-2">
+        <Icon
+          aria-hidden
+          className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+        />
+        <div className="min-w-0">
+          <h5 className="text-pretty font-medium text-sm leading-5">
+            {role.title}
+          </h5>
+          <p className="mt-1 font-mono text-[11px] text-muted-foreground leading-5">
+            {role.meta}
+          </p>
         </div>
-        <p className="flex items-center text-muted-foreground text-xs sm:text-sm">
-          {entry.location}
-          {entry.isCurrent ? (
-            <span
-              aria-label={currentLabel}
-              className="ml-2 size-1.5 rounded-full bg-sky-400 shadow-[0_0_0_3px_color-mix(in_oklch,var(--color-sky-400)_35%,transparent)]"
-              role="img"
-            />
-          ) : null}
-        </p>
       </div>
-      <ul className="relative mt-4 ml-4 space-y-5 border-l">
-        {entry.roles.map((role, index) => (
-          <RoleRow
-            defaultOpen={defaultOpen && index === 0}
-            key={role.title}
-            role={role}
-          />
-        ))}
-      </ul>
+      {role.description.length > 0 ? (
+        <div className="mt-2 pl-6">
+          <RoleDescription role={role} />
+        </div>
+      ) : null}
     </li>
   );
 }
 
 export function ExperienceList({
   entries,
-  showMoreLabel,
-  showLessLabel,
   currentLabel,
+  websiteLabel,
+  additionalRolesLabel,
 }: {
   entries: readonly Experience[];
-  showMoreLabel: string;
-  showLessLabel: string;
   currentLabel: string;
+  websiteLabel: string;
+  additionalRolesLabel: (count: number) => string;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const visibleEntries = entries.slice(0, INITIAL_COUNT);
-  const hiddenEntries = entries.slice(INITIAL_COUNT);
-
   return (
-    <Collapsible onOpenChange={setIsOpen} open={isOpen}>
-      <ul className="divide-y">
-        {visibleEntries.map((entry, index) => (
-          <ExperienceCompany
-            currentLabel={currentLabel}
-            defaultOpen={index === 0}
-            entry={entry}
-            key={entry.company}
-          />
-        ))}
-      </ul>
-      {hiddenEntries.length > 0 && (
-        <CollapsibleContent>
-          <ul className="divide-y border-t">
-            {hiddenEntries.map((entry) => (
-              <ExperienceCompany
-                currentLabel={currentLabel}
-                defaultOpen={false}
-                entry={entry}
-                key={entry.company}
-              />
-            ))}
-          </ul>
-        </CollapsibleContent>
-      )}
-      {hiddenEntries.length > 0 && (
-        <div className="border-t">
-          <CollapsibleTrigger
-            render={
-              <Button
-                className="h-auto w-full cursor-pointer gap-2 rounded-none px-6 py-3 text-foreground text-sm aria-expanded:bg-transparent"
-                variant="ghost"
-              >
-                {isOpen ? showLessLabel : showMoreLabel}
-                {isOpen ? (
-                  <ChevronUp aria-hidden className="size-4" />
-                ) : (
-                  <ChevronDown aria-hidden className="size-4" />
+    <ul className="divide-y">
+      {entries.map((entry) => {
+        const primaryRole = entry.roles[0];
+        const additionalRoles = entry.roles.slice(1);
+        const skillNames = [
+          ...new Set(entry.roles.flatMap((role) => role.skills)),
+        ];
+
+        return (
+          <li key={entry.company}>
+            <details className="group/experience">
+              <summary className="flex cursor-pointer list-none items-start gap-3 px-6 py-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
+                <OrganizationMark entry={entry} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <h4 className="font-medium text-sm">{entry.company}</h4>
+                    <KindBadge entry={entry} />
+                    {entry.isCurrent && (
+                      <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
+                        <span
+                          aria-hidden
+                          className="size-1 rounded-full bg-foreground"
+                        />
+                        {currentLabel}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-sm">
+                    <span>{primaryRole?.title}</span>
+                    {additionalRoles.length > 0 && (
+                      <span className="rounded-full border px-1.5 font-mono text-[10px]">
+                        <span aria-hidden>+{additionalRoles.length}</span>
+                        <span className="sr-only">
+                          {additionalRolesLabel(additionalRoles.length)}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 font-mono text-[11px] text-muted-foreground leading-5">
+                    {primaryRole?.meta}
+                  </p>
+                  {skillNames.length > 0 && <SkillBadges names={skillNames} />}
+                </div>
+                <ChevronDown
+                  aria-hidden
+                  className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-open/experience:rotate-180 motion-reduce:transition-none"
+                />
+              </summary>
+              <div className="pr-6 pb-5 pl-[4.25rem]">
+                {primaryRole && <RoleDescription role={primaryRole} />}
+                {additionalRoles.length > 0 && (
+                  <ul className="mt-4 divide-y border-t">
+                    {additionalRoles.map((role) => (
+                      <AdditionalRole key={role.title} role={role} />
+                    ))}
+                  </ul>
                 )}
-              </Button>
-            }
-          />
-        </div>
-      )}
-    </Collapsible>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t pt-3 text-muted-foreground text-xs">
+                  <p className="flex items-start gap-1.5">
+                    <MapPin aria-hidden className="mt-0.5 size-3 shrink-0" />
+                    {entry.location}
+                  </p>
+                  {entry.href && (
+                    <Link
+                      href={entry.href}
+                      aria-label={`${websiteLabel}: ${entry.company}`}
+                      className="inline-flex items-center gap-1 underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:text-foreground focus-visible:underline"
+                    >
+                      {websiteLabel}
+                      <ArrowUpRight aria-hidden className="size-3" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </details>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

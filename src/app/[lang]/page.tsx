@@ -40,8 +40,8 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
       <ExperienceList
         currentLabel={messages.current}
         entries={getExperience(lang)}
-        showLessLabel={messages.showLess}
-        showMoreLabel={messages.showMore}
+        websiteLabel={messages.website}
+        additionalRolesLabel={messages.additionalRoles}
       />
     ),
     skills: <SkillLists categories={getSkillCategories(lang)} />,
