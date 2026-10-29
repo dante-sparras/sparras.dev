@@ -31,6 +31,7 @@ describe("homepageOutline", () => {
   test("translates section titles without changing their anchors", () => {
     expect(getHomepageOutline("sv").map((entry) => entry.title)).toEqual([
       "Referenser",
+      "Erfarenhet",
       "Färdigheter",
       "Projekt",
       "Blogg",

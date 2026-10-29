@@ -9,6 +9,7 @@ type Messages = {
   showMore: string;
   showLess: string;
   showAllProjects: (count: number) => string;
+  current: string;
   localTime: string;
   sameTime: string;
   ahead: string;
@@ -33,6 +34,7 @@ export const messages: Record<Locale, Messages> = {
     showMore: "Show More",
     showLess: "Show Less",
     showAllProjects: (count) => `Show all projects (${count})`,
+    current: "Current",
     localTime: "Local time",
     sameTime: "same time",
     ahead: "ahead",
@@ -64,6 +66,7 @@ export const messages: Record<Locale, Messages> = {
     showMore: "Visa mer",
     showLess: "Visa mindre",
     showAllProjects: (count) => `Visa alla projekt (${count})`,
+    current: "Pågående",
     localTime: "Lokal tid",
     sameTime: "samma tid",
     ahead: "före",

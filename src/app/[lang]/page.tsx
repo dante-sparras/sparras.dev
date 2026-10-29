@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Bio } from "@/components/bio";
 import { BlackHoleBanner } from "@/components/black-hole-banner";
+import { ExperienceList } from "@/components/experience-list";
 import { LinkCardGrid } from "@/components/link-card-grid";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import {
@@ -15,6 +16,7 @@ import { SkillLists } from "@/components/skill-lists";
 import { H2 } from "@/components/typography/h2";
 import { Muted } from "@/components/typography/muted";
 import { P } from "@/components/typography/p";
+import { getExperience } from "@/content/experience";
 import { getSections, type SectionId } from "@/content/outline";
 import { posts } from "@/content/posts";
 import { getProfile } from "@/content/profile";
@@ -34,6 +36,14 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   const projects = getProjects(lang);
   const sectionContent: Record<SectionId, ReactNode> = {
     references: <ReferencesMarquee references={getReferences(lang)} />,
+    experience: (
+      <ExperienceList
+        currentLabel={messages.current}
+        entries={getExperience(lang)}
+        showLessLabel={messages.showLess}
+        showMoreLabel={messages.showMore}
+      />
+    ),
     skills: <SkillLists categories={getSkillCategories(lang)} />,
     projects: (
       <ProjectList

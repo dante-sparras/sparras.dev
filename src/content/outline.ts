@@ -1,3 +1,4 @@
+import { getExperience } from "@/content/experience";
 import { posts } from "@/content/posts";
 import { getProjects } from "@/content/projects";
 import { getReferences } from "@/content/references";
@@ -5,7 +6,12 @@ import { skills } from "@/content/skills";
 import type { Locale } from "@/i18n/locale";
 import { defaultLocale } from "@/i18n/locale";
 
-export type SectionId = "references" | "skills" | "projects" | "blog";
+export type SectionId =
+  | "references"
+  | "experience"
+  | "skills"
+  | "projects"
+  | "blog";
 
 export type OutlineEntry = {
   id: SectionId;
@@ -15,6 +21,7 @@ export type OutlineEntry = {
 
 const sectionTitles: Record<SectionId, Record<Locale, string>> = {
   references: { en: "References", sv: "Referenser" },
+  experience: { en: "Experience", sv: "Erfarenhet" },
   skills: { en: "Skills", sv: "Färdigheter" },
   projects: { en: "Projects", sv: "Projekt" },
   blog: { en: "Blog", sv: "Blogg" },
@@ -26,6 +33,11 @@ export function getHomepageOutline(locale: Locale): OutlineEntry[] {
       id: "references",
       title: sectionTitles.references[locale],
       items: getReferences(locale),
+    },
+    {
+      id: "experience",
+      title: sectionTitles.experience[locale],
+      items: getExperience(locale),
     },
     { id: "skills", title: sectionTitles.skills[locale], items: skills },
     {
