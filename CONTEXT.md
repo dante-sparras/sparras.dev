@@ -21,8 +21,12 @@ The fixed top of the homepage that introduces Dante: the banner, the Profile ove
 _Avoid_: hero, header section
 
 **Section**:
-A titled, navigable part of the homepage below the Profile area (References, Skills, Projects, Blog). A Section with nothing to show is left out of the page and the nav.
+A titled, navigable part of the homepage below the Profile area (References, Experience, Skills, Projects, Blog). A Section with nothing to show is left out of the page and the nav.
 _Avoid_: block, panel, area
+
+**Experience**:
+A position Dante has held, shown under the organization with when he held it and what he did. Open positions are marked on the organization.
+_Avoid_: resume, jobs, work history, career
 
 **Homepage outline**:
 The ordered list of Sections. The nav and the order of the page both come from it.

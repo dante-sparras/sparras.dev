@@ -9,6 +9,9 @@ type Messages = {
   showMore: string;
   showLess: string;
   showAllProjects: (count: number) => string;
+  current: string;
+  website: string;
+  additionalRoles: (count: number) => string;
   localTime: string;
   sameTime: string;
   ahead: string;
@@ -33,6 +36,10 @@ export const messages: Record<Locale, Messages> = {
     showMore: "Show More",
     showLess: "Show Less",
     showAllProjects: (count) => `Show all projects (${count})`,
+    current: "Current",
+    website: "Website",
+    additionalRoles: (count) =>
+      `${count} more ${count === 1 ? "role" : "roles"}`,
     localTime: "Local time",
     sameTime: "same time",
     ahead: "ahead",
@@ -64,6 +71,10 @@ export const messages: Record<Locale, Messages> = {
     showMore: "Visa mer",
     showLess: "Visa mindre",
     showAllProjects: (count) => `Visa alla projekt (${count})`,
+    current: "Pågående",
+    website: "Webbplats",
+    additionalRoles: (count) =>
+      `${count} ytterligare ${count === 1 ? "roll" : "roller"}`,
     localTime: "Lokal tid",
     sameTime: "samma tid",
     ahead: "före",
