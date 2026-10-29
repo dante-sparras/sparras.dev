@@ -13,6 +13,9 @@ const slotClassName = "w-96 shrink-0 p-2";
 
 const scrollDuration = 40_000;
 
+/** How long a touch scroll must be quiet before the row moves again. */
+const touchResumeDelay = 1_500;
+
 type Direction = "left" | "right";
 
 /** Survives the remount that a locale change triggers, so the loops do not snap back to the start. */
@@ -126,28 +129,85 @@ function MarqueeRow({
     };
     frame = requestAnimationFrame(step);
 
-    const pause = () => {
-      paused = true;
-      position = scroller.scrollLeft;
+    // Paused while a mouse hovers the row, keyboard focus is inside it, or a
+    // touch swipe (and its momentum) is still scrolling it.
+    let hovered = false;
+    let focused = false;
+    let touching = false;
+    let touchTimer = 0;
+
+    const sync = () => {
+      const shouldPause = hovered || focused || touching;
+      if (shouldPause === paused) return;
+      paused = shouldPause;
+      if (paused) {
+        position = scroller.scrollLeft;
+      } else {
+        previous = performance.now();
+      }
     };
-    const play = () => {
-      previous = performance.now();
-      paused = false;
+    const releaseTouchSoon = () => {
+      window.clearTimeout(touchTimer);
+      touchTimer = window.setTimeout(() => {
+        touching = false;
+        sync();
+      }, touchResumeDelay);
+    };
+    const onPointerEnter = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      hovered = true;
+      sync();
+    };
+    const onPointerLeave = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      hovered = false;
+      sync();
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse") return;
+      window.clearTimeout(touchTimer);
+      touching = true;
+      sync();
+    };
+    // `pointercancel` fires as soon as the browser takes over a swipe, so the
+    // hold is released only once scrolling has been quiet for a moment.
+    const onPointerRelease = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse" && touching) releaseTouchSoon();
+    };
+    const onFocusIn = () => {
+      focused = true;
+      sync();
+    };
+    const onFocusOut = (event: FocusEvent) => {
+      focused = scroller.contains(event.relatedTarget as Node | null);
+      sync();
     };
     const followManualScroll = () => {
       if (!paused) return;
       position = scroller.scrollLeft;
       savedScrollLeft[direction] = position;
+      if (touching) releaseTouchSoon();
     };
-    scroller.addEventListener("pointerenter", pause);
-    scroller.addEventListener("pointerleave", play);
-    scroller.addEventListener("scroll", followManualScroll);
+    const listeners = {
+      pointerenter: onPointerEnter,
+      pointerleave: onPointerLeave,
+      pointerdown: onPointerDown,
+      pointerup: onPointerRelease,
+      pointercancel: onPointerRelease,
+      focusin: onFocusIn,
+      focusout: onFocusOut,
+      scroll: followManualScroll,
+    } as const;
+    for (const [type, listener] of Object.entries(listeners)) {
+      scroller.addEventListener(type, listener as EventListener);
+    }
 
     return () => {
       cancelAnimationFrame(frame);
-      scroller.removeEventListener("pointerenter", pause);
-      scroller.removeEventListener("pointerleave", play);
-      scroller.removeEventListener("scroll", followManualScroll);
+      window.clearTimeout(touchTimer);
+      for (const [type, listener] of Object.entries(listeners)) {
+        scroller.removeEventListener(type, listener as EventListener);
+      }
       savedScrollLeft[direction] = position;
     };
   }, [prefersReducedMotion, direction]);

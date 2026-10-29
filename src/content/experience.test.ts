@@ -63,6 +63,25 @@ describe("formatExperiencePeriod", () => {
     ).toEqual({ range: "01.2026–Current", duration: "10m" });
   });
 
+  test("leaves out Current and the duration before the start", () => {
+    expect(
+      formatExperiencePeriod(
+        { year: 2027, month: 1 },
+        { year: 2027, month: 6 },
+        october2026,
+        "en",
+      ),
+    ).toEqual({ range: "01.2027–06.2027", duration: "" });
+    expect(
+      formatExperiencePeriod(
+        { year: 2027, month: 1 },
+        undefined,
+        october2026,
+        "en",
+      ),
+    ).toEqual({ range: "01.2027", duration: "" });
+  });
+
   test("spells the duration in Swedish", () => {
     expect(
       formatExperiencePeriod(
