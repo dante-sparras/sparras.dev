@@ -47,7 +47,7 @@ export function ProfileAvatar({ alt, className, src }: ProfileAvatarProps) {
         alt={alt}
         fill
         sizes={`${AVATAR_SIZE_PX}px`}
-        priority
+        loading="eager"
         className="object-cover"
       />
     </RgbSplit>

@@ -4,7 +4,6 @@ import { getProjects } from "@/content/projects";
 import { getReferences } from "@/content/references";
 import { skills } from "@/content/skills";
 import type { Locale } from "@/i18n/locale";
-import { defaultLocale } from "@/i18n/locale";
 
 export type SectionId =
   | "references"
@@ -56,5 +55,3 @@ export function visibleSections(outline: readonly OutlineEntry[]) {
 export function getSections(locale: Locale) {
   return visibleSections(getHomepageOutline(locale));
 }
-
-export const homepageOutline = getHomepageOutline(defaultLocale);

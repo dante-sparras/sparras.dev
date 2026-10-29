@@ -23,7 +23,7 @@ function ProjectRow({ project }: { project: Project }) {
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <h4 className="font-medium text-base">{project.title}</h4>
+            <h3 className="font-medium text-base">{project.title}</h3>
             {project.stack.length > 0 && (
               <ul className="flex flex-wrap items-center gap-2">
                 {project.stack.map((skill) => (

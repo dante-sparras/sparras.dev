@@ -118,9 +118,9 @@ function AdditionalRole({ role }: { role: ExperienceRole }) {
           className="mt-0.5 size-4 shrink-0 text-muted-foreground"
         />
         <div className="min-w-0">
-          <h5 className="text-pretty font-medium text-sm leading-5">
+          <h4 className="text-pretty font-medium text-sm leading-5">
             {role.title}
-          </h5>
+          </h4>
           <p className="mt-1 font-mono text-[11px] text-muted-foreground leading-5">
             {role.meta}
           </p>
@@ -162,7 +162,7 @@ export function ExperienceList({
                 <OrganizationMark entry={entry} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <h4 className="font-medium text-sm">{entry.company}</h4>
+                    <h3 className="font-medium text-sm">{entry.company}</h3>
                     <KindBadge entry={entry} />
                     {entry.isCurrent && (
                       <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">

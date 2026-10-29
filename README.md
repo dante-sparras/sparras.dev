@@ -34,7 +34,8 @@ The website should now be running at `http://localhost:3000`. Open this URL in y
 In the project directory, you can run:
 
 - `bun dev`: Runs the app in development mode.
-- `bun build`: Builds the app for production.
+- `bun run build`: Builds the app for production. (`bun build` is Bun's own bundler, not this script.)
 - `bun start`: Starts the production server.
-- `bun lint`: Runs the linter to check for code quality issues.
-- `bun format`: Formats the code using Prettier.
+- `bun lint`: Checks linting and formatting with Biome.
+- `bun format`: Formats the code with Biome.
+- `bun test`: Runs the tests.

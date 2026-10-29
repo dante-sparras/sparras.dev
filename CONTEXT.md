@@ -11,7 +11,7 @@ The facts about Dante that the site presents: name, role, summary, bio, avatar, 
 _Avoid_: bio data, about, identity
 
 **Social link**:
-A link to one of Dante's accounts elsewhere (GitHub, X, LinkedIn), shown with that platform's icon.
+A link to one of Dante's accounts elsewhere (GitHub, X, LinkedIn, Discord), shown with that platform's icon.
 _Avoid_: socials, contact link
 
 ### Homepage structure

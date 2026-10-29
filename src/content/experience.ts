@@ -269,6 +269,10 @@ function monthOf(now: Date): YearMonth {
   return { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 };
 }
 
+function hasStarted(start: YearMonth, now: Date) {
+  return monthIndex(start) <= monthIndex(monthOf(now));
+}
+
 function isOngoing(end: YearMonth | undefined, now: Date) {
   if (!end) return true;
   return monthIndex(end) >= monthIndex(monthOf(now));
@@ -289,6 +293,13 @@ export function formatExperiencePeriod(
   now: Date,
   locale: Locale,
 ) {
+  const startLabel = `${padMonth(start.month)}.${start.year}`;
+  if (!hasStarted(start, now)) {
+    // Not begun yet: no "Current" and no duration to count.
+    const endLabel = end ? `–${padMonth(end.month)}.${end.year}` : "";
+    return { range: `${startLabel}${endLabel}`, duration: "" };
+  }
+
   const today = monthOf(now);
   const effectiveEnd = end && monthIndex(end) < monthIndex(today) ? end : today;
   const months = inclusiveMonthCount(start, effectiveEnd);
@@ -301,7 +312,7 @@ export function formatExperiencePeriod(
   ]
     .filter((part) => part !== null)
     .join(" ");
-  const range = `${padMonth(start.month)}.${start.year}–${
+  const range = `${startLabel}–${
     end && !isOngoing(end, now)
       ? `${padMonth(end.month)}.${end.year}`
       : labels.current
@@ -333,9 +344,9 @@ function roleMeta(role: ExperienceRoleSource, locale: Locale, now: Date) {
     now,
     locale,
   );
-  return [employmentLabels[role.employment][locale], range, duration].join(
-    " | ",
-  );
+  return [employmentLabels[role.employment][locale], range, duration]
+    .filter(Boolean)
+    .join(" | ");
 }
 
 export function getExperience(locale: Locale, now = new Date()): Experience[] {
@@ -348,7 +359,10 @@ export function getExperience(locale: Locale, now = new Date()): Experience[] {
     icon: entry.icon,
     logoSrc: entry.logoSrc,
     isCurrent: entry.roles.some(
-      (role) => !role.pointInTime && isOngoing(role.end, now),
+      (role) =>
+        !role.pointInTime &&
+        hasStarted(role.start, now) &&
+        isOngoing(role.end, now),
     ),
     roles: entry.roles.map((role) => ({
       title: role.title[locale],

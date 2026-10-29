@@ -44,9 +44,18 @@
   "overrides": [
     {
       "includes": ["src/components/ui/**"],
+      "formatter": { "enabled": false },
+      "assist": { "enabled": false },
       "linter": {
         "rules": {
+          "nursery": {
+            "useSortedClasses": "off"
+          },
+          "style": {
+            "useImportType": "off"
+          },
           "a11y": {
+            "noLabelWithoutControl": "off",
             "useFocusableInteractive": "off",
             "useSemanticElements": "off",
             "useKeyWithClickEvents": "off",
@@ -61,6 +70,7 @@
             "noDangerouslySetInnerHtml": "off"
           },
           "correctness": {
+            "noUnusedImports": "off",
             "useExhaustiveDependencies": "off"
           }
         }

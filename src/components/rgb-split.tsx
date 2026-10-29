@@ -303,11 +303,7 @@ export function RgbSplit({
 
   const contentRef = useRef(contentLayer);
   const borderRef = useRef(borderLayer);
-  contentRef.current = contentLayer;
-  borderRef.current = borderLayer;
-
   const fixedAngle = useRef<number | null>(resolveRgbSplitAngle(angle));
-  fixedAngle.current = resolveRgbSplitAngle(angle);
 
   const latest = useRef<RgbSplitValues>(rgbSplit.rest);
   const borderMotion = useRef({
@@ -392,7 +388,14 @@ export function RgbSplit({
   });
 
   const paintRef = useRef(paint);
-  paintRef.current = paint;
+
+  // Refs are synced after render, not during it, which keeps the component
+  // pure for React Compiler. This runs before the angle effect below.
+  useLayoutEffect(() => {
+    contentRef.current = contentLayer;
+    borderRef.current = borderLayer;
+    paintRef.current = paint;
+  });
 
   useLayoutEffect(() => {
     fixedAngle.current = resolveRgbSplitAngle(angle);

@@ -2,6 +2,9 @@ import { useCallback, useSyncExternalStore } from "react";
 
 const CHANGE_EVENT = "stored-preference-change";
 
+/** Used when storage is blocked (private mode), so a choice still applies for the visit. */
+const unsavedChoices = new Map<string, string>();
+
 function subscribe(onChange: () => void) {
   window.addEventListener("storage", onChange);
   window.addEventListener(CHANGE_EVENT, onChange);
@@ -30,7 +33,8 @@ export function useStoredPreference<T extends string>(
         const stored = window.localStorage.getItem(key);
         return options.find((option) => option === stored) ?? fallback;
       } catch {
-        return fallback;
+        const unsaved = unsavedChoices.get(key);
+        return options.find((option) => option === unsaved) ?? fallback;
       }
     },
     () => fallback,
@@ -41,7 +45,8 @@ export function useStoredPreference<T extends string>(
       try {
         window.localStorage.setItem(key, next);
       } catch {
-        // Storage can be blocked (private mode); the choice is then not saved.
+        // Storage can be blocked (private mode); keep the choice in memory instead.
+        unsavedChoices.set(key, next);
       }
       window.dispatchEvent(new Event(CHANGE_EVENT));
     },

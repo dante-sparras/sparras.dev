@@ -46,8 +46,8 @@ function parseAcceptLanguage(header: string): LanguageRange[] {
 
 function matchLocale(tag: string): Locale | null {
   if (tag === "*") return defaultLocale;
-  const language = tag.split("-")[0];
-  return language === "en" || language === "sv" ? language : null;
+  const language = tag.split("-")[0] ?? "";
+  return isLocale(language) ? language : null;
 }
 
 export function negotiateLocale(acceptLanguage: string | null): Locale {

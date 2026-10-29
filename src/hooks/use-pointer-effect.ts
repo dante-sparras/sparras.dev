@@ -33,7 +33,6 @@ function pointInElement(event: PointerEvent<Element>): PointerPoint {
 export function usePointerEffect<V extends Record<string, number>>(
   effect: PointerEffect<V>,
   onFrame: (values: Readonly<V>) => void,
-  { enterDelayMs = 0 }: { enterDelayMs?: number } = {},
 ) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const onFrameRef = useRef(onFrame);
@@ -47,7 +46,6 @@ export function usePointerEffect<V extends Record<string, number>>(
     const controller = createPointerEffect(effect, {
       clock: browserFrameClock,
       onFrame: (values) => onFrameRef.current(values),
-      enterDelayMs,
     });
     controller.setReducedMotion(prefersReducedMotion);
     controllerRef.current = controller;
@@ -56,7 +54,7 @@ export function usePointerEffect<V extends Record<string, number>>(
       controller.dispose();
       controllerRef.current = null;
     };
-  }, [effect, enterDelayMs, prefersReducedMotion]);
+  }, [effect, prefersReducedMotion]);
 
   return {
     onPointerEnter: (event: PointerEvent<Element>) =>

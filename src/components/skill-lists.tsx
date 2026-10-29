@@ -24,12 +24,12 @@ export function SkillLists({
             aria-labelledby={headingId}
             className="grid grid-cols-1 sm:grid-cols-[12rem_1fr]"
           >
-            <h4
+            <h3
               id={headingId}
               className="px-6 pt-4 pb-1 text-sm sm:border-r sm:py-5"
             >
               {category.title}
-            </h4>
+            </h3>
             <ul className="flex flex-wrap gap-2 px-6 pt-2 pb-4 sm:py-4">
               {category.skills.map((skill) => (
                 <li key={skill.name}>

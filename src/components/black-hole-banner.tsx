@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { type RefObject, useEffect, useRef, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { usePointerEffect } from "@/hooks/use-pointer-effect";
 import { hoverLens } from "@/lib/pointer-effect";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,6 @@ import { cn } from "@/lib/utils";
 const ARTBOARD_WIDTH_PX = 2160;
 const LENS_RADIUS_ON_ARTBOARD_PX = 160;
 const HOLE_SCALE = 1.25;
-const MOBILE_BREAKPOINT_PX = 768;
 /** Hole center as a fraction of the banner width. Keep in sync with HOLE_LAYER_CLASS. */
 const MOBILE_HOLE_SHIFT_X = 0.69;
 const DESKTOP_HOLE_SHIFT_X = 0.6;
@@ -117,10 +117,10 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
   // circle covers the same fraction of the banner on any screen.
   const lensRadiusPx =
     (LENS_RADIUS_ON_ARTBOARD_PX / ARTBOARD_WIDTH_PX) * bannerWidth;
-  const holeShiftX =
-    bannerWidth < MOBILE_BREAKPOINT_PX
-      ? MOBILE_HOLE_SHIFT_X
-      : DESKTOP_HOLE_SHIFT_X;
+  // Same viewport breakpoint as `md:` in HOLE_LAYER_CLASS. The banner's own
+  // width can't be used: on desktop it is 766px, inside the bordered column.
+  const isMobile = useIsMobile();
+  const holeShiftX = isMobile ? MOBILE_HOLE_SHIFT_X : DESKTOP_HOLE_SHIFT_X;
 
   // Tiny leftover scale after a fade-out is not worth showing — it
   // would look like a faint speck rather than a hidden lens.
@@ -135,10 +135,11 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
   return (
     <div
       ref={rootRef}
-      className="relative aspect-2160/864 w-full touch-none select-none overflow-hidden bg-black"
+      className="relative aspect-2160/864 w-full touch-pan-y select-none overflow-hidden bg-black"
       onPointerEnter={onPointerEnter}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
+      onPointerCancel={onPointerLeave}
     >
       {/*
         Both layers are 1.25× the banner box and centered, so the hole
@@ -150,7 +151,8 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
           alt={alt}
           fill
           unoptimized
-          priority
+          loading="eager"
+          fetchPriority="high"
           sizes={BANNER_IMAGE_SIZES}
           className="object-cover [image-rendering:pixelated]"
         />
@@ -180,7 +182,6 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
             alt=""
             fill
             unoptimized
-            priority
             sizes={BANNER_IMAGE_SIZES}
             className="object-cover [image-rendering:pixelated]"
             style={{

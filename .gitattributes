@@ -1,0 +1,2 @@
+# Check out text files with LF on every OS, matching Biome's formatter.
+* text=auto eol=lf

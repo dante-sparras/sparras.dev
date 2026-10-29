@@ -16,6 +16,7 @@ export type CurrentWeather = {
 
 export type Coordinates = { latitude: number; longitude: number };
 
+const FETCH_TIMEOUT_MS = 3000;
 const REVALIDATE_SECONDS = 900;
 
 /** Groups WMO weather interpretation codes (used by Open-Meteo). */
@@ -60,6 +61,8 @@ export async function getCurrentWeather({
   try {
     const response = await fetch(url, {
       next: { revalidate: REVALIDATE_SECONDS },
+      // A stalled API must not hold up rendering; the catch shows no weather.
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!response.ok) return null;
 

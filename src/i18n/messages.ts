@@ -13,9 +13,6 @@ type Messages = {
   website: string;
   additionalRoles: (count: number) => string;
   localTime: string;
-  sameTime: string;
-  ahead: string;
-  behind: string;
   temperatureUnit: string;
   celsius: string;
   fahrenheit: string;
@@ -41,9 +38,6 @@ export const messages: Record<Locale, Messages> = {
     additionalRoles: (count) =>
       `${count} more ${count === 1 ? "role" : "roles"}`,
     localTime: "Local time",
-    sameTime: "same time",
-    ahead: "ahead",
-    behind: "behind",
     temperatureUnit: "Temperature unit",
     celsius: "Celsius (°C)",
     fahrenheit: "Fahrenheit (°F)",
@@ -76,9 +70,6 @@ export const messages: Record<Locale, Messages> = {
     additionalRoles: (count) =>
       `${count} ytterligare ${count === 1 ? "roll" : "roller"}`,
     localTime: "Lokal tid",
-    sameTime: "samma tid",
-    ahead: "före",
-    behind: "efter",
     temperatureUnit: "Temperaturenhet",
     celsius: "Celsius (°C)",
     fahrenheit: "Fahrenheit (°F)",
