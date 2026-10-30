@@ -1,3 +1,4 @@
+import { timeZone } from "@/content/profile";
 import { allSkills } from "@/content/skills";
 import type { Href, ImageSrc } from "@/content/types";
 import type { Locale } from "@/i18n/locale";
@@ -75,8 +76,9 @@ const periodLabels: Record<
     current: "Current",
   },
   sv: {
-    years: (count) => `${count} år`,
-    months: (count) => `${count} mån`,
+    // A no-break space keeps each number with its unit when the line wraps.
+    years: (count) => `${count}\u00a0år`,
+    months: (count) => `${count}\u00a0mån`,
     current: "Pågående",
   },
 };
@@ -228,7 +230,7 @@ const experienceSources: readonly ExperienceSource[] = [
       {
         title: {
           en: "Best Upper Secondary Thesis (voted by students)",
-          sv: "Bästa gymnasiearbete (utsedd av eleverna)",
+          sv: "Bästa gymnasiearbete (utsett av eleverna)",
         },
         icon: "award",
         start: { year: 2021, month: 6 },
@@ -265,8 +267,18 @@ function monthIndex(value: YearMonth) {
   return value.year * 12 + value.month;
 }
 
+const yearMonthFormat = new Intl.DateTimeFormat("en", {
+  timeZone,
+  year: "numeric",
+  month: "numeric",
+});
+
+/** The month in Dante's time zone, so a new month starts at local midnight, not UTC. */
 function monthOf(now: Date): YearMonth {
-  return { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 };
+  const parts = yearMonthFormat.formatToParts(now);
+  const part = (type: "year" | "month") =>
+    Number(parts.find((entry) => entry.type === type)?.value);
+  return { year: part("year"), month: part("month") };
 }
 
 function hasStarted(start: YearMonth, now: Date) {

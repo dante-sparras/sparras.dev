@@ -82,6 +82,19 @@ describe("formatExperiencePeriod", () => {
     ).toEqual({ range: "01.2027", duration: "" });
   });
 
+  test("starts a new month at midnight in Stockholm, not UTC", () => {
+    // 23:30 UTC on 31 October is already 1 November in Stockholm.
+    const stockholmNovember = new Date(Date.UTC(2026, 9, 31, 23, 30));
+    expect(
+      formatExperiencePeriod(
+        { year: 2026, month: 1 },
+        { year: 2026, month: 10 },
+        stockholmNovember,
+        "en",
+      ),
+    ).toEqual({ range: "01.2026–10.2026", duration: "10m" });
+  });
+
   test("spells the duration in Swedish", () => {
     expect(
       formatExperiencePeriod(
@@ -90,7 +103,7 @@ describe("formatExperiencePeriod", () => {
         october2026,
         "sv",
       ),
-    ).toEqual({ range: "07.2022–Pågående", duration: "4 år 4 mån" });
+    ).toEqual({ range: "07.2022–Pågående", duration: "4\u00a0år 4\u00a0mån" });
   });
 });
 
@@ -147,20 +160,22 @@ describe("getExperience", () => {
     );
     expect(entries[0]?.roles[0]?.title).toBe("Systemutvecklare .NET");
     expect(entries[0]?.roles[0]?.meta).toBe(
-      "Heltid | 01.2026–Pågående | 10 mån",
+      "Heltid | 01.2026–Pågående | 10\u00a0mån",
     );
     expect(entries[0]?.kindLabel).toBe("Utbildning");
     expect(entries[1]?.location).toBe("Åbo, Finland");
     expect(entries[1]?.roles[0]?.meta).toBe(
-      "Deltid | 07.2022–Pågående | 4 år 4 mån",
+      "Deltid | 07.2022–Pågående | 4\u00a0år 4\u00a0mån",
     );
-    expect(entries[2]?.roles[0]?.meta).toBe("Heltid | 08.2021–02.2022 | 7 mån");
+    expect(entries[2]?.roles[0]?.meta).toBe(
+      "Heltid | 08.2021–02.2022 | 7\u00a0mån",
+    );
     expect(entries[3]?.roles[0]?.title).toBe("Teknikprogrammet");
     expect(entries[3]?.roles[0]?.meta).toBe(
-      "Heltid | 08.2018–06.2021 | 2 år 11 mån",
+      "Heltid | 08.2018–06.2021 | 2\u00a0år 11\u00a0mån",
     );
     expect(entries[3]?.roles[3]?.title).toBe(
-      "Bästa gymnasiearbete (utsedd av eleverna)",
+      "Bästa gymnasiearbete (utsett av eleverna)",
     );
   });
 });

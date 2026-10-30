@@ -7,7 +7,7 @@ Dante Sparrås's personal site and portfolio: a single homepage presenting his p
 ### Content
 
 **Profile**:
-The facts about Dante that the site presents: name, role, summary, bio, avatar, company, location, time zone and Social links. The single source for anything that says who he is.
+The facts about Dante that the site presents: name, role, summary, bio, avatar, studies, location, time zone and Social links. The single source for anything that says who he is.
 _Avoid_: bio data, about, identity
 
 **Social link**:
