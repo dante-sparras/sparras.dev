@@ -21,14 +21,13 @@ import { cn } from "@/lib/utils";
 const ARTBOARD_WIDTH_PX = 2160;
 const LENS_RADIUS_ON_ARTBOARD_PX = 160;
 const HOLE_SCALE = 1.25;
-/** Hole center as a fraction of the banner width. Keep in sync with HOLE_LAYER_CLASS. */
-const MOBILE_HOLE_SHIFT_X = 0.69;
-const DESKTOP_HOLE_SHIFT_X = 0.6;
-/** Hole center as a fraction of the banner height. */
-const HOLE_SHIFT_Y = 0.4;
+/** Hole center as a fraction of the banner. Keep in sync with HOLE_LAYER_CLASS. */
+const HOLE_SHIFT_X = 0.6;
+const MOBILE_HOLE_SHIFT_Y = 0.32;
+const DESKTOP_HOLE_SHIFT_Y = 0.4;
 const BANNER_IMAGE_SIZES = "(min-width: 768px) 48rem, 100vw";
 const HOLE_LAYER_CLASS =
-  "absolute top-[40%] left-[69%] size-[125%] -translate-x-1/2 -translate-y-1/2 md:left-[60%]";
+  "absolute top-[32%] left-[60%] size-[125%] -translate-x-1/2 -translate-y-1/2 md:top-[40%]";
 const REVEAL_ZOOM = 1.05;
 
 /** Inner part of the mask that is fully opaque (the rest fades out). */
@@ -117,10 +116,9 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
   // circle covers the same fraction of the banner on any screen.
   const lensRadiusPx =
     (LENS_RADIUS_ON_ARTBOARD_PX / ARTBOARD_WIDTH_PX) * bannerWidth;
-  // Same viewport breakpoint as `md:` in HOLE_LAYER_CLASS. The banner's own
-  // width can't be used: on desktop it is 766px, inside the bordered column.
+  // Same viewport breakpoint as `md:` in HOLE_LAYER_CLASS.
   const isMobile = useIsMobile();
-  const holeShiftX = isMobile ? MOBILE_HOLE_SHIFT_X : DESKTOP_HOLE_SHIFT_X;
+  const holeShiftY = isMobile ? MOBILE_HOLE_SHIFT_Y : DESKTOP_HOLE_SHIFT_Y;
 
   // Tiny leftover scale after a fade-out is not worth showing — it
   // would look like a faint speck rather than a hidden lens.
@@ -135,7 +133,7 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
   return (
     <div
       ref={rootRef}
-      className="relative aspect-2160/864 w-full touch-pan-y select-none overflow-hidden bg-black"
+      className="relative aspect-3/2 w-full touch-pan-y select-none overflow-hidden bg-black md:aspect-2160/864"
       onPointerEnter={onPointerEnter}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
@@ -189,8 +187,8 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
               transformOrigin: pointerOriginOnScaledLayer(
                 lens.x,
                 lens.y,
-                holeShiftX,
-                HOLE_SHIFT_Y,
+                HOLE_SHIFT_X,
+                holeShiftY,
               ),
             }}
           />
