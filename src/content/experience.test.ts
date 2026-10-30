@@ -143,7 +143,12 @@ describe("getExperience", () => {
       "Part-time | 12.2018–06.2021 | 2y 7m",
       "06.2021",
     ]);
-    expect(entries[1]?.roles[0]?.skills).toEqual(["Unity", "C#"]);
+    expect(entries[1]?.roles[0]?.skills).toEqual([
+      "Unity",
+      "C#",
+      "Git",
+      "GitHub",
+    ]);
     expect(entries[3]?.roles.map((role) => role.title)).toEqual([
       "Technology Programme",
       "Student Ambassador",
