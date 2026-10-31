@@ -21,7 +21,7 @@ _Avoid_: socials, contact link
 ### Homepage structure
 
 **Profile area**:
-The fixed top of the homepage that introduces Dante: the banner, the Availability with its resume and contact actions, the Profile overview and the About paragraph. It is not a Section and is not in the nav.
+The fixed top of the homepage that introduces Dante: the banner, the Availability banner, the Profile overview and the About paragraph. It is not a Section and is not in the nav.
 _Avoid_: hero, header section
 
 **Section**:

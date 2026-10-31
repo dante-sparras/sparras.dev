@@ -29,27 +29,32 @@ const buttonColors = "bg-foreground text-background hover:bg-foreground/80";
 
 export function ResumeDownload({
   lang,
+  buttonLabel,
   label,
   menuLabel,
   fileName,
   themeLabels,
 }: {
   lang: Locale;
+  /** Short enough for the nav. */
+  buttonLabel: string;
+  /** Says what the button does, for screen readers and as a tooltip. */
   label: string;
   menuLabel: string;
   /** Without the extension; each theme adds its own suffix. */
   fileName: string;
   themeLabels: Record<ResumeTheme, string>;
 }) {
-  const downloadProps = (theme: ResumeTheme) => ({
-    href: `/${lang}/resume/${theme}`,
-    download: `${fileName}-${theme}.pdf`,
-  });
+  const resumeHref = (theme: ResumeTheme) => `/${lang}/resume/${theme}`;
+  const resumeFile = (theme: ResumeTheme) => `${fileName}-${theme}.pdf`;
 
   return (
     <ButtonGroup>
       <a
-        {...downloadProps(defaultTheme)}
+        href={resumeHref(defaultTheme)}
+        download={resumeFile(defaultTheme)}
+        aria-label={label}
+        title={label}
         data-slot="button"
         className={cn(
           buttonVariants({ variant: null, size: "lg" }),
@@ -57,7 +62,7 @@ export function ResumeDownload({
         )}
       >
         <Download aria-hidden />
-        {label}
+        {buttonLabel}
       </a>
       <ButtonGroupSeparator />
       <DropdownMenu>
@@ -85,7 +90,7 @@ export function ResumeDownload({
                 key={theme}
                 className="cursor-pointer whitespace-nowrap"
                 render={
-                  <a {...downloadProps(theme)}>
+                  <a href={resumeHref(theme)} download={resumeFile(theme)}>
                     <Icon aria-hidden />
                     {themeLabels[theme]}
                   </a>

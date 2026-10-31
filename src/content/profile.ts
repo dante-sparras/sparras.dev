@@ -21,7 +21,13 @@ type ProfileCopy = {
   /** Written for search results and shared links, so it names the search. */
   pageTitle: string;
   summary: string;
-  availability: { title: string; dates: string; workplace: string };
+  availability: {
+    title: string;
+    dates: string;
+    /** For the banner on the homepage, where the full dates don't fit. */
+    shortDates: string;
+    workplace: string;
+  };
   bio: BioPart[];
   avatarAlt: string;
   resumeSummary: string;
@@ -83,6 +89,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     availability: {
       title: "Looking for a 24-week LIA internship",
       dates: "8 March–28 May and 30 August–19 November 2027",
+      shortDates: "8 Mar–28 May & 30 Aug–19 Nov 2027",
       workplace: "Norrköping or remote",
     },
     bio: [
@@ -116,6 +123,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     availability: {
       title: "Söker LIA-plats på 24 veckor",
       dates: "8 mars–28 maj och 30 augusti–19 november 2027",
+      shortDates: "8 mars–28 maj & 30 aug–19 nov 2027",
       workplace: "Norrköping eller distans",
     },
     bio: [

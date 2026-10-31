@@ -8,7 +8,9 @@ import {
   LanguageMenuItems,
   LanguageSwitcher,
 } from "@/components/language-switcher";
+import { ResumeDownload } from "@/components/resume-download";
 import { SiteLogo } from "@/components/site-logo";
+import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,15 +139,35 @@ export default async function RootLayout({
                 ))}
               </ul>
             </nav>
-            <div className="hidden md:block">
-              <LanguageSwitcher lang={lang} menuLabel={messages.language} />
+            <div className="ml-auto flex items-center gap-2 md:ml-0">
+              <ResumeDownload
+                lang={lang}
+                buttonLabel={messages.resumeButton}
+                label={messages.downloadResume}
+                menuLabel={messages.chooseResumeTheme}
+                fileName={messages.resume.fileName}
+                themeLabels={messages.resumeThemes}
+              />
+              <Link
+                href={`mailto:${profile.email}`}
+                aria-label={messages.contactMe}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                  "hidden md:inline-flex",
+                )}
+              >
+                {messages.resume.contact}
+              </Link>
+              <div className="hidden md:block">
+                <LanguageSwitcher lang={lang} menuLabel={messages.language} />
+              </div>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger
                 aria-label={messages.mainNavigation}
                 className={cn(
                   navigationMenuTriggerStyle(),
-                  "ml-auto flex size-9 cursor-pointer px-0 md:hidden",
+                  "flex size-9 cursor-pointer px-0 md:hidden",
                 )}
               >
                 <MenuIcon className="size-5" />

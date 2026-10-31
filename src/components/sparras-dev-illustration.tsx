@@ -18,6 +18,9 @@ const settleDuration = 360;
 const column = { left: 256, right: 1023 };
 const gutter = 281;
 
+/** How much the banner strip pulled everything below it up the page. */
+const bannerSavings = 63;
+
 const lineOpacity = 0.14;
 const bleedGradientId = "sparras-dev-line-bleed";
 const avatarClipId = "sparras-dev-avatar";
@@ -156,6 +159,22 @@ function NavBar() {
       <Line x={417} y={25} width={74} opacity={0.75} />
       <Line x={512} y={25} width={73} opacity={0.75} />
       <Line x={604} y={25} width={36} opacity={0.75} />
+      <rect x={739} y={10} width={97} height={36} rx={8} fill="#fff" />
+      <rect x={752} y={20} width={16} height={16} fill="#000" />
+      <rect x={776} y={25} width={48} height={6} fill="#000" />
+      <rect x={837} y={10} width={36} height={36} rx={8} fill="#fff" />
+      <path d="M849 25l6 6 6-6" fill="none" stroke="#000" strokeWidth={2} />
+      <rect
+        x={881}
+        y={10}
+        width={74}
+        height={36}
+        rx={8}
+        fill="none"
+        stroke="#fff"
+        strokeOpacity={0.3}
+      />
+      <Line x={893} y={25} width={50} height={6} opacity={0.9} />
       <Line x={972} y={19} width={18} height={18} opacity={0.75} />
       <Rule y={navHeight - 1} />
     </>
@@ -205,30 +224,21 @@ function ProfileArea() {
 function Availability() {
   return (
     <>
-      <Line x={gutter} y={390} width={292} height={10} opacity={1} />
-      <Line x={gutter} y={417} width={322} />
-      <Line x={gutter} y={437} width={148} />
-      <rect x={694} y={399} width={162} height={36} rx={8} fill="#fff" />
-      <rect x={708} y={409} width={16} height={16} fill="#000" />
-      <rect x={732} y={414} width={110} height={6} fill="#000" />
-      <rect x={857} y={399} width={36} height={36} rx={8} fill="#fff" />
-      <path d="M869 414l6 6 6-6" fill="none" stroke="#000" strokeWidth={2} />
-      <Line x={916} y={414} width={68} height={6} opacity={0.9} />
       <rect
-        x={901}
-        y={399}
-        width={98}
-        height={36}
-        rx={8}
-        fill="none"
-        stroke="#fff"
-        strokeOpacity={0.3}
+        x={column.left}
+        y={364}
+        width={column.right - column.left}
+        height={45}
+        fill="#fff"
+        opacity={0.05}
       />
-      <Rule y={472} />
+      <circle cx={284} cy={386} r={3} fill="#fff" />
+      <Line x={296} y={381} width={246} height={9} opacity={1} />
+      <Line x={553} y={383} width={362} height={7} />
+      <Rule y={409} />
     </>
   );
 }
-
 const overviewRows = [
   { y: 496, width: 150 },
   { y: 526, width: 140 },
@@ -499,9 +509,11 @@ function Page() {
       <ColumnBorders height={pageHeight} />
       <ProfileArea />
       <Availability />
-      <ProfileOverview />
-      <AboutParagraph />
-      <ProjectsSection />
+      <g transform={`translate(0 ${-bannerSavings})`}>
+        <ProfileOverview />
+        <AboutParagraph />
+        <ProjectsSection />
+      </g>
       <NavBar />
     </>
   );
