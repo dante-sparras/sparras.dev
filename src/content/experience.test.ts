@@ -103,7 +103,7 @@ describe("formatExperiencePeriod", () => {
         october2026,
         "sv",
       ),
-    ).toEqual({ range: "07.2022–Pågående", duration: "4\u00a0år 4\u00a0mån" });
+    ).toEqual({ range: "07.2022–pågående", duration: "4\u00a0år 4\u00a0mån" });
   });
 });
 
@@ -153,7 +153,7 @@ describe("getExperience", () => {
       "Technology Programme",
       "Student Ambassador",
       "Makerspace Coordinator",
-      "Best Upper Secondary Thesis (voted by students)",
+      "Best Diploma Project (voted by students)",
     ]);
   });
 
@@ -165,12 +165,12 @@ describe("getExperience", () => {
     );
     expect(entries[0]?.roles[0]?.title).toBe("Systemutvecklare .NET");
     expect(entries[0]?.roles[0]?.meta).toBe(
-      "Heltid | 01.2026–Pågående | 10\u00a0mån",
+      "Heltid | 01.2026–pågående | 10\u00a0mån",
     );
     expect(entries[0]?.kindLabel).toBe("Utbildning");
     expect(entries[1]?.location).toBe("Åbo, Finland");
     expect(entries[1]?.roles[0]?.meta).toBe(
-      "Medhjälpare | 07.2022–Pågående | 4\u00a0år 4\u00a0mån",
+      "Medhjälpare | 07.2022–pågående | 4\u00a0år 4\u00a0mån",
     );
     expect(entries[2]?.roles[0]?.meta).toBe(
       "Heltid | 08.2021–02.2022 | 7\u00a0mån",

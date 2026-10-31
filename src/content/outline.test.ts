@@ -31,7 +31,7 @@ describe("getHomepageOutline", () => {
     expect(getHomepageOutline("sv").map((entry) => entry.title)).toEqual([
       "Referenser",
       "Erfarenhet",
-      "Färdigheter",
+      "Kompetenser",
       "Projekt",
       "Blogg",
     ]);

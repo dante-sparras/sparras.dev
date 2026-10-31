@@ -21,8 +21,8 @@ const projectSources: {
   {
     title: "sparras.dev",
     description: {
-      en: "My personal website built with Next.js, Tailwind CSS, and shadcn/ui.",
-      sv: "Min personliga webbplats byggd med Next.js, Tailwind CSS och shadcn/ui.",
+      en: "Portfolio built with Next.js and TypeScript.",
+      sv: "Portfolio byggd med Next.js och TypeScript.",
     },
     href: "https://github.com/dante-sparras/sparras.dev",
     imageSrc: "/banner/black-hole-banner.png",
@@ -31,8 +31,8 @@ const projectSources: {
   {
     title: "Winland",
     description: {
-      en: "A keyboard-driven tiling window manager for Windows 11.",
-      sv: "En tangentbordsstyrd tiling-fönsterhanterare för Windows 11.",
+      en: "Keyboard-driven tiling window manager for Windows 11, built in C#.",
+      sv: "Tangentbordsstyrd fönsterhanterare för Windows 11, byggd i C#.",
     },
     href: "https://github.com/dante-sparras/winland",
     stack: ["C#"],
@@ -40,8 +40,8 @@ const projectSources: {
   {
     title: "Winshell",
     description: {
-      en: "A shell toolkit for Windows 11 that matches Quickshell.",
-      sv: "Ett verktygskit för skal i Windows 11 som matchar Quickshell.",
+      en: "Desktop shell toolkit for Windows 11, built in C# and configured in QML.",
+      sv: "Verktyg för skrivbordsskal i Windows 11, byggt i C# och konfigurerat i QML.",
     },
     href: "https://github.com/dante-sparras/winshell",
     stack: ["C#"],
@@ -57,10 +57,20 @@ const projectSources: {
   },
 ];
 
+/** Strongest first, and only projects a reader can open: Winoma's repo is private. */
+const resumeProjectTitles = ["Winland", "Winshell", "sparras.dev"];
+
 function getSkill(name: string) {
   const skill = skills.find((entry) => entry.name === name);
   if (!skill) throw new Error(`Unknown skill in project stack: ${name}`);
   return skill;
+}
+
+export function getResumeProjects(locale: Locale): Project[] {
+  const projects = getProjects(locale);
+  return resumeProjectTitles.flatMap((title) =>
+    projects.filter((project) => project.title === title),
+  );
 }
 
 export function getProjects(locale: Locale): Project[] {
