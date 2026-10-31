@@ -19,8 +19,11 @@ type Messages = {
     title: string;
     fileName: string;
     contact: string;
+    languages: string;
+    references: string;
     work: string;
     education: string;
+    certificates: string;
     contributions: string;
     projects: string;
     skills: string;
@@ -56,8 +59,11 @@ export const messages: Record<Locale, Messages> = {
       title: "Resume",
       fileName: "Dante-Sparras-Resume",
       contact: "Contact",
+      languages: "Languages",
+      references: "References available on request.",
       work: "Work Experience",
       education: "Education",
+      certificates: "Certificates",
       contributions: "Other Experience",
       projects: "Projects",
       skills: "Skills",
@@ -100,11 +106,14 @@ export const messages: Record<Locale, Messages> = {
       title: "CV",
       fileName: "Dante-Sparras-CV",
       contact: "Kontakt",
+      languages: "Språk",
+      references: "Referenser lämnas på begäran.",
       work: "Arbetslivserfarenhet",
       education: "Utbildning",
+      certificates: "Certifikat",
       contributions: "Övrig erfarenhet",
       projects: "Projekt",
-      skills: "Färdigheter",
+      skills: "Kompetenser",
     },
     localTime: "Lokal tid",
     temperatureUnit: "Temperaturenhet",

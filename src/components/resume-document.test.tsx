@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { ResumeDocument, skillIcon } from "@/components/resume-document";
+import {
+  contactIcon,
+  contactIcons,
+  ResumeDocument,
+  skillIcon,
+} from "@/components/resume-document";
 import { skills } from "@/content/skills";
 import { locales } from "@/i18n/locale";
 import { resumeThemes } from "@/lib/resume-theme";
@@ -19,6 +24,14 @@ describe("ResumeDocument", () => {
     const missing = skills.filter((skill) => !skillIcon(skill.iconSrc, "dark"));
 
     expect(missing.map((skill) => skill.name)).toEqual([]);
+  });
+
+  test("has every contact icon in both themes", () => {
+    const missing = resumeThemes.flatMap((theme) =>
+      contactIcons.filter((icon) => !contactIcon(icon, theme)),
+    );
+
+    expect(missing).toEqual([]);
   });
 
   const versions = locales.flatMap((locale) =>

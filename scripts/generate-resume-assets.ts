@@ -5,8 +5,11 @@
  * Run `bun scripts/generate-resume-assets.ts` after adding a skill or an
  * organization logo.
  */
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { GlobeIcon, MailIcon, MapPinIcon, PhoneIcon } from "lucide-react";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import sharp from "sharp";
 import { getExperience } from "@/content/experience";
 import { skills } from "@/content/skills";
@@ -62,6 +65,41 @@ for (const { logoSrc } of getExperience("en")) {
     .flatten({ background: "#ffffff" })
     .jpeg({ quality: 90 })
     .toFile(path.join(output, "logos", `${baseName(logoSrc)}.jpg`));
+}
+
+/** The same icons as the site's profile section, plus the social logos. */
+const lucide = (icon: typeof MailIcon) =>
+  Buffer.from(renderToStaticMarkup(createElement(icon, { size: 96 })));
+
+const contactIcons = {
+  mail: lucide(MailIcon),
+  phone: lucide(PhoneIcon),
+  location: lucide(MapPinIcon),
+  website: lucide(GlobeIcon),
+  github: await readFile("public/icons/github.svg"),
+  linkedin: await readFile("public/icons/linkedin.svg"),
+};
+
+/** The muted text color of each resume theme. */
+const contactColors = { dark: "#a1a1a1", light: "#525252" };
+
+await mkdir(path.join(output, "contact"), { recursive: true });
+
+for (const [name, svg] of Object.entries(contactIcons)) {
+  const shape = await sharp(svg, { density: 300 })
+    .resize(48, 48, { fit: "contain", background: transparent })
+    .ensureAlpha()
+    .png()
+    .toBuffer();
+
+  for (const [theme, color] of Object.entries(contactColors)) {
+    await sharp({
+      create: { width: 48, height: 48, channels: 4, background: color },
+    })
+      .composite([{ input: shape, blend: "dest-in" }])
+      .png()
+      .toFile(path.join(output, "contact", `${name}-${theme}.png`));
+  }
 }
 
 await sharp("public/avatar/profile.png")
