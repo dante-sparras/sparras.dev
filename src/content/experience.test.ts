@@ -119,11 +119,11 @@ describe("getExperience", () => {
     ]);
     expect(entries.map((entry) => entry.kind)).toEqual([
       "education",
-      "work",
+      "contribution",
       "education",
       "education",
     ]);
-    expect(entries[1]?.kindLabel).toBe("Work");
+    expect(entries[1]?.kindLabel).toBe("Contribution");
     expect(entries.map((entry) => entry.isCurrent)).toEqual([
       true,
       true,
@@ -134,13 +134,13 @@ describe("getExperience", () => {
       "Full-time | 01.2026–Current | 10m",
     );
     expect(entries[1]?.roles[0]?.meta).toBe(
-      "Part-time | 07.2022–Current | 4y 4m",
+      "Contributor | 07.2022–Current | 4y 4m",
     );
     expect(entries[2]?.roles[0]?.meta).toBe("Full-time | 08.2021–02.2022 | 7m");
     expect(entries[3]?.roles.map((role) => role.meta)).toEqual([
       "Full-time | 08.2018–06.2021 | 2y 11m",
-      "Part-time | 12.2018–06.2021 | 2y 7m",
-      "Part-time | 12.2018–06.2021 | 2y 7m",
+      "Volunteer | 12.2018–06.2021 | 2y 7m",
+      "Volunteer | 12.2018–06.2021 | 2y 7m",
       "06.2021",
     ]);
     expect(entries[1]?.roles[0]?.skills).toEqual([
@@ -170,7 +170,7 @@ describe("getExperience", () => {
     expect(entries[0]?.kindLabel).toBe("Utbildning");
     expect(entries[1]?.location).toBe("Åbo, Finland");
     expect(entries[1]?.roles[0]?.meta).toBe(
-      "Deltid | 07.2022–Pågående | 4\u00a0år 4\u00a0mån",
+      "Medhjälpare | 07.2022–Pågående | 4\u00a0år 4\u00a0mån",
     );
     expect(entries[2]?.roles[0]?.meta).toBe(
       "Heltid | 08.2021–02.2022 | 7\u00a0mån",
