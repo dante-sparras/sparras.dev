@@ -40,6 +40,9 @@ const kindIcons = {
   contribution: Handshake,
 } satisfies Record<Experience["kind"], LucideIcon>;
 
+/** The organizations with accomplishments to read, so they start open. */
+const INITIAL_OPEN_COUNT = 3;
+
 function OrganizationMark({ entry }: { entry: Experience }) {
   const Icon = icons[entry.icon];
 
@@ -71,7 +74,7 @@ function KindBadge({ entry }: { entry: Experience }) {
 
 function SkillBadges({ names }: { names: readonly string[] }) {
   return (
-    <ul className="mt-2 -ml-[7px] flex flex-wrap gap-0.5">
+    <ul className="mt-2 flex flex-wrap gap-1.5">
       {names
         .flatMap((name) => allSkills.filter((skill) => skill.name === name))
         .map((skill) => (
@@ -140,7 +143,7 @@ export function ExperienceList({
 }) {
   return (
     <ul className="divide-y">
-      {entries.map((entry) => {
+      {entries.map((entry, index) => {
         const primaryRole = entry.roles[0];
         const additionalRoles = entry.roles.slice(1);
         const skillNames = [
@@ -149,8 +152,11 @@ export function ExperienceList({
 
         return (
           <li key={entry.company}>
-            <details className="group/experience">
-              <summary className="group flex cursor-pointer list-none items-start gap-3 px-6 py-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
+            <details
+              className="group/experience transition-colors hover:bg-muted/20"
+              open={index < INITIAL_OPEN_COUNT}
+            >
+              <summary className="group flex cursor-pointer list-none items-start gap-3 px-6 py-4 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
                 <OrganizationMark entry={entry} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

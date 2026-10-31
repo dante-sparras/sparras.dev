@@ -1,11 +1,15 @@
 "use client";
 
+import { Pause, Play } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
+import { Section } from "@/components/section";
 import { P } from "@/components/typography/p";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { CardDescription, CardTitle } from "@/components/ui/card";
+import type { OutlineEntry } from "@/content/outline";
 import type { Reference } from "@/content/references";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { cn } from "@/lib/utils";
@@ -81,10 +85,13 @@ function ReferenceCard({
 function MarqueeRow({
   references,
   direction,
+  isPaused,
   className,
 }: {
   references: Reference[];
   direction: Direction;
+  /** Holds the row still; it can still be scrolled by hand. */
+  isPaused: boolean;
   className?: string;
 }) {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -130,7 +137,7 @@ function MarqueeRow({
     }
 
     const sign = direction === "left" ? 1 : -1;
-    let paused = false;
+    let paused = isPaused;
     let position = scroller.scrollLeft;
     let previous = performance.now();
     let frame = 0;
@@ -151,15 +158,15 @@ function MarqueeRow({
     };
     frame = requestAnimationFrame(step);
 
-    // Paused while a mouse hovers the row, keyboard focus is inside it, or a
-    // touch swipe (and its momentum) is still scrolling it.
+    // Paused by the visitor, or while a mouse hovers the row, keyboard focus is
+    // inside it, or a touch swipe (and its momentum) is still scrolling it.
     let hovered = false;
     let focused = false;
     let touching = false;
     let touchTimer = 0;
 
     const sync = () => {
-      const shouldPause = hovered || focused || touching;
+      const shouldPause = isPaused || hovered || focused || touching;
       if (shouldPause === paused) return;
       paused = shouldPause;
       if (paused) {
@@ -232,7 +239,7 @@ function MarqueeRow({
       }
       savedScrollLeft[direction] = position;
     };
-  }, [prefersReducedMotion, direction]);
+  }, [prefersReducedMotion, direction, isPaused]);
 
   const loops = prefersReducedMotion ? 1 : 2 * copies;
   const items = Array.from({ length: loops }).flatMap((_, loop) =>
@@ -247,7 +254,7 @@ function MarqueeRow({
     <div
       ref={scrollerRef}
       className={cn(
-        "@container scrollbar-none flex min-w-0 overflow-x-auto overscroll-x-contain",
+        "@container scrollbar-none mask-x-from-92% flex min-w-0 overflow-x-auto overscroll-x-contain",
         className,
       )}
     >
@@ -266,20 +273,57 @@ function MarqueeRow({
   );
 }
 
-export function ReferencesMarquee({ references }: { references: Reference[] }) {
+/** The References Section, which owns its pause button so the rows can obey it. */
+export function ReferencesSection({
+  entry,
+  references,
+  pauseLabel,
+  playLabel,
+}: {
+  entry: Pick<OutlineEntry, "id" | "title">;
+  references: Reference[];
+  pauseLabel: string;
+  playLabel: string;
+}) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [isPaused, setIsPaused] = useState(false);
   const splitAt = Math.ceil(references.length / 2);
   const topRow = references.slice(0, splitAt);
   const bottomRow = references.slice(splitAt);
+  const toggleLabel = isPaused ? playLabel : pauseLabel;
+  const ToggleIcon = isPaused ? Play : Pause;
 
   return (
-    // `auto-rows-fr` keeps both rows as tall as the tallest card. The `py-2`
-    // adds to each slot's own `p-2`, so the outer edges get the same 16px as
-    // the gap between the two rows.
-    <div className="grid min-w-0 auto-rows-fr py-2">
-      <MarqueeRow references={topRow} direction="left" />
-      {bottomRow.length > 0 ? (
-        <MarqueeRow references={bottomRow} direction="right" />
-      ) : null}
-    </div>
+    <Section
+      entry={entry}
+      action={
+        prefersReducedMotion ? null : (
+          <Button
+            aria-label={toggleLabel}
+            className="cursor-pointer"
+            onClick={() => setIsPaused(!isPaused)}
+            size="icon"
+            title={toggleLabel}
+            variant="outline"
+          >
+            <ToggleIcon aria-hidden />
+          </Button>
+        )
+      }
+    >
+      {/* `auto-rows-fr` keeps both rows as tall as the tallest card. The `py-2`
+          adds to each slot's own `p-2`, so the outer edges get the same 16px as
+          the gap between the two rows. */}
+      <div className="grid min-w-0 auto-rows-fr py-2">
+        <MarqueeRow direction="left" isPaused={isPaused} references={topRow} />
+        {bottomRow.length > 0 ? (
+          <MarqueeRow
+            direction="right"
+            isPaused={isPaused}
+            references={bottomRow}
+          />
+        ) : null}
+      </div>
+    </Section>
   );
 }

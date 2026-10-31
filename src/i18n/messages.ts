@@ -13,8 +13,13 @@ type Messages = {
   current: string;
   website: string;
   additionalRoles: (count: number) => string;
+  availability: string;
+  contactMe: string;
   downloadResume: string;
+  chooseResumeTheme: string;
   resumeThemes: Record<ResumeTheme, string>;
+  pauseReferences: string;
+  playReferences: string;
   resume: {
     title: string;
     fileName: string;
@@ -53,8 +58,13 @@ export const messages: Record<Locale, Messages> = {
     website: "Website",
     additionalRoles: (count) =>
       `${count} more ${count === 1 ? "role" : "roles"}`,
+    availability: "Availability",
+    contactMe: "Contact me",
     downloadResume: "Download resume",
+    chooseResumeTheme: "Choose a resume version",
     resumeThemes: { dark: "Dark", light: "Light (for printing)" },
+    pauseReferences: "Pause references",
+    playReferences: "Play references",
     resume: {
       title: "Resume",
       fileName: "Dante-Sparras-Resume",
@@ -100,8 +110,13 @@ export const messages: Record<Locale, Messages> = {
     website: "Webbplats",
     additionalRoles: (count) =>
       `${count} ytterligare ${count === 1 ? "roll" : "roller"}`,
+    availability: "Tillgänglighet",
+    contactMe: "Kontakta mig",
     downloadResume: "Ladda ner CV",
+    chooseResumeTheme: "Välj CV-version",
     resumeThemes: { dark: "Mörk", light: "Ljus (för utskrift)" },
+    pauseReferences: "Pausa referenser",
+    playReferences: "Spela upp referenser",
     resume: {
       title: "CV",
       fileName: "Dante-Sparras-CV",

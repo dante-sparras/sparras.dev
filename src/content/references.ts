@@ -23,7 +23,7 @@ const referenceSources: {
   {
     name: "Sebastian Aarnio",
     initials: "SA",
-    avatarSrc: "/sebastian-aarnio.png",
+    avatarSrc: "/references/sebastian-aarnio.webp",
     linkedinHref: "https://www.linkedin.com/in/sebastian-aarnio/",
     companyLogoSrc: "/spacexai-logo.jpg",
     workplace: {
@@ -36,7 +36,7 @@ const referenceSources: {
   {
     name: "Olie Aarnio",
     initials: "OA",
-    avatarSrc: "/olie-aarnio.png",
+    avatarSrc: "/references/olie-aarnio.webp",
     linkedinHref: "https://www.linkedin.com/in/olie-aarnio-05bbb2173/",
     companyLogoSrc: "/casuology-logo.jpg",
     workplace: {
@@ -49,7 +49,7 @@ const referenceSources: {
   {
     name: "Henry Brandt",
     initials: "HB",
-    avatarSrc: "/henry-brandt.png",
+    avatarSrc: "/references/henry-brandt.webp",
     linkedinHref: "https://www.linkedin.com/in/brandthenry/",
     companyLogoSrc: "/yh-akademin-logo.jpg",
     workplace: {
@@ -61,7 +61,7 @@ const referenceSources: {
   {
     name: "Robert Johansson",
     initials: "RJ",
-    avatarSrc: "/robert-johansson.png",
+    avatarSrc: "/references/robert-johansson.webp",
     linkedinHref: "https://www.linkedin.com/in/robert-johansson86/",
     companyLogoSrc: "/yh-akademin-logo.jpg",
     workplace: {
@@ -73,7 +73,7 @@ const referenceSources: {
   {
     name: "Frank Jonsson",
     initials: "FJ",
-    avatarSrc: "/frank-jonsson.png",
+    avatarSrc: "/references/frank-jonsson.webp",
     linkedinHref: "https://www.linkedin.com/in/fwjonsson/",
     companyLogoSrc: "/yh-akademin-logo.jpg",
     workplace: {
@@ -86,7 +86,7 @@ const referenceSources: {
   {
     name: "Leopold Hedefalk Nybom",
     initials: "LH",
-    avatarSrc: "/leopold-hedefalk-nybom.png",
+    avatarSrc: "/references/leopold-hedefalk-nybom.webp",
     linkedinHref: "https://www.linkedin.com/in/leopold-hedefalk-nybom/",
     companyLogoSrc: "/yh-akademin-logo.jpg",
     workplace: {

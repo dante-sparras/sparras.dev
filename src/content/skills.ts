@@ -19,6 +19,11 @@ const skillCategories: SkillCategory[] = [
     title: { en: "Programming Languages", sv: "Programspråk" },
     skills: [
       {
+        name: "C#",
+        iconSrc: "/icons/c-sharp.svg",
+        href: "https://learn.microsoft.com/en-us/dotnet/csharp/",
+      },
+      {
         name: "TypeScript",
         iconSrc: "/icons/typescript.svg",
         href: "https://www.typescriptlang.org/",
@@ -37,11 +42,6 @@ const skillCategories: SkillCategory[] = [
         name: "CSS",
         iconSrc: "/icons/css.svg",
         href: "https://developer.mozilla.org/en-US/docs/Web/CSS",
-      },
-      {
-        name: "C#",
-        iconSrc: "/icons/c-sharp.svg",
-        href: "https://learn.microsoft.com/en-us/dotnet/csharp/",
       },
       {
         name: "C++",
@@ -95,6 +95,11 @@ const skillCategories: SkillCategory[] = [
     id: "backend",
     title: { en: "Backend & Cloud", sv: "Backend och moln" },
     skills: [
+      {
+        name: ".NET",
+        iconSrc: "/icons/dotnet.svg",
+        href: "https://dotnet.microsoft.com/",
+      },
       { name: "Bun", iconSrc: "/icons/bun.svg", href: "https://bun.com/" },
       {
         name: "Node.js",

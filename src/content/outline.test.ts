@@ -29,10 +29,10 @@ describe("getHomepageOutline", () => {
 
   test("translates section titles without changing their anchors", () => {
     expect(getHomepageOutline("sv").map((entry) => entry.title)).toEqual([
+      "Projekt",
       "Referenser",
       "Erfarenhet",
       "Kompetenser",
-      "Projekt",
       "Blogg",
     ]);
     expect(getHomepageOutline("sv").map((entry) => entry.id)).toEqual(
