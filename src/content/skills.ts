@@ -16,7 +16,7 @@ type SkillCategory = {
 const skillCategories: SkillCategory[] = [
   {
     id: "languages",
-    title: { en: "Languages", sv: "Språk" },
+    title: { en: "Programming Languages", sv: "Programspråk" },
     skills: [
       {
         name: "TypeScript",
@@ -207,6 +207,22 @@ const skillCategories: SkillCategory[] = [
     ],
   },
 ];
+
+/** Real skills, but noise for an employer reading a one-page resume. */
+const leftOffResume = new Set([
+  "T3 Code",
+  "Vercel",
+  "Omarchy (Arch Linux)",
+  "Hermes Agent",
+  "Grok Build",
+]);
+
+export function getResumeSkillCategories(locale: Locale) {
+  return getSkillCategories(locale).map((category) => ({
+    ...category,
+    skills: category.skills.filter((skill) => !leftOffResume.has(skill.name)),
+  }));
+}
 
 export function getSkillCategories(locale: Locale) {
   return skillCategories.map(({ id, title, skills }) => ({

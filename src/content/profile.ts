@@ -20,6 +20,10 @@ type ProfileCopy = {
   summary: string;
   bio: BioPart[];
   avatarAlt: string;
+  /** The resume states what he is today; the site's `role` states his field. */
+  resumeHeadline: string;
+  resumeSummary: string;
+  languages: string[];
   studies: string;
   location: string;
   pronouns: string;
@@ -84,6 +88,10 @@ const profileCopy: Record<Locale, ProfileCopy> = {
       ". I care about writing clean, performant code, designing thoughtfully and shipping work that holds up. I enjoy working closely with teams and sharing what I learn.",
     ],
     avatarAlt: "Picture of Dante Sparrås",
+    resumeHeadline: ".NET Developer Student",
+    resumeSummary:
+      ".NET developer student at YH Akademin, finishing in December 2027. Looking for a 24-week LIA internship: 8 March–28 May and 30 August–19 November 2027.",
+    languages: ["Swedish", "English"],
     studies: "Student",
     location: "Norrköping, Sweden",
     pronouns: "he/him",
@@ -92,7 +100,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     role: "Fullstack- och .NET-utvecklare",
     summary: "Fullstackutvecklare med inriktning på webb- och spelutveckling.",
     bio: [
-      "Jag är en fullstackutvecklare som designar och bygger webbplatser och webbapplikationer, med spelutveckling som ett andra fokusområde. På webben arbetar jag i ",
+      "Jag är fullstackutvecklare som designar och bygger webbplatser och webbapplikationer, med spelutveckling som ett andra fokusområde. På webben arbetar jag i ",
       { skill: "TypeScript" },
       " med ",
       { skill: "Next.js" },
@@ -105,6 +113,10 @@ const profileCopy: Record<Locale, ProfileCopy> = {
       ". Jag bryr mig om att skriva ren och effektiv kod, designa omsorgsfullt och leverera arbete som håller. Jag trivs med att arbeta nära andra i team och dela med mig av det jag lär mig.",
     ],
     avatarAlt: "Bild på Dante Sparrås",
+    resumeHeadline: "Student, systemutvecklare .NET",
+    resumeSummary:
+      "Studerar till systemutvecklare .NET på YH Akademin, med examen i december 2027. Söker en arbetsplats för min LIA på 24 veckor: 8 mars–28 maj och 30 augusti–19 november 2027.",
+    languages: ["Svenska", "engelska"],
     studies: "Student",
     location: "Norrköping, Sverige",
     pronouns: "han/honom",
@@ -123,6 +135,9 @@ export function getProfile(locale: Locale) {
       src: "/avatar/profile.png" satisfies ImageSrc,
       alt: text.avatarAlt,
     },
+    resumeHeadline: text.resumeHeadline,
+    resumeSummary: text.resumeSummary,
+    languages: text.languages,
     studies: text.studies,
     school,
     location: text.location,

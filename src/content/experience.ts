@@ -88,7 +88,7 @@ const periodLabels: Record<
     // A no-break space keeps each number with its unit when the line wraps.
     years: (count) => `${count}\u00a0år`,
     months: (count) => `${count}\u00a0mån`,
-    current: "Pågående",
+    current: "pågående",
   },
 };
 
@@ -113,10 +113,10 @@ const experienceSources: readonly ExperienceSource[] = [
         end: { year: 2027, month: 12 },
         description: {
           en: [
-            "Studying for a qualified higher vocational diploma in .NET development.",
+            "Advanced Higher Vocational Education Diploma in .NET development.",
           ],
           sv: [
-            "Studerar till en kvalificerad yrkeshögskoleexamen som systemutvecklare .NET.",
+            "Studerar till kvalificerad yrkeshögskoleexamen som systemutvecklare .NET.",
           ],
         },
         skills: [
@@ -169,7 +169,7 @@ const experienceSources: readonly ExperienceSource[] = [
     logoSrc: "/tga-logo.jpg",
     roles: [
       {
-        title: { en: "Game Programmer", sv: "Spelprogrammerare" },
+        title: { en: "Game Programming", sv: "Spelprogrammering" },
         employment: "full-time",
         icon: "gamepad",
         start: { year: 2021, month: 8 },
@@ -177,13 +177,11 @@ const experienceSources: readonly ExperienceSource[] = [
         description: {
           en: [
             "Developed Lich's Grimoire, a mobile game, from concept to completion in a six-person team.",
-            "Contributed to gameplay mechanics as one of four programmers.",
-            "Built tools to streamline the team's workflow.",
+            "Worked on gameplay mechanics as one of four programmers and built tools for the team's workflow.",
           ],
           sv: [
             "Utvecklade Lich's Grimoire, ett mobilspel, från idé till färdigt spel i ett team på sex personer.",
-            "Bidrog till spelmekanik som en av fyra programmerare.",
-            "Byggde verktyg som förenklade teamets arbetsflöde.",
+            "Arbetade med spelmekanik som en av fyra programmerare och byggde verktyg för teamets arbetsflöde.",
           ],
         },
         skills: ["C++", "C#", "Unity", "Perforce"],
@@ -204,10 +202,7 @@ const experienceSources: readonly ExperienceSource[] = [
         icon: "graduation",
         start: { year: 2018, month: 8 },
         end: { year: 2021, month: 6 },
-        description: {
-          en: ["Studied the Technology Programme at upper secondary school."],
-          sv: ["Läste teknikprogrammet på gymnasiet."],
-        },
+        description: { en: [], sv: [] },
         skills: [
           "Python",
           "C#",
@@ -220,19 +215,17 @@ const experienceSources: readonly ExperienceSource[] = [
         ],
       },
       {
-        title: { en: "Student Ambassador", sv: "Studentambassadör" },
+        title: { en: "Student Ambassador", sv: "Elevambassadör" },
         employment: "volunteer",
         icon: "megaphone",
         start: { year: 2018, month: 12 },
         end: { year: 2021, month: 6 },
         description: {
           en: [
-            "Represented the school at events for prospective students and parents.",
-            "Communicated its technical profile and project-based approach.",
+            "Represented the school at events for prospective students and their parents.",
           ],
           sv: [
-            "Representerade skolan vid evenemang för blivande elever och föräldrar.",
-            "Berättade om den tekniska profilen och det projektbaserade arbetssättet.",
+            "Representerade skolan vid evenemang för blivande elever och deras föräldrar.",
           ],
         },
         skills: [],
@@ -245,19 +238,17 @@ const experienceSources: readonly ExperienceSource[] = [
         end: { year: 2021, month: 6 },
         description: {
           en: [
-            "Led the school's innovation hub.",
-            "Mentored students in 3D modeling, 3D printing, electronics, and soldering.",
+            "Ran the school's makerspace on my own initiative, mentoring students in 3D modelling, 3D printing, electronics, and soldering.",
           ],
           sv: [
-            "Ledde skolans innovationsverkstad.",
-            "Handledde elever i 3D-modellering, 3D-utskrift, elektronik och lödning.",
+            "Drev skolans makerspace på eget initiativ och handledde elever i 3D-modellering, 3D-utskrift, elektronik och lödning.",
           ],
         },
         skills: [],
       },
       {
         title: {
-          en: "Best Upper Secondary Thesis (voted by students)",
+          en: "Best Diploma Project (voted by students)",
           sv: "Bästa gymnasiearbete (utsett av eleverna)",
         },
         icon: "award",
