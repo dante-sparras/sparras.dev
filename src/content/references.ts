@@ -9,6 +9,7 @@ export type Reference = {
   companyLogoSrc: ImageSrc;
   workplace?: string;
   quote?: string;
+  isFeatured: boolean;
 };
 
 const referenceSources: {
@@ -19,6 +20,8 @@ const referenceSources: {
   companyLogoSrc: ImageSrc;
   workplace: Record<Locale, string>;
   quote?: string;
+  /** Stays still above the moving row, for the references that matter most. */
+  isFeatured?: boolean;
 }[] = [
   {
     name: "Sebastian Aarnio",
@@ -32,6 +35,7 @@ const referenceSources: {
     },
     quote:
       "Strong engineer who combines solid technical skills with a real eye for design.",
+    isFeatured: true,
   },
   {
     name: "Olie Aarnio",
@@ -45,6 +49,7 @@ const referenceSources: {
     },
     quote:
       "Reliable to work with. Ships polished work and cares about the details.",
+    isFeatured: true,
   },
   {
     name: "Henry Brandt",
@@ -107,5 +112,6 @@ export function getReferences(locale: Locale): Reference[] {
     companyLogoSrc: reference.companyLogoSrc,
     workplace: reference.workplace[locale],
     quote: reference.quote,
+    isFeatured: reference.isFeatured ?? false,
   }));
 }

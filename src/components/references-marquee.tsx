@@ -287,9 +287,8 @@ export function ReferencesSection({
 }) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [isPaused, setIsPaused] = useState(false);
-  const splitAt = Math.ceil(references.length / 2);
-  const topRow = references.slice(0, splitAt);
-  const bottomRow = references.slice(splitAt);
+  const featured = references.filter((reference) => reference.isFeatured);
+  const moving = references.filter((reference) => !reference.isFeatured);
   const toggleLabel = isPaused ? playLabel : pauseLabel;
   const ToggleIcon = isPaused ? Play : Pause;
 
@@ -311,18 +310,17 @@ export function ReferencesSection({
         )
       }
     >
-      {/* `auto-rows-fr` keeps both rows as tall as the tallest card. The `py-2`
-          adds to each slot's own `p-2`, so the outer edges get the same 16px as
-          the gap between the two rows. */}
-      <div className="grid min-w-0 auto-rows-fr py-2">
-        <MarqueeRow direction="left" isPaused={isPaused} references={topRow} />
-        {bottomRow.length > 0 ? (
-          <MarqueeRow
-            direction="right"
-            isPaused={isPaused}
-            references={bottomRow}
-          />
-        ) : null}
+      <ul className="grid auto-rows-fr gap-4 px-6 pt-4 sm:grid-cols-2">
+        {featured.map((reference) => (
+          <li key={reference.name}>
+            <ReferenceCard reference={reference} isLoopCopy={false} />
+          </li>
+        ))}
+      </ul>
+      {/* The `py-2` adds to each slot's own `p-2`, so the row is spaced from the
+          cards above by the same 16px as the gap between them. */}
+      <div className="grid min-w-0 py-2">
+        <MarqueeRow direction="left" isPaused={isPaused} references={moving} />
       </div>
     </Section>
   );
