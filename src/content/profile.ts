@@ -8,13 +8,6 @@ export type SocialLink = {
   iconSrc: ImageSrc;
 };
 
-/**
- * A piece of the bio: plain text, or a reference to an entry in
- * `src/content/skills.ts` (matched by `skill`) that is rendered with its icon.
- * Use `label` when the wording in the sentence differs from the skill name.
- */
-export type BioPart = string | { skill: string; label?: string };
-
 type ProfileCopy = {
   /** The one headline for the site, the page description and the resume. */
   role: string;
@@ -28,7 +21,7 @@ type ProfileCopy = {
     shortDates: string;
     workplace: string;
   };
-  bio: BioPart[];
+  bio: string;
   avatarAlt: string;
   resumeSummary: string;
   languages: string[];
@@ -92,21 +85,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
       shortDates: "8 Mar–28 May & 30 Aug–19 Nov 2027",
       workplace: "Norrköping or remote",
     },
-    bio: [
-      "I'm studying .NET development at YH Akademin and build my own Windows tools in ",
-      { skill: "C#" },
-      " and ",
-      { skill: ".NET" },
-      ", including Winland and Winshell. On the web I work in ",
-      { skill: "TypeScript" },
-      " with ",
-      { skill: "Next.js" },
-      " and ",
-      { skill: "TailwindCSS", label: "Tailwind CSS" },
-      ". For games, I use ",
-      { skill: "Unity" },
-      ". I care about writing clean, performant code, designing thoughtfully and shipping work that holds up. I enjoy working closely with teams and sharing what I learn.",
-    ],
+    bio: "I'm studying .NET development at YH Akademin. I work across web, desktop and game development. I like following best practices and care about writing clean, performant code, designing thoughtfully and shipping work that holds up. I enjoy working closely with teams and sharing what I learn.",
     avatarAlt: "Picture of Dante Sparrås",
     resumeSummary:
       ".NET developer student at YH Akademin, finishing in December 2027. Looking for a 24-week LIA internship: 8 March–28 May and 30 August–19 November 2027. Based in Norrköping and open to remote work.",
@@ -126,21 +105,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
       shortDates: "8 mars–28 maj & 30 aug–19 nov 2027",
       workplace: "Norrköping eller distans",
     },
-    bio: [
-      "Jag studerar till systemutvecklare .NET på YH Akademin och bygger egna Windows-verktyg i ",
-      { skill: "C#" },
-      " och ",
-      { skill: ".NET" },
-      ", bland annat Winland och Winshell. På webben arbetar jag i ",
-      { skill: "TypeScript" },
-      " med ",
-      { skill: "Next.js" },
-      " och ",
-      { skill: "TailwindCSS", label: "Tailwind CSS" },
-      ". För spel använder jag ",
-      { skill: "Unity" },
-      ". Jag bryr mig om att skriva ren och effektiv kod, designa omsorgsfullt och leverera arbete som håller. Jag trivs med att arbeta nära andra i team och dela med mig av det jag lär mig.",
-    ],
+    bio: "Jag studerar till systemutvecklare .NET på YH Akademin. Jag arbetar med webb-, skrivbords- och spelutveckling. Jag gillar att följa bästa praxis och bryr mig om att skriva ren och effektiv kod, designa omsorgsfullt och leverera arbete som håller. Jag trivs med att arbeta nära andra i team och dela med mig av det jag lär mig.",
     avatarAlt: "Bild på Dante Sparrås",
     resumeSummary:
       "Studerar till systemutvecklare .NET på YH Akademin, med examen i december 2027. Söker en arbetsplats för min LIA på 24 veckor: 8 mars–28 maj och 30 augusti–19 november 2027. Bor i Norrköping och kan även arbeta på distans.",
