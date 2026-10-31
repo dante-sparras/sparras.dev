@@ -58,7 +58,7 @@ export async function generateMetadata({
 
   const profile = getProfile(lang);
   return {
-    metadataBase: new URL("https://sparras.dev"),
+    metadataBase: new URL("https://www.sparras.dev"),
     title: profile.name,
     description: profile.summary,
     alternates: {
