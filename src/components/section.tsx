@@ -17,7 +17,7 @@ export function Section({
     <section
       id={entry.id}
       aria-labelledby={headingId}
-      className="scroll-mt-14 border-b-bleed"
+      className="border-b-bleed"
     >
       <div className="flex items-center justify-between gap-4 border-b-bleed px-6 py-3">
         <h2 id={headingId} className="font-semibold text-2xl tracking-tight">

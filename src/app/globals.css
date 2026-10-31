@@ -102,7 +102,8 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  /* White, because it is used at 50% and must still stand out against black. */
+  --ring: oklch(1 0 0);
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
@@ -130,21 +131,40 @@
   }
 }
 
+/*
+ * Outside any layer, so these beat the vendored components without editing
+ * them. The first is needed because forced colors removes box-shadow rings, and
+ * the second because a highlighted menu item barely differs from the menu.
+ */
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
+  }
+}
+
+[role^="menuitem"]:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: -2px;
+}
+
 @layer utilities {
   /*
-   * Bottom border that reaches both edges of the window instead of stopping at
-   * the parent's width. It keeps the 1px box a real border would take up, and
-   * assumes the element is horizontally centered in the viewport. The part
-   * outside the 48rem column (max-w-3xl) fades out towards the window edges (the
-   * fade reaches slightly into the column, up to 16rem long), staying
-   * faint for most of the way and only picking up close to the column.
+   * Bottom border that reaches past the parent's width, up to both edges of the
+   * window or 16rem beyond the column on wider screens. It keeps the 1px box a
+   * real border would take up, and assumes the element is horizontally centered
+   * in the viewport. The part outside the 48rem column (max-w-3xl) fades out
+   * towards its ends (the fade reaches slightly into the column, up to 16rem
+   * long), staying faint for most of the way and only picking up close to the
+   * column.
    */
   .border-b-bleed {
     @apply relative border-b border-b-transparent;
 
     &::after {
       content: "";
-      --bleed: max(0px, calc((100vw - 48rem) / 2));
+      --line-width: min(100vw, 80rem);
+      --bleed: max(0px, calc((var(--line-width) - 48rem) / 2));
       --fade: min(16rem, calc(var(--bleed) * 1.35));
       background-image: linear-gradient(
         to right,
@@ -157,7 +177,8 @@
           calc(100% - var(--fade) * 0.6),
         transparent
       );
-      @apply pointer-events-none absolute bottom-[-1px] left-1/2 h-px w-screen -translate-x-1/2;
+      width: var(--line-width);
+      @apply pointer-events-none absolute bottom-[-1px] left-1/2 h-px -translate-x-1/2;
     }
   }
 }

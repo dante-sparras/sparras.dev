@@ -18,6 +18,8 @@ export type BioPart = string | { skill: string; label?: string };
 type ProfileCopy = {
   /** The one headline for the site, the page description and the resume. */
   role: string;
+  /** Written for search results and shared links, so it names the search. */
+  pageTitle: string;
   summary: string;
   availability: { title: string; dates: string; workplace: string };
   bio: BioPart[];
@@ -33,6 +35,8 @@ const school: { name: string; href: Href } = {
   name: "YH Akademin",
   href: "https://yh.se",
 };
+
+export const siteUrl = "https://www.sparras.dev";
 
 export const timeZone = "Europe/Stockholm";
 
@@ -73,7 +77,9 @@ const socialLinks: SocialLink[] = [
 const profileCopy: Record<Locale, ProfileCopy> = {
   en: {
     role: ".NET Developer Student",
-    summary: ".NET developer student looking for a LIA internship in 2027.",
+    pageTitle: "Dante Sparrås – .NET Developer Student, LIA 2027 in Norrköping",
+    summary:
+      ".NET developer student at YH Akademin in Norrköping, building Windows tools in C#. Looking for a 24-week LIA internship in 2027, on site or remote.",
     availability: {
       title: "Looking for a 24-week LIA internship",
       dates: "8 March–28 May and 30 August–19 November 2027",
@@ -104,7 +110,9 @@ const profileCopy: Record<Locale, ProfileCopy> = {
   },
   sv: {
     role: "Student, systemutvecklare .NET",
-    summary: "Studerar till systemutvecklare .NET och söker LIA-plats 2027.",
+    pageTitle: "Dante Sparrås – systemutvecklare .NET, LIA 2027 i Norrköping",
+    summary:
+      "Studerar till systemutvecklare .NET på YH Akademin i Norrköping och bygger Windows-verktyg i C#. Söker LIA-plats på 24 veckor 2027, på plats eller på distans.",
     availability: {
       title: "Söker LIA-plats på 24 veckor",
       dates: "8 mars–28 maj och 30 augusti–19 november 2027",
@@ -141,6 +149,7 @@ export function getProfile(locale: Locale) {
   return {
     name: "Dante Sparrås",
     role: text.role,
+    pageTitle: text.pageTitle,
     summary: text.summary,
     availability: text.availability,
     bio: text.bio,
