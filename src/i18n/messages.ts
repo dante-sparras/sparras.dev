@@ -1,4 +1,5 @@
 import type { Locale } from "@/i18n/locale";
+import type { ResumeTheme } from "@/lib/resume-theme";
 import type { WeatherCondition } from "@/lib/weather";
 
 type Messages = {
@@ -12,6 +13,18 @@ type Messages = {
   current: string;
   website: string;
   additionalRoles: (count: number) => string;
+  downloadResume: string;
+  resumeThemes: Record<ResumeTheme, string>;
+  resume: {
+    title: string;
+    fileName: string;
+    contact: string;
+    work: string;
+    education: string;
+    contributions: string;
+    projects: string;
+    skills: string;
+  };
   localTime: string;
   temperatureUnit: string;
   celsius: string;
@@ -37,6 +50,18 @@ export const messages: Record<Locale, Messages> = {
     website: "Website",
     additionalRoles: (count) =>
       `${count} more ${count === 1 ? "role" : "roles"}`,
+    downloadResume: "Download resume",
+    resumeThemes: { dark: "Dark", light: "Light (for printing)" },
+    resume: {
+      title: "Resume",
+      fileName: "Dante-Sparras-Resume",
+      contact: "Contact",
+      work: "Work Experience",
+      education: "Education",
+      contributions: "Other Experience",
+      projects: "Projects",
+      skills: "Skills",
+    },
     localTime: "Local time",
     temperatureUnit: "Temperature unit",
     celsius: "Celsius (°C)",
@@ -69,6 +94,18 @@ export const messages: Record<Locale, Messages> = {
     website: "Webbplats",
     additionalRoles: (count) =>
       `${count} ytterligare ${count === 1 ? "roll" : "roller"}`,
+    downloadResume: "Ladda ner CV",
+    resumeThemes: { dark: "Mörk", light: "Ljus (för utskrift)" },
+    resume: {
+      title: "CV",
+      fileName: "Dante-Sparras-CV",
+      contact: "Kontakt",
+      work: "Arbetslivserfarenhet",
+      education: "Utbildning",
+      contributions: "Övrig erfarenhet",
+      projects: "Projekt",
+      skills: "Färdigheter",
+    },
     localTime: "Lokal tid",
     temperatureUnit: "Temperaturenhet",
     celsius: "Celsius (°C)",
