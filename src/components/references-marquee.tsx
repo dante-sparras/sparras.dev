@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
 import { P } from "@/components/typography/p";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,9 +23,20 @@ type Direction = "left" | "right";
 /** Survives the remount that a locale change triggers, so the loops do not snap back to the start. */
 const savedScrollLeft: Partial<Record<Direction, number>> = {};
 
-function ReferenceCard({ reference }: { reference: Reference }) {
+/**
+ * The name is the link and stretches over the whole card, so the quote stays
+ * readable text. `isLoopCopy` cards only fill the loop: they are hidden from
+ * screen readers, so the keyboard must skip them too.
+ */
+function ReferenceCard({
+  reference,
+  isLoopCopy,
+}: {
+  reference: Reference;
+  isLoopCopy: boolean;
+}) {
   return (
-    <div className="flex h-full flex-col justify-between gap-4 rounded-2xl border border-border p-4 transition-colors duration-200 hover:border-foreground">
+    <div className="relative flex h-full flex-col justify-between gap-4 rounded-2xl border border-border p-4 transition-colors duration-200 hover:border-foreground has-focus-visible:border-foreground">
       {reference.quote ? (
         // The quotes are given in English on both language pages.
         <P lang="en" className="text-pretty leading-5">
@@ -40,7 +52,13 @@ function ReferenceCard({ reference }: { reference: Reference }) {
         </Avatar>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <CardTitle className="truncate font-semibold text-[14px]">
-            {reference.name}
+            <Link
+              href={reference.linkedinHref}
+              tabIndex={isLoopCopy ? -1 : undefined}
+              className="outline-none after:absolute after:inset-0 after:rounded-2xl"
+            >
+              {reference.name}
+            </Link>
           </CardTitle>
           {reference.workplace ? (
             <CardDescription className="line-clamp-2 text-[12px]">
@@ -240,7 +258,7 @@ function MarqueeRow({
             aria-hidden={hidden ? true : undefined}
             className={slotClassName}
           >
-            <ReferenceCard reference={reference} />
+            <ReferenceCard reference={reference} isLoopCopy={hidden} />
           </li>
         ))}
       </ul>

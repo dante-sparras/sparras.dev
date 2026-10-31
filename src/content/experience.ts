@@ -122,8 +122,6 @@ const experienceSources: readonly ExperienceSource[] = [
         skills: [
           "C#",
           "SQL Server",
-          "ASP.NET",
-          "ADO.NET",
           "HTML",
           "CSS",
           "JavaScript",

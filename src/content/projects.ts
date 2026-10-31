@@ -46,18 +46,9 @@ const projectSources: {
     href: "https://github.com/dante-sparras/winshell",
     stack: ["C#"],
   },
-  {
-    title: "Winoma",
-    description: {
-      en: "Omarchy for Windows 11.",
-      sv: "Omarchy för Windows 11.",
-    },
-    href: "https://github.com/dante-sparras/winoma",
-    stack: ["C#"],
-  },
 ];
 
-/** Strongest first, and only projects a reader can open: Winoma's repo is private. */
+/** Strongest first. */
 const resumeProjectTitles = ["Winland", "Winshell", "sparras.dev"];
 
 function getSkill(name: string) {

@@ -90,7 +90,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     avatarAlt: "Picture of Dante Sparrås",
     resumeHeadline: ".NET Developer Student",
     resumeSummary:
-      ".NET developer student at YH Akademin, finishing in December 2027. Looking for a 24-week LIA internship: 8 March–28 May and 30 August–19 November 2027.",
+      ".NET developer student at YH Akademin, finishing in December 2027. Looking for a 24-week LIA internship: 8 March–28 May and 30 August–19 November 2027. Based in Norrköping and open to remote work.",
     languages: ["Swedish", "English"],
     studies: "Student",
     location: "Norrköping, Sweden",
@@ -115,7 +115,7 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     avatarAlt: "Bild på Dante Sparrås",
     resumeHeadline: "Student, systemutvecklare .NET",
     resumeSummary:
-      "Studerar till systemutvecklare .NET på YH Akademin, med examen i december 2027. Söker en arbetsplats för min LIA på 24 veckor: 8 mars–28 maj och 30 augusti–19 november 2027.",
+      "Studerar till systemutvecklare .NET på YH Akademin, med examen i december 2027. Söker en arbetsplats för min LIA på 24 veckor: 8 mars–28 maj och 30 augusti–19 november 2027. Bor i Norrköping och kan även arbeta på distans.",
     languages: ["Svenska", "engelska"],
     studies: "Student",
     location: "Norrköping, Sverige",

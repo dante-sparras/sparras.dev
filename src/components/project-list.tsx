@@ -1,9 +1,9 @@
 "use client";
 
 import { ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { SkillBadge } from "@/components/skill-badge";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -25,17 +25,9 @@ function ProjectRow({ project }: { project: Project }) {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h3 className="font-medium text-base">{project.title}</h3>
             {project.stack.length > 0 && (
-              <ul className="flex flex-wrap items-center gap-2">
+              <ul className="flex flex-wrap items-center gap-0.5">
                 {project.stack.map((skill) => (
-                  <li key={skill.name} title={skill.name}>
-                    <Image
-                      src={skill.iconSrc}
-                      alt={skill.name}
-                      width={14}
-                      height={14}
-                      className="size-3.5 object-contain opacity-70 transition-opacity group-hover:opacity-100"
-                    />
-                  </li>
+                  <SkillBadge key={skill.name} skill={skill} />
                 ))}
               </ul>
             )}

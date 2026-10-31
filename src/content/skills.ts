@@ -112,16 +112,6 @@ const skillCategories: SkillCategory[] = [
         href: "https://www.convex.dev/",
       },
       {
-        name: "ASP.NET",
-        iconSrc: "/icons/dotnet.svg",
-        href: "https://dotnet.microsoft.com/en-us/apps/aspnet",
-      },
-      {
-        name: "ADO.NET",
-        iconSrc: "/icons/dotnet.svg",
-        href: "https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/ado-net-overview",
-      },
-      {
         name: "SQL Server",
         iconSrc: "/icons/sql-server.svg",
         href: "https://www.microsoft.com/en-us/sql-server",
@@ -151,7 +141,7 @@ const skillCategories: SkillCategory[] = [
   },
   {
     id: "workflow",
-    title: { en: "Workflow & AI", sv: "Arbetsflöde och AI" },
+    title: { en: "Workflow", sv: "Arbetsflöde" },
     skills: [
       {
         name: "T3 Code",
@@ -184,38 +174,12 @@ const skillCategories: SkillCategory[] = [
         iconSrc: "/icons/omarchy.svg",
         href: "https://omarchy.org/",
       },
-      {
-        name: "Hermes Agent",
-        iconSrc: "/icons/hermes-agent.png",
-        href: "https://hermes-agent.nousresearch.com/",
-      },
-      {
-        name: "Cursor",
-        iconSrc: "/icons/cursor.svg",
-        href: "https://cursor.com/",
-      },
-      {
-        name: "Grok Build",
-        iconSrc: "/icons/grok-build.png",
-        href: "https://docs.x.ai/build/overview",
-      },
-      {
-        name: "Claude Code",
-        iconSrc: "/icons/claude-code.svg",
-        href: "https://code.claude.com/",
-      },
     ],
   },
 ];
 
 /** Real skills, but noise for an employer reading a one-page resume. */
-const leftOffResume = new Set([
-  "T3 Code",
-  "Vercel",
-  "Omarchy (Arch Linux)",
-  "Hermes Agent",
-  "Grok Build",
-]);
+const leftOffResume = new Set(["T3 Code", "Vercel", "Omarchy (Arch Linux)"]);
 
 export function getResumeSkillCategories(locale: Locale) {
   return getSkillCategories(locale).map((category) => ({
