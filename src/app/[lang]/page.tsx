@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Bio } from "@/components/bio";
@@ -12,12 +11,10 @@ import {
 } from "@/components/profile-overview";
 import { ProjectList } from "@/components/project-list";
 import { ReferencesSection } from "@/components/references-marquee";
-import { ResumeDownload } from "@/components/resume-download";
 import { Section } from "@/components/section";
 import { SkillLists } from "@/components/skill-lists";
 import { Muted } from "@/components/typography/muted";
 import { P } from "@/components/typography/p";
-import { buttonVariants } from "@/components/ui/button";
 import { getExperience } from "@/content/experience";
 import { getSections, type SectionId } from "@/content/outline";
 import { posts } from "@/content/posts";
@@ -116,34 +113,24 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
       </header>
       <section
         aria-label={messages.availability}
-        className="flex flex-col gap-4 border-b-bleed px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
+        className="flex flex-col gap-1 border-b-bleed bg-muted/20 px-6 py-3 md:flex-row md:items-baseline md:gap-3"
       >
-        <div className="min-w-0">
-          <p className="text-pretty font-semibold text-base">
-            {profile.availability.title}
-          </p>
-          <Muted className="mt-1 text-pretty">
-            {profile.availability.dates}
-          </Muted>
-          <Muted className="text-pretty">
-            {profile.availability.workplace}
-          </Muted>
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <ResumeDownload
-            lang={lang}
-            label={messages.downloadResume}
-            menuLabel={messages.chooseResumeTheme}
-            fileName={messages.resume.fileName}
-            themeLabels={messages.resumeThemes}
+        <p className="flex items-center gap-2 font-semibold text-sm">
+          <span
+            aria-hidden
+            className="size-1.5 shrink-0 rounded-full bg-foreground"
           />
-          <Link
-            href={`mailto:${profile.email}`}
-            className={buttonVariants({ variant: "outline", size: "lg" })}
-          >
-            {messages.contactMe}
-          </Link>
-        </div>
+          {profile.availability.title}
+        </p>
+        <Muted className="text-pretty text-[13px]">
+          {profile.availability.shortDates}
+          <span aria-hidden className="hidden md:inline">
+            {" · "}
+          </span>
+          <span className="block md:inline">
+            {profile.availability.workplace}
+          </span>
+        </Muted>
       </section>
       <ProfileOverview locale={lang} />
       <P className="text-pretty border-b-bleed px-6 py-6 text-base leading-7">

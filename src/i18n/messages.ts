@@ -15,6 +15,7 @@ type Messages = {
   additionalRoles: (count: number) => string;
   availability: string;
   contactMe: string;
+  resumeButton: string;
   downloadResume: string;
   chooseResumeTheme: string;
   resumeThemes: Record<ResumeTheme, string>;
@@ -60,6 +61,7 @@ export const messages: Record<Locale, Messages> = {
       `${count} more ${count === 1 ? "role" : "roles"}`,
     availability: "Availability",
     contactMe: "Contact me",
+    resumeButton: "Resume",
     downloadResume: "Download resume",
     chooseResumeTheme: "Choose a resume version",
     resumeThemes: { dark: "Dark", light: "Light (for printing)" },
@@ -112,6 +114,7 @@ export const messages: Record<Locale, Messages> = {
       `${count} ytterligare ${count === 1 ? "roll" : "roller"}`,
     availability: "Tillgänglighet",
     contactMe: "Kontakta mig",
+    resumeButton: "CV",
     downloadResume: "Ladda ner CV",
     chooseResumeTheme: "Välj CV-version",
     resumeThemes: { dark: "Mörk", light: "Ljus (för utskrift)" },
