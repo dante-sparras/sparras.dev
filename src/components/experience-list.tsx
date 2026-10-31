@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { SkillBadge } from "@/components/skill-badge";
 import type {
   Experience,
   ExperienceIcon,
@@ -70,28 +71,12 @@ function KindBadge({ entry }: { entry: Experience }) {
 
 function SkillBadges({ names }: { names: readonly string[] }) {
   return (
-    <ul className="mt-2.5 flex flex-wrap gap-1.5">
-      {names.map((name) => {
-        const skill = allSkills.find((entry) => entry.name === name);
-
-        return (
-          <li
-            key={name}
-            className="inline-flex h-6 items-center gap-1.5 rounded-full border bg-background px-2 font-mono text-foreground text-xs"
-          >
-            {skill && (
-              <Image
-                src={skill.iconSrc}
-                alt=""
-                width={14}
-                height={14}
-                className="size-3.5 object-contain"
-              />
-            )}
-            {name}
-          </li>
-        );
-      })}
+    <ul className="mt-2 -ml-[7px] flex flex-wrap gap-0.5">
+      {names
+        .flatMap((name) => allSkills.filter((skill) => skill.name === name))
+        .map((skill) => (
+          <SkillBadge key={skill.name} skill={skill} />
+        ))}
     </ul>
   );
 }
@@ -165,7 +150,7 @@ export function ExperienceList({
         return (
           <li key={entry.company}>
             <details className="group/experience">
-              <summary className="flex cursor-pointer list-none items-start gap-3 px-6 py-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
+              <summary className="group flex cursor-pointer list-none items-start gap-3 px-6 py-4 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
                 <OrganizationMark entry={entry} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
