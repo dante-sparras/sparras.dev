@@ -1,30 +1,51 @@
 "use client";
 
 import { ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { type PointerEvent, useState } from "react";
-import { SparrasDevIllustration } from "@/components/sparras-dev-illustration";
+import { type PointerEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { WinlandIllustration } from "@/components/winland-illustration";
-import { WinshellIllustration } from "@/components/winshell-illustration";
 import type { Project } from "@/content/projects";
+import { useIsNearScreen } from "@/hooks/use-is-near-screen";
 
 const INITIAL_COUNT = 3;
 
+// The scenes are half the page's elements and start well below the first
+// screen, so they stay out of the HTML and are only fetched on the way there.
 const scenes = {
-  winland: WinlandIllustration,
-  winshell: WinshellIllustration,
-  "sparras-dev": SparrasDevIllustration,
+  winland: dynamic(
+    () =>
+      import("@/components/winland-illustration").then(
+        (module) => module.WinlandIllustration,
+      ),
+    { ssr: false },
+  ),
+  winshell: dynamic(
+    () =>
+      import("@/components/winshell-illustration").then(
+        (module) => module.WinshellIllustration,
+      ),
+    { ssr: false },
+  ),
+  "sparras-dev": dynamic(
+    () =>
+      import("@/components/sparras-dev-illustration").then(
+        (module) => module.SparrasDevIllustration,
+      ),
+    { ssr: false },
+  ),
 };
 
 function ProjectRow({ project }: { project: Project }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const sceneBox = useRef<HTMLDivElement>(null);
+  const isNearScreen = useIsNearScreen(sceneBox);
   const Scene = scenes[project.illustration];
 
   // A tap only follows the link, so the scene is for a mouse or the keyboard.
@@ -46,8 +67,19 @@ function ProjectRow({ project }: { project: Project }) {
         onBlur={() => setIsPlaying(false)}
         className="group flex flex-col gap-4 px-6 py-5 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:flex-row sm:items-center sm:gap-6"
       >
-        <div className="relative aspect-[2/1] w-full shrink-0 overflow-hidden border sm:w-64">
-          <Scene alt={project.illustrationAlt} isPlaying={isPlaying} />
+        <div
+          ref={sceneBox}
+          className="relative aspect-[2/1] w-full shrink-0 overflow-hidden border sm:w-64"
+        >
+          {isNearScreen ? (
+            <Scene alt={project.illustrationAlt} isPlaying={isPlaying} />
+          ) : (
+            <div
+              role="img"
+              aria-label={project.illustrationAlt}
+              className="absolute inset-0"
+            />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-pixel text-xl leading-none">{project.title}</h3>

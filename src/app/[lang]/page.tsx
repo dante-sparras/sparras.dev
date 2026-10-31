@@ -100,7 +100,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
                   {profile.pronouns}
                 </span>
               </h1>
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3">
                 <Muted className="whitespace-nowrap text-xs sm:text-sm">
                   {profile.role}
                 </Muted>
