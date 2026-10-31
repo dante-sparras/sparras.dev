@@ -6,7 +6,7 @@ export const viewport = { width: 1280, height: 640 };
 export const navHeight = 56;
 
 /** The illustration on the page's own card, where the page shows again. */
-export const ownCard: Rect = { x: 282, y: 1168, width: 349, height: 174.5 };
+export const ownCard: Rect = { x: 282, y: 1115, width: 254, height: 127 };
 
 /** Far enough to center the card in the space below the nav. */
 export const scrollDistance =

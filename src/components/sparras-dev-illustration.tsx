@@ -21,9 +21,6 @@ const gutter = 281;
 /** How much the banner strip pulled everything below it up the page. */
 const bannerSavings = 63;
 
-/** How much the shorter About paragraph pulled Projects up the page. */
-const bioSavings = 28;
-
 const lineOpacity = 0.14;
 const bleedGradientId = "sparras-dev-line-bleed";
 const avatarClipId = "sparras-dev-avatar";
@@ -290,104 +287,70 @@ function AboutParagraph() {
   );
 }
 
-function ProjectCard({
-  x,
+const miniSceneWidth = 349;
+const skillIconStep = 28;
+
+function ProjectRow({
   y,
   title,
   description,
-  badgeRows,
+  iconCount,
   children,
 }: {
-  x: number;
   y: number;
   title: number;
   description: readonly number[];
-  /** Pill widths per row, the last row sitting at the bottom of the card. */
-  badgeRows: readonly (readonly number[])[];
+  iconCount: number;
   children?: ReactNode;
 }) {
+  const icons = Array.from({ length: iconCount }, (_, index) => index);
+
   return (
     <>
       <rect
-        x={x}
-        y={y}
-        width={351}
-        height={371}
-        rx={16}
-        fill="#0b0b0b"
+        x={281}
+        y={y + 20}
+        width={256}
+        height={128}
+        fill="#000"
         stroke="#fff"
-        strokeOpacity={0.14}
+        strokeOpacity={lineOpacity}
       />
-      <g transform={`translate(${x + 1} ${y + 1})`}>{children}</g>
-      <rect
-        x={x}
-        y={y + 176}
-        width={351}
-        height={1}
-        fill="#fff"
-        opacity={0.14}
-      />
-      <Line x={x + 17} y={y + 202} width={title} height={12} opacity={1} />
-      <circle
-        cx={x + 318}
-        cy={y + 208}
-        r={16}
-        stroke="#fff"
-        strokeOpacity={0.25}
-      />
-      <path
-        d={`M${x + 313} ${y + 213}l10-10m-7 0h7v7`}
-        fill="none"
-        stroke="#fff"
-        strokeOpacity={0.7}
-        strokeWidth={1.5}
-      />
+      <g
+        transform={`translate(${ownCard.x} ${y + 21}) scale(${ownCard.width / miniSceneWidth})`}
+      >
+        {children}
+      </g>
+      <Line x={561} y={y + 34} width={title} height={12} opacity={1} />
       {description.map((width, row) => (
         <Line
           key={width}
-          x={x + 17}
-          y={y + 240 + row * 24}
+          x={561}
+          y={y + 62 + row * 24}
           width={width}
           height={8}
         />
       ))}
-      {badgeRows.map((widths, row) => {
-        const top = y + 330 - (badgeRows.length - 1 - row) * 30;
-        let left = x + 17;
-
-        return widths.map((width) => {
-          const pill = { x: left, width };
-          left += width + 6;
-
-          return (
-            <g key={`${top}-${pill.x}`}>
-              <rect
-                x={pill.x}
-                y={top}
-                width={width}
-                height={24}
-                rx={12}
-                stroke="#fff"
-                strokeOpacity={0.14}
-              />
-              <Line
-                x={pill.x + 9}
-                y={top + 6}
-                width={12}
-                height={12}
-                opacity={0.8}
-              />
-              <Line
-                x={pill.x + 27}
-                y={top + 9}
-                width={width - 38}
-                height={6}
-                opacity={0.45}
-              />
-            </g>
-          );
-        });
-      })}
+      {icons.map((icon) => (
+        <rect
+          key={icon}
+          x={561 + icon * skillIconStep}
+          y={y + 119}
+          width={18}
+          height={18}
+          rx={4}
+          fill="#fff"
+          opacity={0.75}
+        />
+      ))}
+      <path
+        d={`M985 ${y + 90}l12-12m-9 0h9v9`}
+        fill="none"
+        stroke="#fff"
+        strokeOpacity={0.6}
+        strokeWidth={1.5}
+      />
+      <Rule y={y + 168} />
     </>
   );
 }
@@ -469,36 +432,103 @@ function MiniWinshell() {
 function ProjectsSection() {
   return (
     <>
-      <Line x={gutter} y={808} width={91} height={18} opacity={1} />
-      <Rule y={847} />
-      <ProjectCard
-        x={281}
-        y={871}
-        title={79}
-        description={[312, 118]}
-        badgeRows={[[52, 62]]}
-      >
+      <Line x={gutter} y={718} width={91} height={18} opacity={1} />
+      <Rule y={755} />
+      <ProjectRow y={756} title={79} description={[380, 60]} iconCount={2}>
         <MiniWinland />
-      </ProjectCard>
-      <ProjectCard
-        x={648}
-        y={871}
-        title={86}
-        description={[316, 164]}
-        badgeRows={[[52, 62]]}
-      >
+      </ProjectRow>
+      <ProjectRow y={925} title={86} description={[392, 96]} iconCount={2}>
         <MiniWinshell />
-      </ProjectCard>
-      <ProjectCard
-        x={281}
-        y={1258}
-        title={108}
-        description={[302, 176]}
-        badgeRows={[
-          [78, 102],
-          [120, 94, 56],
-        ]}
+      </ProjectRow>
+      <ProjectRow y={1094} title={108} description={[372, 120]} iconCount={5} />
+    </>
+  );
+}
+
+function FeaturedReference({
+  x,
+  quote,
+  name,
+  workplace,
+}: {
+  x: number;
+  quote: readonly number[];
+  name: number;
+  workplace: number;
+}) {
+  const y = 1336;
+
+  return (
+    <>
+      <rect
+        x={x}
+        y={y}
+        width={351}
+        height={131}
+        rx={16}
+        fill="none"
+        stroke="#fff"
+        strokeOpacity={lineOpacity}
       />
+      {quote.map((width, row) => (
+        <Line
+          key={width}
+          x={x + 17}
+          y={y + 22 + row * 20}
+          width={width}
+          height={7}
+          opacity={0.75}
+        />
+      ))}
+      <circle
+        cx={x + 33}
+        cy={y + 98}
+        r={16}
+        fill="#fff"
+        fillOpacity={0.2}
+        stroke="#fff"
+        strokeOpacity={lineOpacity}
+      />
+      <Line x={x + 61} y={y + 87} width={name} height={9} opacity={1} />
+      <Line x={x + 61} y={y + 106} width={workplace} height={6} />
+      <rect
+        x={x + 310}
+        y={y + 88}
+        width={24}
+        height={24}
+        rx={4}
+        fill="#fff"
+        opacity={0.75}
+      />
+    </>
+  );
+}
+
+/** Only as much of References as the end of the scroll shows. */
+function ReferencesStart() {
+  return (
+    <>
+      <Line x={gutter} y={1282} width={125} height={18} opacity={1} />
+      <rect
+        x={967}
+        y={1275}
+        width={32}
+        height={32}
+        rx={8}
+        fill="none"
+        stroke="#fff"
+        strokeOpacity={0.3}
+      />
+      <Line x={978} y={1285} width={3} height={12} opacity={0.9} />
+      <Line x={985} y={1285} width={3} height={12} opacity={0.9} />
+      <Rule y={1319} />
+      <FeaturedReference
+        x={281}
+        quote={[296, 200]}
+        name={112}
+        workplace={172}
+      />
+      <FeaturedReference x={648} quote={[298, 178]} name={80} workplace={190} />
     </>
   );
 }
@@ -514,10 +544,9 @@ function Page() {
       <g transform={`translate(0 ${-bannerSavings})`}>
         <ProfileOverview />
         <AboutParagraph />
-        <g transform={`translate(0 ${-bioSavings})`}>
-          <ProjectsSection />
-        </g>
       </g>
+      <ProjectsSection />
+      <ReferencesStart />
       <NavBar />
     </>
   );
