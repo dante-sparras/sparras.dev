@@ -29,6 +29,11 @@ const sectionTitles: Record<SectionId, Record<Locale, string>> = {
 export function getHomepageOutline(locale: Locale): OutlineEntry[] {
   return [
     {
+      id: "projects",
+      title: sectionTitles.projects[locale],
+      items: getProjects(locale),
+    },
+    {
       id: "references",
       title: sectionTitles.references[locale],
       items: getReferences(locale),
@@ -39,11 +44,6 @@ export function getHomepageOutline(locale: Locale): OutlineEntry[] {
       items: getExperience(locale),
     },
     { id: "skills", title: sectionTitles.skills[locale], items: skills },
-    {
-      id: "projects",
-      title: sectionTitles.projects[locale],
-      items: getProjects(locale),
-    },
     { id: "blog", title: sectionTitles.blog[locale], items: posts },
   ];
 }

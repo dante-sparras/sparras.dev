@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Bio } from "@/components/bio";
@@ -10,12 +11,13 @@ import {
   SocialLinkBadges,
 } from "@/components/profile-overview";
 import { ProjectList } from "@/components/project-list";
-import { ReferencesMarquee } from "@/components/references-marquee";
+import { ReferencesSection } from "@/components/references-marquee";
 import { ResumeDownload } from "@/components/resume-download";
 import { Section } from "@/components/section";
 import { SkillLists } from "@/components/skill-lists";
 import { Muted } from "@/components/typography/muted";
 import { P } from "@/components/typography/p";
+import { buttonVariants } from "@/components/ui/button";
 import { getExperience } from "@/content/experience";
 import { getSections, type SectionId } from "@/content/outline";
 import { posts } from "@/content/posts";
@@ -40,8 +42,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   const messages = getMessages(lang);
   const sections = getSections(lang);
   const projects = getProjects(lang);
-  const sectionContent: Record<SectionId, ReactNode> = {
-    references: <ReferencesMarquee references={getReferences(lang)} />,
+  const sectionContent: Record<Exclude<SectionId, "references">, ReactNode> = {
     experience: (
       <ExperienceList
         currentLabel={messages.current}
@@ -63,17 +64,6 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         items={posts}
         showLessLabel={messages.showLess}
         showMoreLabel={messages.showMore}
-      />
-    ),
-  };
-
-  const sectionActions: Partial<Record<SectionId, ReactNode>> = {
-    experience: (
-      <ResumeDownload
-        lang={lang}
-        label={messages.downloadResume}
-        fileName={messages.resume.fileName}
-        themeLabels={messages.resumeThemes}
       />
     ),
   };
@@ -113,20 +103,56 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           </div>
         </div>
       </header>
+      <section
+        aria-label={messages.availability}
+        className="flex flex-col gap-4 border-b-bleed px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="min-w-0">
+          <p className="text-pretty font-semibold text-base">
+            {profile.availability.title}
+          </p>
+          <Muted className="mt-1 text-pretty">
+            {profile.availability.dates}
+          </Muted>
+          <Muted className="text-pretty">
+            {profile.availability.workplace}
+          </Muted>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <ResumeDownload
+            lang={lang}
+            label={messages.downloadResume}
+            menuLabel={messages.chooseResumeTheme}
+            fileName={messages.resume.fileName}
+            themeLabels={messages.resumeThemes}
+          />
+          <Link
+            href={`mailto:${profile.email}`}
+            className={buttonVariants({ variant: "outline", size: "lg" })}
+          >
+            {messages.contactMe}
+          </Link>
+        </div>
+      </section>
       <ProfileOverview locale={lang} />
       <P className="text-pretty border-b-bleed px-6 py-6 text-base leading-7">
         <Bio parts={profile.bio} />
       </P>
-      {sections.map((entry) => (
-        <Section
-          key={entry.id}
-          entry={entry}
-          showHeading={entry.id !== "references"}
-          action={sectionActions[entry.id]}
-        >
-          {sectionContent[entry.id]}
-        </Section>
-      ))}
+      {sections.map(({ id, title }) =>
+        id === "references" ? (
+          <ReferencesSection
+            key={id}
+            entry={{ id, title }}
+            references={getReferences(lang)}
+            pauseLabel={messages.pauseReferences}
+            playLabel={messages.playReferences}
+          />
+        ) : (
+          <Section key={id} entry={{ id, title }}>
+            {sectionContent[id]}
+          </Section>
+        ),
+      )}
     </>
   );
 }

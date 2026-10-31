@@ -16,12 +16,12 @@ export type SocialLink = {
 export type BioPart = string | { skill: string; label?: string };
 
 type ProfileCopy = {
+  /** The one headline for the site, the page description and the resume. */
   role: string;
   summary: string;
+  availability: { title: string; dates: string; workplace: string };
   bio: BioPart[];
   avatarAlt: string;
-  /** The resume states what he is today; the site's `role` states his field. */
-  resumeHeadline: string;
   resumeSummary: string;
   languages: string[];
   studies: string;
@@ -72,23 +72,29 @@ const socialLinks: SocialLink[] = [
 
 const profileCopy: Record<Locale, ProfileCopy> = {
   en: {
-    role: "Full-stack & .NET Developer",
-    summary: "Full-stack developer specializing in web and game development.",
+    role: ".NET Developer Student",
+    summary: ".NET developer student looking for a LIA internship in 2027.",
+    availability: {
+      title: "Looking for a 24-week LIA internship",
+      dates: "8 March–28 May and 30 August–19 November 2027",
+      workplace: "Norrköping or remote",
+    },
     bio: [
-      "I'm a full-stack developer who designs and builds websites and web applications, with game development as a second focus. On the web I work in ",
+      "I'm studying .NET development at YH Akademin and build my own Windows tools in ",
+      { skill: "C#" },
+      " and ",
+      { skill: ".NET" },
+      ", including Winland and Winshell. On the web I work in ",
       { skill: "TypeScript" },
       " with ",
       { skill: "Next.js" },
       " and ",
       { skill: "TailwindCSS", label: "Tailwind CSS" },
       ". For games, I use ",
-      { skill: "C#" },
-      " with ",
       { skill: "Unity" },
       ". I care about writing clean, performant code, designing thoughtfully and shipping work that holds up. I enjoy working closely with teams and sharing what I learn.",
     ],
     avatarAlt: "Picture of Dante Sparrås",
-    resumeHeadline: ".NET Developer Student",
     resumeSummary:
       ".NET developer student at YH Akademin, finishing in December 2027. Looking for a 24-week LIA internship: 8 March–28 May and 30 August–19 November 2027. Based in Norrköping and open to remote work.",
     languages: ["Swedish", "English"],
@@ -97,23 +103,29 @@ const profileCopy: Record<Locale, ProfileCopy> = {
     pronouns: "he/him",
   },
   sv: {
-    role: "Fullstack- och .NET-utvecklare",
-    summary: "Fullstackutvecklare med inriktning på webb- och spelutveckling.",
+    role: "Student, systemutvecklare .NET",
+    summary: "Studerar till systemutvecklare .NET och söker LIA-plats 2027.",
+    availability: {
+      title: "Söker LIA-plats på 24 veckor",
+      dates: "8 mars–28 maj och 30 augusti–19 november 2027",
+      workplace: "Norrköping eller distans",
+    },
     bio: [
-      "Jag är fullstackutvecklare som designar och bygger webbplatser och webbapplikationer, med spelutveckling som ett andra fokusområde. På webben arbetar jag i ",
+      "Jag studerar till systemutvecklare .NET på YH Akademin och bygger egna Windows-verktyg i ",
+      { skill: "C#" },
+      " och ",
+      { skill: ".NET" },
+      ", bland annat Winland och Winshell. På webben arbetar jag i ",
       { skill: "TypeScript" },
       " med ",
       { skill: "Next.js" },
       " och ",
       { skill: "TailwindCSS", label: "Tailwind CSS" },
       ". För spel använder jag ",
-      { skill: "C#" },
-      " med ",
       { skill: "Unity" },
       ". Jag bryr mig om att skriva ren och effektiv kod, designa omsorgsfullt och leverera arbete som håller. Jag trivs med att arbeta nära andra i team och dela med mig av det jag lär mig.",
     ],
     avatarAlt: "Bild på Dante Sparrås",
-    resumeHeadline: "Student, systemutvecklare .NET",
     resumeSummary:
       "Studerar till systemutvecklare .NET på YH Akademin, med examen i december 2027. Söker en arbetsplats för min LIA på 24 veckor: 8 mars–28 maj och 30 augusti–19 november 2027. Bor i Norrköping och kan även arbeta på distans.",
     languages: ["Svenska", "engelska"],
@@ -130,12 +142,12 @@ export function getProfile(locale: Locale) {
     name: "Dante Sparrås",
     role: text.role,
     summary: text.summary,
+    availability: text.availability,
     bio: text.bio,
     avatar: {
       src: "/avatar/profile.png" satisfies ImageSrc,
       alt: text.avatarAlt,
     },
-    resumeHeadline: text.resumeHeadline,
     resumeSummary: text.resumeSummary,
     languages: text.languages,
     studies: text.studies,

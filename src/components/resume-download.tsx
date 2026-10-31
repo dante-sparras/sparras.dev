@@ -1,7 +1,11 @@
 "use client";
 
-import { Download, Moon, Sun } from "lucide-react";
+import { ChevronDown, Download, Moon, Sun } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@/components/ui/button-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,51 +21,80 @@ const themeIcons = { dark: Moon, light: Sun } satisfies Record<
   typeof Moon
 >;
 
+/** Prints well and suits an application, so it is the one-click download. */
+const defaultTheme: ResumeTheme = "light";
+
+/** White instead of the theme's blue `primary`: the page is monochrome. */
+const buttonColors = "bg-foreground text-background hover:bg-foreground/80";
+
 export function ResumeDownload({
   lang,
   label,
+  menuLabel,
   fileName,
   themeLabels,
 }: {
   lang: Locale;
   label: string;
+  menuLabel: string;
   /** Without the extension; each theme adds its own suffix. */
   fileName: string;
   themeLabels: Record<ResumeTheme, string>;
 }) {
+  const downloadProps = (theme: ResumeTheme) => ({
+    href: `/${lang}/resume/${theme}`,
+    download: `${fileName}-${theme}.pdf`,
+  });
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label={label}
-        title={label}
+    <ButtonGroup>
+      <a
+        {...downloadProps(defaultTheme)}
+        data-slot="button"
         className={cn(
-          buttonVariants({ variant: "outline", size: "icon" }),
-          "cursor-pointer",
+          buttonVariants({ variant: null, size: "lg" }),
+          buttonColors,
         )}
       >
         <Download aria-hidden />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" aria-label={label} className="w-auto">
-        {resumeThemes.map((theme) => {
-          const Icon = themeIcons[theme];
+        {label}
+      </a>
+      <ButtonGroupSeparator />
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={menuLabel}
+          title={menuLabel}
+          className={cn(
+            buttonVariants({ variant: null, size: "icon-lg" }),
+            buttonColors,
+            "cursor-pointer",
+          )}
+        >
+          <ChevronDown aria-hidden />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          aria-label={menuLabel}
+          className="w-auto"
+        >
+          {resumeThemes.map((theme) => {
+            const Icon = themeIcons[theme];
 
-          return (
-            <DropdownMenuItem
-              key={theme}
-              className="cursor-pointer whitespace-nowrap"
-              render={
-                <a
-                  href={`/${lang}/resume/${theme}`}
-                  download={`${fileName}-${theme}.pdf`}
-                >
-                  <Icon aria-hidden />
-                  {themeLabels[theme]}
-                </a>
-              }
-            />
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            return (
+              <DropdownMenuItem
+                key={theme}
+                className="cursor-pointer whitespace-nowrap"
+                render={
+                  <a {...downloadProps(theme)}>
+                    <Icon aria-hidden />
+                    {themeLabels[theme]}
+                  </a>
+                }
+              />
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </ButtonGroup>
   );
 }

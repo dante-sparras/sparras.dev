@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
 import { certificates } from "@/content/certificates";
 import { type Experience, getExperience } from "@/content/experience";
 import { getProfile } from "@/content/profile";
-import { getResumeProjects } from "@/content/projects";
+import { getProjects } from "@/content/projects";
 import { getResumeSkillCategories } from "@/content/skills";
 import type { Href, ImageSrc } from "@/content/types";
 import type { Locale } from "@/i18n/locale";
@@ -438,7 +438,7 @@ export function ResumeDocument({
           </View>
           <View style={styles.identity}>
             <Text style={styles.name}>{profile.name}</Text>
-            <Text style={styles.role}>{profile.resumeHeadline}</Text>
+            <Text style={styles.role}>{profile.role}</Text>
           </View>
         </View>
 
@@ -447,7 +447,7 @@ export function ResumeDocument({
             <Text style={styles.bio}>{profile.resumeSummary}</Text>
             <MainSection title={labels.projects} styles={styles}>
               <View style={styles.projects}>
-                {getResumeProjects(locale).map((project) => (
+                {getProjects(locale).map((project) => (
                   <View key={project.title} style={styles.project}>
                     <View style={styles.projectHeading}>
                       <Text style={styles.projectTitle}>{project.title}</Text>
