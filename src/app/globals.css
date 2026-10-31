@@ -1,6 +1,14 @@
-@import "tailwindcss";
+@import "tailwindcss" source("..");
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+
+/*
+ * Vendored components nothing imports yet. Tailwind scans every file, so these
+ * would otherwise add to the stylesheet each visitor has to download. Take a
+ * name off the list when it starts being used; `unused-components.test.ts`
+ * fails until you do.
+ */
+@source not "../components/ui/{accordion,alert-dialog,alert,aspect-ratio,attachment,badge,breadcrumb,bubble,calendar,carousel,chart,checkbox,combobox,command,context-menu,dialog,direction,drawer,empty,field,hover-card,input-group,input-otp,input,item,kbd,label,marker,menubar,message-scroller,message,native-select,pagination,popover,progress,questionnaire,radio-group,resizable,scroll-area,select,sheet,sidebar,skeleton,slider,sonner,spinner,switch,table,tabs,textarea,toast,toggle-group,toggle,tooltip}.tsx";
 
 @custom-variant dark (&:is(.dark *));
 

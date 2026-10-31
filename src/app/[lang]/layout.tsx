@@ -1,6 +1,7 @@
 import { Languages, MenuIcon } from "lucide-react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Geist_Pixel } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -37,13 +38,15 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  // Only used further down the page, so it shouldn't compete with the first screen.
+  preload: false,
 });
 
-const geistPixel = Geist_Pixel({
+// The Google copy unpacks to 560 KB and stalls the first layout, so this one is
+// cut down by `scripts/subset-pixel-font.py`.
+const geistPixel = localFont({
+  src: "../../assets/fonts/geist-pixel.woff2",
   variable: "--font-geist-pixel",
-  subsets: ["latin"],
-  // Naming a fallback stops Turbopack looking up this font's metrics, which it
-  // doesn't have, even with `adjustFontFallback` off.
   fallback: ["ui-monospace", "monospace"],
   adjustFontFallback: false,
 });
