@@ -1,10 +1,11 @@
-import type { ImageSrc } from "@/content/types";
+import type { Href, ImageSrc } from "@/content/types";
 import type { Locale } from "@/i18n/locale";
 
 export type Reference = {
   name: string;
   initials: string;
   avatarSrc: string;
+  linkedinHref: Href;
   companyLogoSrc: ImageSrc;
   workplace?: string;
   quote?: string;
@@ -14,6 +15,7 @@ const referenceSources: {
   name: string;
   initials: string;
   avatarSrc: string;
+  linkedinHref: Href;
   companyLogoSrc: ImageSrc;
   workplace: Record<Locale, string>;
   quote?: string;
@@ -22,6 +24,7 @@ const referenceSources: {
     name: "Sebastian Aarnio",
     initials: "SA",
     avatarSrc: "/sebastian-aarnio.png",
+    linkedinHref: "https://www.linkedin.com/in/sebastian-aarnio/",
     companyLogoSrc: "/spacexai-logo.jpg",
     workplace: {
       en: "Software Engineer @ SpaceXSI",
@@ -34,6 +37,7 @@ const referenceSources: {
     name: "Olie Aarnio",
     initials: "OA",
     avatarSrc: "/olie-aarnio.png",
+    linkedinHref: "https://www.linkedin.com/in/olie-aarnio-05bbb2173/",
     companyLogoSrc: "/casuology-logo.jpg",
     workplace: {
       en: "Game Content Writer @ Casuology",
@@ -46,6 +50,7 @@ const referenceSources: {
     name: "Henry Brandt",
     initials: "HB",
     avatarSrc: "/henry-brandt.png",
+    linkedinHref: "https://www.linkedin.com/in/brandthenry/",
     companyLogoSrc: "/yh-akademin-logo.jpg",
     workplace: {
       en: "Student @ YH Akademin",
@@ -57,6 +62,7 @@ const referenceSources: {
     name: "Robert Johansson",
     initials: "RJ",
     avatarSrc: "/robert-johansson.png",
+    linkedinHref: "https://www.linkedin.com/in/robert-johansson86/",
     companyLogoSrc: "/yh-akademin-logo.jpg",
     workplace: {
       en: "Student @ YH Akademin",
@@ -68,6 +74,7 @@ const referenceSources: {
     name: "Frank Jonsson",
     initials: "FJ",
     avatarSrc: "/frank-jonsson.png",
+    linkedinHref: "https://www.linkedin.com/in/fwjonsson/",
     companyLogoSrc: "/yh-akademin-logo.jpg",
     workplace: {
       en: "Student @ YH Akademin",
@@ -80,6 +87,7 @@ const referenceSources: {
     name: "Leopold Hedefalk Nybom",
     initials: "LH",
     avatarSrc: "/leopold-hedefalk-nybom.png",
+    linkedinHref: "https://www.linkedin.com/in/leopold-hedefalk-nybom/",
     companyLogoSrc: "/yh-akademin-logo.jpg",
     workplace: {
       en: "Student @ YH Akademin",
@@ -95,6 +103,7 @@ export function getReferences(locale: Locale): Reference[] {
     name: reference.name,
     initials: reference.initials,
     avatarSrc: reference.avatarSrc,
+    linkedinHref: reference.linkedinHref,
     companyLogoSrc: reference.companyLogoSrc,
     workplace: reference.workplace[locale],
     quote: reference.quote,
