@@ -21,6 +21,9 @@ const gutter = 281;
 /** How much the banner strip pulled everything below it up the page. */
 const bannerSavings = 63;
 
+/** How much the shorter About paragraph pulled Projects up the page. */
+const bioSavings = 28;
+
 const lineOpacity = 0.14;
 const bleedGradientId = "sparras-dev-line-bleed";
 const avatarClipId = "sparras-dev-avatar";
@@ -263,11 +266,10 @@ function ProfileOverview() {
 }
 
 const bioLines = [
-  { y: 635, width: 716 },
-  { y: 663, width: 690 },
-  { y: 691, width: 702 },
-  { y: 719, width: 668 },
-  { y: 747, width: 410 },
+  { y: 635, width: 628 },
+  { y: 663, width: 658 },
+  { y: 691, width: 693 },
+  { y: 719, width: 147 },
 ];
 
 function AboutParagraph() {
@@ -283,7 +285,7 @@ function AboutParagraph() {
           opacity={0.75}
         />
       ))}
-      <Rule y={790} />
+      <Rule y={762} />
     </>
   );
 }
@@ -512,7 +514,9 @@ function Page() {
       <g transform={`translate(0 ${-bannerSavings})`}>
         <ProfileOverview />
         <AboutParagraph />
-        <ProjectsSection />
+        <g transform={`translate(0 ${-bioSavings})`}>
+          <ProjectsSection />
+        </g>
       </g>
       <NavBar />
     </>
