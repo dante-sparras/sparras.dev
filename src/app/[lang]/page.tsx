@@ -25,6 +25,10 @@ import { getProfile } from "@/content/profile";
 import { getProjects } from "@/content/projects";
 import { getReferences } from "@/content/references";
 import { getSkillCategories } from "@/content/skills";
+import {
+  getProfileStructuredData,
+  serializeStructuredData,
+} from "@/content/structured-data";
 import { isLocale } from "@/i18n/locale";
 import { getMessages } from "@/i18n/messages";
 
@@ -70,6 +74,13 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: our own data, escaped for a script tag
+        dangerouslySetInnerHTML={{
+          __html: serializeStructuredData(getProfileStructuredData(lang)),
+        }}
+      />
       <header className="border-b-bleed">
         <div className="relative">
           <BlackHoleBanner alt={messages.bannerAlt} />

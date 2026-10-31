@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { getSections } from "@/content/outline";
-import { getProfile } from "@/content/profile";
-import { isLocale, locales } from "@/i18n/locale";
+import { getProfile, siteUrl } from "@/content/profile";
+import { isLocale, type Locale, locales } from "@/i18n/locale";
 import { getMessages } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
 import "../globals.css";
@@ -39,10 +39,17 @@ const geistMono = Geist_Mono({
 
 const geistPixel = Geist_Pixel({
   variable: "--font-geist-pixel",
-  subsets: ["latin", "latin-ext"],
-  axes: ["ELSH"],
+  subsets: ["latin"],
+  // Naming a fallback stops Turbopack looking up this font's metrics, which it
+  // doesn't have, even with `adjustFontFallback` off.
+  fallback: ["ui-monospace", "monospace"],
   adjustFontFallback: false,
 });
+
+const openGraphLocales: Record<Locale, string> = {
+  en: "en_US",
+  sv: "sv_SE",
+};
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -58,9 +65,21 @@ export async function generateMetadata({
 
   const profile = getProfile(lang);
   return {
-    metadataBase: new URL("https://www.sparras.dev"),
-    title: profile.name,
+    metadataBase: new URL(siteUrl),
+    title: profile.pageTitle,
     description: profile.summary,
+    openGraph: {
+      type: "profile",
+      url: `/${lang}`,
+      siteName: profile.name,
+      title: profile.pageTitle,
+      description: profile.summary,
+      locale: openGraphLocales[lang],
+      alternateLocale: locales
+        .filter((locale) => locale !== lang)
+        .map((locale) => openGraphLocales[locale]),
+    },
+    twitter: { card: "summary_large_image" },
     alternates: {
       canonical: `/${lang}`,
       languages: {
@@ -93,7 +112,7 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
-      className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} dark scheme-dark motion-safe:scroll-smooth`}
+      className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} dark scheme-dark scroll-pt-18 motion-safe:scroll-smooth`}
       // Next 16 only turns smooth scrolling off for route changes with this.
       data-scroll-behavior="smooth"
     >

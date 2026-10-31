@@ -25,7 +25,12 @@ const HOLE_SCALE = 1.25;
 const HOLE_SHIFT_X = 0.6;
 const MOBILE_HOLE_SHIFT_Y = 0.32;
 const DESKTOP_HOLE_SHIFT_Y = 0.4;
-const BANNER_IMAGE_SIZES = "(min-width: 768px) 48rem, 100vw";
+/**
+ * The art fills a layer 125% of the banner. On phones it is also cropped to
+ * cover a taller box, so it is drawn about twice as wide as the screen, but only
+ * the part that stays visible is worth paying for, which 150vw keeps sharp.
+ */
+const BANNER_IMAGE_SIZES = "(min-width: 768px) 60rem, 150vw";
 const HOLE_LAYER_CLASS =
   "absolute top-[32%] left-[60%] size-[125%] -translate-x-1/2 -translate-y-1/2 md:top-[40%]";
 const REVEAL_ZOOM = 1.05;
@@ -107,6 +112,8 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const bannerWidth = useElementWidth(rootRef, ARTBOARD_WIDTH_PX);
   const [lens, setLens] = useState(hoverLens.rest);
+  // The reveal image only shows under the lens, so most visits never need it.
+  const [hasPointerEntered, setHasPointerEntered] = useState(false);
   const { onPointerEnter, onPointerMove, onPointerLeave } = usePointerEffect(
     hoverLens,
     setLens,
@@ -134,7 +141,10 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
     <div
       ref={rootRef}
       className="relative aspect-3/2 w-full touch-pan-y select-none overflow-hidden bg-black md:aspect-2160/864"
-      onPointerEnter={onPointerEnter}
+      onPointerEnter={(event) => {
+        setHasPointerEntered(true);
+        onPointerEnter(event);
+      }}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
       onPointerCancel={onPointerLeave}
@@ -148,11 +158,10 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
           src="/banner/black-hole-banner.png"
           alt={alt}
           fill
-          unoptimized
           loading="eager"
           fetchPriority="high"
           sizes={BANNER_IMAGE_SIZES}
-          className="object-cover [image-rendering:pixelated]"
+          className="object-cover"
         />
       </div>
       {/*
@@ -160,40 +169,42 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
         in and out. WebkitMaskImage is the Safari-prefixed twin of
         maskImage — both must be set or Safari shows the full image.
       */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          opacity: isLensVisible ? lens.scale : 0,
-          maskImage: mask,
-          WebkitMaskImage: mask,
-        }}
-      >
-        {/*
-          Zoom from the pointer, not the image center. Otherwise the
-          magnified pixels would drift away from the cursor. Origin is
-          remapped onto the 1.25× layer so the zoom stays under the mouse.
-        */}
-        <div className={HOLE_LAYER_CLASS}>
-          <Image
-            src="/banner/black-hole-banner-reveal.png"
-            alt=""
-            fill
-            unoptimized
-            sizes={BANNER_IMAGE_SIZES}
-            className="object-cover [image-rendering:pixelated]"
-            style={{
-              transform: `scale(${zoom})`,
-              transformOrigin: pointerOriginOnScaledLayer(
-                lens.x,
-                lens.y,
-                HOLE_SHIFT_X,
-                holeShiftY,
-              ),
-            }}
-          />
+      {hasPointerEntered ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            opacity: isLensVisible ? lens.scale : 0,
+            maskImage: mask,
+            WebkitMaskImage: mask,
+          }}
+        >
+          {/*
+            Zoom from the pointer, not the image center. Otherwise the
+            magnified pixels would drift away from the cursor. Origin is
+            remapped onto the 1.25× layer so the zoom stays under the mouse.
+          */}
+          <div className={HOLE_LAYER_CLASS}>
+            <Image
+              src="/banner/black-hole-banner-reveal.png"
+              alt=""
+              fill
+              loading="eager"
+              sizes={BANNER_IMAGE_SIZES}
+              className="object-cover"
+              style={{
+                transform: `scale(${zoom})`,
+                transformOrigin: pointerOriginOnScaledLayer(
+                  lens.x,
+                  lens.y,
+                  HOLE_SHIFT_X,
+                  holeShiftY,
+                ),
+              }}
+            />
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

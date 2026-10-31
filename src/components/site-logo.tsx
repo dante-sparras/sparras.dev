@@ -28,7 +28,6 @@ export function SiteLogo<T extends string>({
         width={36}
         height={36}
         loading="eager"
-        unoptimized
         className="size-9"
       />
     </Link>
