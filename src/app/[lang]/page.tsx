@@ -11,6 +11,7 @@ import {
 } from "@/components/profile-overview";
 import { ProjectList } from "@/components/project-list";
 import { ReferencesMarquee } from "@/components/references-marquee";
+import { ResumeDownload } from "@/components/resume-download";
 import { Section } from "@/components/section";
 import { SkillLists } from "@/components/skill-lists";
 import { Muted } from "@/components/typography/muted";
@@ -66,6 +67,17 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
     ),
   };
 
+  const sectionActions: Partial<Record<SectionId, ReactNode>> = {
+    experience: (
+      <ResumeDownload
+        lang={lang}
+        label={messages.downloadResume}
+        fileName={messages.resume.fileName}
+        themeLabels={messages.resumeThemes}
+      />
+    ),
+  };
+
   return (
     <>
       <header className="border-b-bleed">
@@ -110,6 +122,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           key={entry.id}
           entry={entry}
           showHeading={entry.id !== "references"}
+          action={sectionActions[entry.id]}
         >
           {sectionContent[entry.id]}
         </Section>

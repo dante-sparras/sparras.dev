@@ -7,6 +7,7 @@ import {
   CodeXml,
   Gamepad2,
   GraduationCap,
+  Handshake,
   Lightbulb,
   MapPin,
   Megaphone,
@@ -32,6 +33,12 @@ const icons = {
   award: Award,
 } satisfies Record<ExperienceIcon, LucideIcon>;
 
+const kindIcons = {
+  education: GraduationCap,
+  work: Briefcase,
+  contribution: Handshake,
+} satisfies Record<Experience["kind"], LucideIcon>;
+
 function OrganizationMark({ entry }: { entry: Experience }) {
   const Icon = icons[entry.icon];
 
@@ -51,7 +58,7 @@ function OrganizationMark({ entry }: { entry: Experience }) {
 }
 
 function KindBadge({ entry }: { entry: Experience }) {
-  const Icon = entry.kind === "education" ? GraduationCap : Briefcase;
+  const Icon = kindIcons[entry.kind];
 
   return (
     <span className="inline-flex h-5 items-center gap-1 rounded-full border px-1.5 font-mono text-[10px] text-muted-foreground">

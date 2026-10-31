@@ -19,9 +19,15 @@ export type ExperienceIcon =
   | "lightbulb"
   | "award";
 
-type Employment = "full-time" | "part-time" | "freelance";
+type Employment =
+  | "full-time"
+  | "part-time"
+  | "freelance"
+  | "contributor"
+  | "volunteer";
 
-export type ExperienceKind = "education" | "work";
+/** `contribution` is work done without being hired, such as helping out at a studio. */
+export type ExperienceKind = "education" | "work" | "contribution";
 
 type ExperienceRoleSource = {
   title: Record<Locale, string>;
@@ -55,11 +61,14 @@ const employmentLabels: Record<Employment, Record<Locale, string>> = {
   "full-time": { en: "Full-time", sv: "Heltid" },
   "part-time": { en: "Part-time", sv: "Deltid" },
   freelance: { en: "Freelance", sv: "Frilans" },
+  contributor: { en: "Contributor", sv: "Medhjälpare" },
+  volunteer: { en: "Volunteer", sv: "Ideellt" },
 };
 
 const kindLabels: Record<ExperienceKind, Record<Locale, string>> = {
   education: { en: "Education", sv: "Utbildning" },
   work: { en: "Work", sv: "Arbete" },
+  contribution: { en: "Contribution", sv: "Bidrag" },
 };
 
 const periodLabels: Record<
@@ -126,7 +135,7 @@ const experienceSources: readonly ExperienceSource[] = [
   },
   {
     company: "Casuology",
-    kind: "work",
+    kind: "contribution",
     href: "https://casuology.com",
     location: { en: "Turku, Finland", sv: "Åbo, Finland" },
     icon: "gamepad",
@@ -134,17 +143,17 @@ const experienceSources: readonly ExperienceSource[] = [
     roles: [
       {
         title: { en: "Game Programmer", sv: "Spelprogrammerare" },
-        employment: "part-time",
+        employment: "contributor",
         icon: "code",
         start: { year: 2022, month: 7 },
         description: {
           en: [
             "Developing gameplay systems and features in Unity and C#.",
-            "Working with a small independent game studio.",
+            "Helping out at a small independent game studio.",
           ],
           sv: [
             "Utvecklar spelsystem och funktioner i Unity och C#.",
-            "Arbetar med en liten oberoende spelstudio.",
+            "Hjälper till på en liten oberoende spelstudio.",
           ],
         },
         skills: ["Unity", "C#", "Git", "GitHub"],
@@ -212,7 +221,7 @@ const experienceSources: readonly ExperienceSource[] = [
       },
       {
         title: { en: "Student Ambassador", sv: "Studentambassadör" },
-        employment: "part-time",
+        employment: "volunteer",
         icon: "megaphone",
         start: { year: 2018, month: 12 },
         end: { year: 2021, month: 6 },
@@ -230,7 +239,7 @@ const experienceSources: readonly ExperienceSource[] = [
       },
       {
         title: { en: "Makerspace Coordinator", sv: "Ansvarig för makerspace" },
-        employment: "part-time",
+        employment: "volunteer",
         icon: "lightbulb",
         start: { year: 2018, month: 12 },
         end: { year: 2021, month: 6 },

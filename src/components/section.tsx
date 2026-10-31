@@ -5,10 +5,13 @@ export function Section({
   entry,
   children,
   showHeading = true,
+  action,
 }: {
   entry: OutlineEntry;
   children: ReactNode;
   showHeading?: boolean;
+  /** Shown at the end of the heading row. */
+  action?: ReactNode;
 }) {
   const headingId = `${entry.id}-heading`;
 
@@ -20,12 +23,12 @@ export function Section({
       className="scroll-mt-14 border-b-bleed"
     >
       {showHeading ? (
-        <h2
-          id={headingId}
-          className="border-b-bleed px-6 py-3 font-semibold text-2xl tracking-tight"
-        >
-          {entry.title}
-        </h2>
+        <div className="flex items-center justify-between gap-4 border-b-bleed px-6 py-3">
+          <h2 id={headingId} className="font-semibold text-2xl tracking-tight">
+            {entry.title}
+          </h2>
+          {action}
+        </div>
       ) : null}
       {children}
     </section>
