@@ -72,7 +72,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
     <>
       <script
         type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: our own data, escaped for a script tag
+        // oxlint-disable-next-line react/no-danger -- our own data, escaped for a script tag
         dangerouslySetInnerHTML={{
           __html: serializeStructuredData(getProfileStructuredData(lang)),
         }}
@@ -96,12 +96,12 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
               {/* Pronouns drop below the name when the row is too narrow. */}
               <h1 className="flex scroll-m-20 flex-wrap items-baseline gap-x-2 gap-y-1 border-b px-3 pb-2 font-pixel text-xl leading-none sm:text-3xl">
                 <span className="whitespace-nowrap">{profile.name}</span>
-                <span className="whitespace-nowrap font-sans text-muted-foreground text-xs sm:text-sm">
+                <span className="font-sans text-xs whitespace-nowrap text-muted-foreground sm:text-sm">
                   {profile.pronouns}
                 </span>
               </h1>
               <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3">
-                <Muted className="whitespace-nowrap text-xs sm:text-sm">
+                <Muted className="text-xs whitespace-nowrap sm:text-sm">
                   {profile.role}
                 </Muted>
                 <SocialLinkBadges locale={lang} />
@@ -112,16 +112,16 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
       </header>
       <section
         aria-label={messages.availability}
-        className="flex flex-col gap-1 border-b-bleed bg-muted/20 px-6 py-3 md:flex-row md:items-baseline md:gap-3"
+        className="border-b-bleed flex flex-col gap-1 bg-muted/20 px-6 py-3 md:flex-row md:items-baseline md:gap-3"
       >
-        <p className="flex items-center gap-2 font-semibold text-sm">
+        <p className="flex items-center gap-2 text-sm font-semibold">
           <span
             aria-hidden
             className="size-1.5 shrink-0 rounded-full bg-foreground"
           />
           {profile.availability.title}
         </p>
-        <Muted className="text-pretty text-[13px]">
+        <Muted className="text-[13px] text-pretty">
           {profile.availability.shortDates}
           <span aria-hidden className="hidden md:inline">
             {" · "}
@@ -132,7 +132,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         </Muted>
       </section>
       <ProfileOverview locale={lang} />
-      <P className="text-pretty border-b-bleed px-6 py-6 text-base leading-7">
+      <P className="border-b-bleed px-6 py-6 text-base leading-7 text-pretty">
         {profile.bio}
       </P>
       {sections.map(({ id, title }) =>

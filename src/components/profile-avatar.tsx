@@ -20,7 +20,7 @@ export function ProfileAvatar({ alt, className, src }: ProfileAvatarProps) {
       render={
         <div
           className={cn(
-            "relative size-38 touch-pan-y select-none rounded-full border",
+            "relative size-38 touch-pan-y rounded-full border select-none",
             className,
           )}
         />

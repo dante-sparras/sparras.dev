@@ -43,7 +43,7 @@ function ReferenceCard({
     <div className="relative flex h-full flex-col justify-between gap-4 rounded-2xl border border-border p-4 transition-colors duration-200 hover:border-foreground has-focus-visible:border-foreground">
       {reference.quote ? (
         // The quotes are given in English on both language pages.
-        <P lang="en" className="text-pretty leading-5">
+        <P lang="en" className="leading-5 text-pretty">
           {reference.quote}
         </P>
       ) : (
@@ -55,7 +55,7 @@ function ReferenceCard({
           <AvatarFallback>{reference.initials}</AvatarFallback>
         </Avatar>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <CardTitle className="truncate font-semibold text-[14px]">
+          <CardTitle className="truncate text-[14px] font-semibold">
             <Link
               href={reference.linkedinHref}
               tabIndex={isLoopCopy ? -1 : undefined}
@@ -254,7 +254,7 @@ function MarqueeRow({
     <div
       ref={scrollerRef}
       className={cn(
-        "@container scrollbar-none mask-x-from-92% flex min-w-0 overflow-x-auto overscroll-x-contain",
+        "@container flex min-w-0 scrollbar-none overflow-x-auto overscroll-x-contain mask-x-from-92%",
         className,
       )}
     >

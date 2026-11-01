@@ -8,7 +8,7 @@ export function P({
   return (
     <p
       className={cn(
-        "text-balance font-sans text-foreground text-sm leading-6",
+        "font-sans text-sm leading-6 text-balance text-foreground",
         className,
       )}
       {...props}

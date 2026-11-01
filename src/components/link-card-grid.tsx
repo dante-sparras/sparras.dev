@@ -68,7 +68,7 @@ function LinkCard({ item }: { item: LinkCardItem }) {
   return (
     <Link
       href={item.href}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card/40 outline-none transition duration-300 hover:-translate-y-0.5 hover:border-foreground/40 focus-visible:border-foreground/60 focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card/40 transition duration-300 outline-none hover:-translate-y-0.5 hover:border-foreground/40 focus-visible:border-foreground/60 focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <LinkCardMedia item={item} />
       <div className="flex flex-1 flex-col gap-2 p-5">
@@ -81,7 +81,7 @@ function LinkCard({ item }: { item: LinkCardItem }) {
             <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:rotate-45" />
           </span>
         </div>
-        <p className="text-pretty text-muted-foreground text-sm leading-6">
+        <p className="text-sm leading-6 text-pretty text-muted-foreground">
           {item.description}
         </p>
         {item.stack?.length || host ? (
@@ -92,7 +92,7 @@ function LinkCard({ item }: { item: LinkCardItem }) {
                   <li
                     key={skill.name}
                     title={skill.name}
-                    className="not-first:-ms-1.5 grid size-7 place-items-center rounded-full border bg-background transition-[margin] duration-300 ease-out group-hover:not-first:ms-1"
+                    className="grid size-7 place-items-center rounded-full border bg-background transition-[margin] duration-300 ease-out not-first:-ms-1.5 group-hover:not-first:ms-1"
                   >
                     <Image
                       src={skill.iconSrc}
@@ -108,7 +108,7 @@ function LinkCard({ item }: { item: LinkCardItem }) {
               <span />
             )}
             {host ? (
-              <span className="font-mono text-muted-foreground text-xs">
+              <span className="font-mono text-xs text-muted-foreground">
                 {host}
               </span>
             ) : null}

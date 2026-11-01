@@ -7,7 +7,7 @@ export function Muted({
 }: React.ComponentProps<"p">) {
   return (
     <p
-      className={cn("font-sans text-muted-foreground text-sm", className)}
+      className={cn("font-sans text-sm text-muted-foreground", className)}
       {...props}
     >
       {children}

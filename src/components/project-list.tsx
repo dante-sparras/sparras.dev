@@ -65,7 +65,7 @@ function ProjectRow({ project }: { project: Project }) {
           setIsPlaying(event.currentTarget.matches(":focus-visible"))
         }
         onBlur={() => setIsPlaying(false)}
-        className="group flex flex-col gap-4 px-6 py-5 outline-none transition-colors hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:flex-row sm:items-center sm:gap-6"
+        className="group flex flex-col gap-4 px-6 py-5 transition-colors outline-none hover:bg-muted/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:flex-row sm:items-center sm:gap-6"
       >
         <div
           ref={sceneBox}
@@ -83,7 +83,7 @@ function ProjectRow({ project }: { project: Project }) {
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-pixel text-xl leading-none">{project.title}</h3>
-          <p className="mt-2 text-pretty text-muted-foreground text-sm leading-6">
+          <p className="mt-2 text-sm leading-6 text-pretty text-muted-foreground">
             {project.description}
           </p>
           {project.stack.length > 0 && (
@@ -146,7 +146,7 @@ export function ProjectList({
             render={
               <Button
                 variant="ghost"
-                className="h-auto w-full cursor-pointer gap-2 rounded-none px-6 py-3 text-foreground text-sm aria-expanded:bg-transparent"
+                className="h-auto w-full cursor-pointer gap-2 rounded-none px-6 py-3 text-sm text-foreground aria-expanded:bg-transparent"
               >
                 {isOpen ? showLessLabel : showAllLabel}
                 {isOpen ? (

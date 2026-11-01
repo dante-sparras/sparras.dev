@@ -140,7 +140,7 @@ export function BlackHoleBanner({ alt }: { alt: string }) {
   return (
     <div
       ref={rootRef}
-      className="relative aspect-3/2 w-full touch-pan-y select-none overflow-hidden bg-black md:aspect-2160/864"
+      className="relative aspect-3/2 w-full touch-pan-y overflow-hidden bg-black select-none md:aspect-2160/864"
       onPointerEnter={(event) => {
         setHasPointerEntered(true);
         onPointerEnter(event);

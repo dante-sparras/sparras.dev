@@ -47,7 +47,7 @@ export default async function OpenGraphImage({
         fontFamily: "Geist",
       }}
     >
-      {/* biome-ignore lint/performance/noImgElement: drawn to a PNG, not a page */}
+      {/* oxlint-disable-next-line nextjs/no-img-element -- drawn to a PNG, not a page */}
       <img
         alt=""
         src={`data:image/png;base64,${banner.toString("base64")}`}

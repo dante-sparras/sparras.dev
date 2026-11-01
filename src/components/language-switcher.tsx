@@ -55,7 +55,7 @@ export function LanguageMenuItems({ lang }: { lang: Locale }) {
           lang={locale}
           scroll={false}
           onClick={() => {
-            // biome-ignore lint/suspicious/noDocumentCookie: the choice has to be stored before navigation
+            // oxlint-disable-next-line unicorn/no-document-cookie -- the choice has to be stored before navigation
             document.cookie = localeCookie(locale);
           }}
         >
