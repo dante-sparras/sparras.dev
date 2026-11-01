@@ -148,6 +148,7 @@ describe("getExperience", () => {
       "C#",
       "Git",
       "GitHub",
+      "Scrumban",
     ]);
     expect(entries[3]?.roles.map((role) => role.title)).toEqual([
       "Technology Programme",

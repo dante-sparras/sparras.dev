@@ -160,6 +160,11 @@ const skillCategories: SkillCategory[] = [
         href: "https://github.com/",
       },
       {
+        name: "Scrumban",
+        iconSrc: "/icons/scrumban.svg",
+        href: "https://en.wikipedia.org/wiki/Scrumban",
+      },
+      {
         name: "Docker",
         iconSrc: "/icons/docker.svg",
         href: "https://www.docker.com/",
