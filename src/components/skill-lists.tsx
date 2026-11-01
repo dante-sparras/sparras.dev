@@ -35,7 +35,7 @@ export function SkillLists({
                 <li key={skill.name}>
                   <Link
                     href={skill.href}
-                    className="group inline-flex h-7 items-center gap-1.5 rounded-full border bg-background px-2.5 font-mono text-[0.8125rem] text-foreground outline-none transition-colors hover:bg-muted focus:bg-muted focus-visible:outline-1 focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="group inline-flex h-7 items-center gap-1.5 rounded-full border bg-background px-2.5 font-mono text-[0.8125rem] text-foreground transition-colors outline-none hover:bg-muted focus:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-1"
                   >
                     <Image
                       src={skill.iconSrc}

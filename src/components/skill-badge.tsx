@@ -4,7 +4,7 @@ import type { Skill } from "@/content/skills";
 /** Always names the skill: a logo alone is unreadable at this size. */
 export function SkillBadge({ skill }: { skill: Skill }) {
   return (
-    <li className="inline-flex h-6 items-center gap-1.5 rounded-full border bg-background px-2 font-mono text-muted-foreground text-xs">
+    <li className="inline-flex h-6 items-center gap-1.5 rounded-full border bg-background px-2 font-mono text-xs text-muted-foreground">
       <Image
         src={skill.iconSrc}
         alt=""

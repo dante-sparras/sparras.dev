@@ -36,6 +36,6 @@ In the project directory, you can run:
 - `bun dev`: Runs the app in development mode.
 - `bun run build`: Builds the app for production. (`bun build` is Bun's own bundler, not this script.)
 - `bun start`: Starts the production server.
-- `bun lint`: Checks linting and formatting with Biome.
-- `bun format`: Formats the code with Biome.
+- `bun lint`: Checks linting with oxlint and formatting with oxfmt.
+- `bun format`: Formats the code with oxfmt.
 - `bun test`: Runs the tests.

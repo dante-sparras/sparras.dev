@@ -1,2 +1,2 @@
-# Check out text files with LF on every OS, matching Biome's formatter.
+# Check out text files with LF on every OS, matching oxfmt.
 * text=auto eol=lf

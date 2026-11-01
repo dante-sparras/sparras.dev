@@ -81,7 +81,7 @@ export function SocialLinkBadges({ locale }: { locale: Locale }) {
             <Link
               href={link.href}
               aria-label={link.platform}
-              className="flex size-5 shrink-0 items-center justify-center rounded-md outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="flex size-5 shrink-0 items-center justify-center rounded-md transition-colors outline-none hover:bg-muted focus-visible:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               <Image
                 alt=""
@@ -98,7 +98,7 @@ export function SocialLinkBadges({ locale }: { locale: Locale }) {
           <Link
             href={`mailto:${profile.email}`}
             aria-label={messages.contactMe}
-            className="flex size-5 shrink-0 items-center justify-center rounded-md text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex size-5 shrink-0 items-center justify-center rounded-md text-foreground transition-colors outline-none hover:bg-muted focus-visible:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <MailIcon aria-hidden className="size-3" />
           </Link>

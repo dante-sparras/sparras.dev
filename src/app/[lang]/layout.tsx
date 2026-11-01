@@ -117,13 +117,13 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
-      className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} dark scheme-dark scroll-pt-18 motion-safe:scroll-smooth`}
+      className={`${geistSans.variable} ${geistMono.variable} ${geistPixel.variable} dark scroll-pt-18 scheme-dark motion-safe:scroll-smooth`}
       // Next 16 only turns smooth scrolling off for route changes with this.
       data-scroll-behavior="smooth"
     >
       <body className="overflow-x-clip bg-background font-sans text-foreground antialiased">
         <div className="sticky top-0 z-50 mx-auto max-w-3xl md:border-x">
-          <header className="flex h-14 items-center gap-4 border-b-bleed bg-background px-6 py-2">
+          <header className="border-b-bleed flex h-14 items-center gap-4 bg-background px-6 py-2">
             <SiteLogo href={`/${lang}`} alt={profile.name} />
             <nav
               className="mr-auto hidden md:flex"

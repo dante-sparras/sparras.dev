@@ -88,11 +88,11 @@ function RoleDescription({ role }: { role: ExperienceRole }) {
   return (
     <>
       {role.description.length === 1 ? (
-        <p className="text-pretty text-sm leading-6">{role.description[0]}</p>
+        <p className="text-sm leading-6 text-pretty">{role.description[0]}</p>
       ) : role.description.length > 1 ? (
         <ul className="list-disc space-y-1.5 pl-4 text-sm leading-6 marker:text-muted-foreground">
           {role.description.map((line) => (
-            <li key={line} className="text-pretty pl-0.5">
+            <li key={line} className="pl-0.5 text-pretty">
               {line}
             </li>
           ))}
@@ -113,10 +113,10 @@ function AdditionalRole({ role }: { role: ExperienceRole }) {
           className="mt-0.5 size-4 shrink-0 text-muted-foreground"
         />
         <div className="min-w-0">
-          <h4 className="text-pretty font-medium text-sm leading-5">
+          <h4 className="text-sm leading-5 font-medium text-pretty">
             {role.title}
           </h4>
-          <p className="mt-1 font-mono text-[11px] text-muted-foreground leading-5">
+          <p className="mt-1 font-mono text-[11px] leading-5 text-muted-foreground">
             {role.meta}
           </p>
         </div>
@@ -160,7 +160,7 @@ export function ExperienceList({
                 <OrganizationMark entry={entry} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <h3 className="font-medium text-sm">{entry.company}</h3>
+                    <h3 className="text-sm font-medium">{entry.company}</h3>
                     <KindBadge entry={entry} />
                     {entry.isCurrent && (
                       <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
@@ -172,7 +172,7 @@ export function ExperienceList({
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-sm">
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
                     <span>{primaryRole?.title}</span>
                     {additionalRoles.length > 0 && (
                       <span className="rounded-full border px-1.5 font-mono text-[10px]">
@@ -183,7 +183,7 @@ export function ExperienceList({
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 font-mono text-[11px] text-muted-foreground leading-5">
+                  <p className="mt-1 font-mono text-[11px] leading-5 text-muted-foreground">
                     {primaryRole?.meta}
                   </p>
                   {skillNames.length > 0 && <SkillBadges names={skillNames} />}
@@ -202,7 +202,7 @@ export function ExperienceList({
                     ))}
                   </ul>
                 )}
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t pt-3 text-muted-foreground text-xs">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t pt-3 text-xs text-muted-foreground">
                   <p className="flex items-start gap-1.5">
                     <MapPin aria-hidden className="mt-0.5 size-3 shrink-0" />
                     {entry.location}

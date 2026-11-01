@@ -27,12 +27,10 @@
   // TypeScript
   "js/ts.tsdk.path": "node_modules\\typescript\\lib",
 
-  // Biome
+  // Oxc
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "biomejs.biome",
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.codeActionsOnSave": {
-    "source.biome": "explicit",
-    "source.fixAll.biome": "explicit",
-    "source.organizeImports.biome": "explicit"
+    "source.fixAll.oxc": "explicit"
   }
 }
