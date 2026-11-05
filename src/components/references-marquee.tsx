@@ -105,8 +105,10 @@ function MarqueeRow({
     if (!scroller || prefersReducedMotion) return;
 
     const measure = () => {
-      const card = scroller.querySelector("li");
-      const setWidth = card ? card.offsetWidth * references.length : 0;
+      // Some cards only join the moving row on mobile; hidden slots have no width.
+      const setWidth = Array.from(scroller.querySelectorAll("li"))
+        .slice(0, references.length)
+        .reduce((width, card) => width + card.offsetWidth, 0);
       if (setWidth <= 0) return;
       setCopies(Math.max(1, Math.ceil(scroller.clientWidth / setWidth)));
     };
@@ -263,7 +265,7 @@ function MarqueeRow({
           <li
             key={key}
             aria-hidden={hidden ? true : undefined}
-            className={slotClassName}
+            className={cn(slotClassName, reference.isFeatured && "sm:hidden")}
           >
             <ReferenceCard reference={reference} isLoopCopy={hidden} />
           </li>
@@ -288,7 +290,8 @@ export function ReferencesSection({
   const prefersReducedMotion = usePrefersReducedMotion();
   const [isPaused, setIsPaused] = useState(false);
   const featured = references.filter((reference) => reference.isFeatured);
-  const moving = references.filter((reference) => !reference.isFeatured);
+  // Keep only the first featured reference pinned on mobile.
+  const moving = references.filter((reference) => reference !== featured[0]);
   const toggleLabel = isPaused ? playLabel : pauseLabel;
   const ToggleIcon = isPaused ? Play : Pause;
 
@@ -311,8 +314,11 @@ export function ReferencesSection({
       }
     >
       <ul className="grid auto-rows-fr gap-4 px-6 pt-4 sm:grid-cols-2">
-        {featured.map((reference) => (
-          <li key={reference.name}>
+        {featured.map((reference, index) => (
+          <li
+            key={reference.name}
+            className={index > 0 ? "hidden sm:block" : undefined}
+          >
             <ReferenceCard reference={reference} isLoopCopy={false} />
           </li>
         ))}
