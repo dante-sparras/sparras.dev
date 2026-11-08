@@ -16,7 +16,7 @@ type SkillCategory = {
 const skillCategories: SkillCategory[] = [
   {
     id: "languages",
-    title: { en: "Programming Languages", sv: "Programspråk" },
+    title: { en: "Languages", sv: "Språk" },
     skills: [
       {
         name: "C#",
@@ -93,7 +93,7 @@ const skillCategories: SkillCategory[] = [
   },
   {
     id: "backend",
-    title: { en: "Backend & Cloud", sv: "Backend och moln" },
+    title: { en: "Backend & Database", sv: "Backend och databas" },
     skills: [
       {
         name: ".NET",
@@ -146,7 +146,7 @@ const skillCategories: SkillCategory[] = [
   },
   {
     id: "workflow",
-    title: { en: "Workflow", sv: "Arbetsflöde" },
+    title: { en: "Workflow & AI", sv: "Arbetsflöde & AI" },
     skills: [
       {
         name: "T3 Code",
