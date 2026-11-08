@@ -9,7 +9,7 @@ describe("visibleSections", () => {
   test("leaves out Sections with nothing to show, keeping the order", () => {
     const outline: OutlineEntry[] = [
       { id: "references", title: "References", items: [1] },
-      { id: "skills", title: "Skills", items: [] },
+      { id: "skills", title: "Stack", items: [] },
       { id: "projects", title: "Projects", items: [1, 2] },
       { id: "blog", title: "Blog", items: [] },
     ];
@@ -32,7 +32,7 @@ describe("getHomepageOutline", () => {
       "Projekt",
       "Referenser",
       "Erfarenhet",
-      "Kompetenser",
+      "Stack",
       "Blogg",
     ]);
     expect(getHomepageOutline("sv").map((entry) => entry.id)).toEqual(

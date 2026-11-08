@@ -21,7 +21,7 @@ export type OutlineEntry = {
 const sectionTitles: Record<SectionId, Record<Locale, string>> = {
   references: { en: "References", sv: "Referenser" },
   experience: { en: "Experience", sv: "Erfarenhet" },
-  skills: { en: "Skills", sv: "Kompetenser" },
+  skills: { en: "Stack", sv: "Stack" },
   projects: { en: "Projects", sv: "Projekt" },
   blog: { en: "Blog", sv: "Blogg" },
 };
